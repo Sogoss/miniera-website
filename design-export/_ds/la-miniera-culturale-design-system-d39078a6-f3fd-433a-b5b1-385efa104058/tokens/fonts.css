@@ -1,0 +1,9 @@
+/* Archivo — sostituzione Google Fonts del grotesk pesante usato nelle miniature.
+   Se l'associazione acquista un font proprietario, sostituire qui con @font-face locali. */
+@import url("https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=Archivo+Black&family=IBM+Plex+Mono:wght@400;600&display=swap");
+
+:root {
+  --font-display: "Archivo Black", "Archivo", Helvetica, Arial, sans-serif;
+  --font-sans: "Archivo", Helvetica, Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}

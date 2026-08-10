@@ -1,0 +1,26 @@
+:root {
+  /* Passo 4px. Il sistema respira: sotto --sp-3 solo dettagli interni. */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+  --sp-9: 96px;
+  --sp-10: 128px;
+
+  --gutter-page: var(--sp-5);
+  --gutter-page-lg: var(--sp-8);
+  --max-content: 68ch;
+  --max-page: 1200px;
+
+  /* Raggi — quasi tutto squadrato; l'unica curva del marchio è
+     l'angolo inferiore destro del badge (vedi --radius-badge). */
+  --radius-0: 0px;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-badge: 0 0 20px 0;
+  --radius-pill: 999px;
+}
