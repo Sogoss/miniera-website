@@ -9,15 +9,17 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "fonts:sync": "node scripts/sync-fonts.mjs"
   },
   "dependencies": {
-    "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.2.0",
-    "sharp": "^0.35.3",
-    "tailwindcss": "^4.3.3"
+    "sharp": "^0.35.3"
   },
   "devDependencies": {
+    "@fontsource-variable/archivo": "^5.3.0",
+    "@fontsource/archivo-black": "^5.3.0",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
     "@sveltia/cms": "^0.184.0",
     "wrangler": "^4.120.0"
   }

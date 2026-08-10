@@ -1,0 +1,116 @@
+/* Colori — adattato da design-export/_ds/.../tokens/colors.css
+ *
+ * Due differenze rispetto all'export del design, entrambe volute:
+ *
+ * 1. Niente color-mix(). Nell'export serviva solo ad applicare un canale
+ *    alpha a un colore di base: rgba() fa la stessa identica cosa ed e
+ *    supportato ovunque. Per non perdere il legame con il colore di base
+ *    ogni tinta derivata porta con se la terna --*-rgb.
+ * 2. Niente oklch(). I cicli 2-5 erano scritti in oklch; qui sono i loro
+ *    equivalenti sRGB, ottenuti con rimappatura di gamut per riduzione del
+ *    croma (il ciclo 2 usciva dal gamut: croma 0.16 -> 0.147).
+ *
+ * Insieme, le due cose abbassano la soglia dei browser da "il sito e
+ * illeggibile sotto Safari 16.2" a "degrada un po' sotto Safari 15.4".
+ */
+
+:root {
+  /* --- Base ------------------------------------------------------------ */
+  --blu-900: #001c2b;
+  --blu-800: #002639;
+  --blu-700: #003049;  /* IL colore del brand: fondo di ogni superficie */
+  --blu-600: #0a3f5c;
+  --blu-500: #14536f;
+  --blu-400: #2d6d89;
+  --blu-300: #5b93aa;
+
+  --arancio-600: #c94a0c;
+  --arancio-500: #f26419;  /* costante di marca: fascia firma e barra del marchio */
+  --arancio-400: #ff8340;
+  --arancio-200: #ffc7a3;
+
+  --crema-100: #fcefd4;
+  --crema-200: #f2e2c0;
+  --crema-300: #e2cda3;
+
+  --nero: #000000;
+  --bianco: #ffffff;
+
+  /* Terne per le tinte usate con trasparenza. Se cambia il colore sopra,
+     va cambiata anche la terna qui: sono la stessa informazione. */
+  --blu-900-rgb: 0, 28, 43;
+  --blu-700-rgb: 0, 48, 73;
+  --crema-100-rgb: 252, 239, 212;
+
+  /* --- Colori dei cicli ------------------------------------------------- */
+  /* Un colore per ciclo di eventi, non per tipo di evento: una proiezione
+     dentro il ciclo 2 e oro come tutto il ciclo 2.
+     Stessa luminosita e saturazione, tinta ruotata: nessuno prevale.
+     Questi sono i valori predefiniti: a regime il colore di ogni ciclo
+     arriva dalla collection `cicli` e viene emesso al build. */
+  --ciclo-1: #f26419;  /* arancio — il ciclo inaugurale */
+  --ciclo-2: #cb9e00;  /* oro */
+  --ciclo-3: #3baa73;  /* verde */
+  --ciclo-4: #e05a81;  /* rosso rosato */
+  --ciclo-5: #ac70c6;  /* viola */
+
+  --ciclo-1-rgb: 242, 100, 25;
+  --ciclo-2-rgb: 203, 158, 0;
+  --ciclo-3-rgb: 59, 170, 115;
+  --ciclo-4-rgb: 224, 90, 129;
+  --ciclo-5-rgb: 172, 112, 198;
+
+  /* --- Semantici ------------------------------------------------------- */
+  --surface-page: var(--blu-700);
+  --surface-raised: var(--blu-600);
+  --surface-sunken: var(--blu-900);
+  --surface-invert: var(--crema-100);
+  --surface-accent: var(--arancio-500);
+
+  --text-primary: var(--crema-100);
+  --text-secondary: rgba(var(--crema-100-rgb), 0.68);
+  --text-muted: rgba(var(--crema-100-rgb), 0.44);
+  --text-on-accent: var(--nero);
+  --text-on-invert: var(--blu-700);
+  --text-accent: var(--arancio-400);
+
+  --border-hairline: rgba(var(--crema-100-rgb), 0.16);
+  --border-strong: var(--crema-100);
+  --border-accent: var(--arancio-500);
+
+  --focus-ring: var(--arancio-400);
+
+  /* Velo delle barre translucide (nav, timeline) */
+  --veil-barra: rgba(var(--blu-900-rgb), 0.82);
+  --veil-barra-forte: rgba(var(--blu-900-rgb), 0.92);
+  --veil-modale: rgba(var(--blu-900-rgb), 0.78);
+
+  /* --- Stato ----------------------------------------------------------- */
+  --stato-ok: #4f9d69;
+  --stato-attenzione: #e0a32e;
+  --stato-errore: #d64545;
+}
+
+/* Il ciclo si dichiara sul contenitore: data-ciclo="2".
+   Tutto cio che dentro usa --accento si adegua.
+   Fuori da un ciclo dichiarato l'accento e l'arancione di marca. */
+:root, [data-ciclo="1"] { --accento: var(--ciclo-1); --accento-rgb: var(--ciclo-1-rgb); }
+[data-ciclo="2"] { --accento: var(--ciclo-2); --accento-rgb: var(--ciclo-2-rgb); }
+[data-ciclo="3"] { --accento: var(--ciclo-3); --accento-rgb: var(--ciclo-3-rgb); }
+[data-ciclo="4"] { --accento: var(--ciclo-4); --accento-rgb: var(--ciclo-4-rgb); }
+[data-ciclo="5"] { --accento: var(--ciclo-5); --accento-rgb: var(--ciclo-5-rgb); }
+
+/* Superficie chiara: stampa, documenti, email. Stessa marca, fondo crema. */
+[data-tema="carta"] {
+  --surface-page: var(--crema-100);
+  --surface-raised: var(--bianco);
+  --surface-sunken: var(--crema-200);
+  --surface-invert: var(--blu-700);
+  --text-primary: var(--blu-700);
+  --text-secondary: rgba(var(--blu-700-rgb), 0.7);
+  --text-muted: rgba(var(--blu-700-rgb), 0.45);
+  --text-on-invert: var(--crema-100);
+  --text-accent: var(--arancio-600);
+  --border-hairline: rgba(var(--blu-700-rgb), 0.18);
+  --border-strong: var(--blu-700);
+}

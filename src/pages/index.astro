@@ -1,17 +1,60 @@
 ---
+// PAGINA PROVVISORIA — serve solo a verificare che la catena regga:
+// import dei token, risoluzione dei file dei caratteri, caricamento delle
+// collection e dei riferimenti fra loro. Viene sostituita dallo scroller vero.
+import '../styles/global.css';
+import { getCollection, getEntry } from 'astro:content';
 
+const eventi = (await getCollection('eventi')).sort(
+  (a, b) => a.data.numero - b.data.numero,
+);
+
+const righe = await Promise.all(
+  eventi.map(async (evento) => {
+    const ciclo = await getEntry(evento.data.ciclo);
+    const sede = await getEntry(evento.data.sede);
+    const relatori = await Promise.all(
+      evento.data.relatori.map(async (r) => {
+        const persona = await getEntry(r.persona);
+        return { nome: persona?.data.nome, ruolo: r.ruolo ?? persona?.data.ruolo };
+      }),
+    );
+    return { evento, ciclo, sede, relatori };
+  }),
+);
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>La Miniera Culturale in Periferia</title>
+  </head>
+  <body>
+    <main style="padding: var(--sp-7) var(--gutter-page); max-width: var(--max-page); margin: 0 auto;">
+      <h1>Verifica della catena</h1>
+      <p style="color: var(--text-secondary);">
+        Token, caratteri self-hostati e collection. Nessun pezzo del sito vero.
+      </p>
+
+      {
+        righe.map(({ evento, ciclo, sede, relatori }) => (
+          <article data-ciclo={ciclo?.data.numero} style="border-top: 4px solid var(--accento); padding: var(--sp-5) 0; margin-top: var(--sp-5);">
+            <span style="font: var(--type-mono); text-transform: uppercase; letter-spacing: var(--tracking-caps); color: var(--accento);">
+              #{evento.data.numero} · Ciclo {ciclo?.data.nome} · {evento.data.formato}
+            </span>
+            <h2 style="margin: var(--sp-2) 0;">{evento.data.titolo}</h2>
+            <p style="color: var(--text-secondary);">{evento.data.descrizione}</p>
+            <p style="font: var(--type-mono); color: var(--text-muted);">
+              {evento.data.data.toISOString()} — {sede?.data.nome}, {sede?.data.indirizzo}, {sede?.data.citta}
+            </p>
+            <ul style="font: var(--type-small); color: var(--text-secondary);">
+              {relatori.map((r) => <li>{r.nome} — {r.ruolo}</li>)}
+            </ul>
+          </article>
+        ))
+      }
+    </main>
+  </body>
 </html>

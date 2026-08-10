@@ -1,0 +1,42 @@
+:root {
+  /* Passo 4px. Il sistema respira: sotto --sp-3 solo dettagli interni. */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+  --sp-9: 96px;
+  --sp-10: 128px;
+
+  --gutter-page: var(--sp-5);
+  --gutter-page-lg: var(--sp-8);
+  --max-content: 68ch;
+  --max-page: 1200px;
+
+  /* Altezza di una scena dello scroller.
+     `svh` e non `dvh`: con dvh l'altezza cambia quando la barra degli
+     indirizzi di Safari si ritrae, e con scroll-snap mandatory la posizione
+     salta. Con svh l'altezza resta stabile — al prezzo di una striscia
+     scoperta quando la barra e ritratta.
+     Il ripiego per i browser precedenti a Safari 15.4 sta nell'@supports in
+     fondo al file, e non come doppia dichiarazione: il minificatore
+     collassava le due righe e il ripiego spariva dal CSS pubblicato. */
+  --h-scena: 100vh;
+
+  /* Raggi — quasi tutto squadrato; l'unica curva del marchio è
+     l'angolo inferiore destro del badge (vedi --radius-badge). */
+  --radius-0: 0px;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-badge: 0 0 20px 0;
+  --radius-pill: 999px;
+}
+
+@supports (height: 100svh) {
+  :root {
+    --h-scena: 100svh;
+  }
+}
