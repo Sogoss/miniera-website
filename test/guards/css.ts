@@ -7,8 +7,8 @@
  * repeatable in CI.
  *
  * The same functions run against both the source and the minified CSS in
- * dist/, which writes `--h-scena:100vh` with no space after the colon, so the
- * patterns below tolerate either spacing.
+ * dist/, which writes `--scene-height:100vh` with no space after the colon, so
+ * the patterns below tolerate either spacing.
  */
 import { type Violation, lineNumber } from './types.ts';
 
@@ -110,16 +110,17 @@ const SVH_ONLY = /^\d+(?:\.\d+)?svh$/;
 
 /**
  * The failure that already happened for real: the minifier collapses the
- * double declaration and `--h-scena: 100vh` vanishes from the published file
- * without the source changing. This guard reads the published file, which is
- * the only place the loss is visible.
+ * double declaration and `--scene-height: 100vh` vanishes from the published
+ * file without the source changing. This guard reads the published file, which
+ * is the only place the loss is visible.
  *
- * The token name is a parameter because the CSS tokens are still Italian and
- * are due to be renamed; when they are, only the default below moves.
+ * The token name stays a parameter. It was one because the tokens were still
+ * Italian and a rename was coming; the rename happened in PR 2 and cost this
+ * guard one default value, which is the argument for leaving it that way.
  */
 export function checkSceneHeightFallback(
   css: string,
-  token = 'h-scena',
+  token = 'scene-height',
 ): Violation[] {
   const violations: Violation[] = [];
   const clean = stripComments(css);
@@ -234,13 +235,13 @@ function baseColors(css: string): [string, string][] {
  * it just drifts, which is the half nobody notices they have broken.
  *
  * Iteration goes **from the triples to the hex values**, never the other way:
- * a dozen colours (--blu-800, the --arancio-*, --nero, the --stato-*) have no
+ * a dozen colours (--blue-800, the --orange-*, --black, the --status-*) have no
  * triple and are not supposed to have one.
  *
  * A colour is resolved **inside the block its triple sits in**, not across the
  * whole stylesheet. The same name is legitimately declared more than once —
- * `[data-tema="carta"]` already redeclares several, and the per-cycle accent
- * rules will declare one --accento each — so a flat file-wide index would
+ * `[data-theme="paper"]` already redeclares several, and the per-cycle accent
+ * rules will declare one --accent each — so a flat file-wide index would
  * compare every triple against whichever declaration happened to come last and
  * report drift that is not there. The file-wide index survives only as a
  * fallback, and only where the whole file agrees on one value: guessing
@@ -269,7 +270,7 @@ export function checkRgbTriples(css: string): Violation[] {
       const name = triple[1]!;
       const value = (triple[2] ?? '').trim();
 
-      // --accento-rgb holds `var(--ciclo-N-rgb)`: a pointer, not a triple. It
+      // --accent-rgb holds `var(--cycle-N-rgb)`: a pointer, not a triple. It
       // has to be skipped, otherwise parseInt yields NaN and the guard passes
       // for the wrong reason.
       const parts = LITERAL_TRIPLE.exec(value);
@@ -317,6 +318,73 @@ export function checkRgbTriples(css: string): Violation[] {
         });
       }
     }
+  }
+
+  return violations;
+}
+
+/* --- Every var() finds its declaration ---------------------------------- */
+
+/** Every custom property *declared* in a chunk of CSS. */
+function declaredProperties(css: string): Set<string> {
+  const declared = new Set<string>();
+  const pattern = /(?:^|[;{])\s*(--[a-z0-9-]+)\s*:/gi;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(css)) !== null) declared.add(match[1]!);
+  return declared;
+}
+
+/**
+ * Every custom property *read* through `var()`, and whether the reading
+ * carries a fallback.
+ *
+ * `var(--accent, var(--orange-500))` is legitimate even where `--accent` is
+ * undefined — that is what a fallback is for — so those readings are not
+ * reported.
+ */
+function usedProperties(css: string): { name: string; index: number }[] {
+  const used: { name: string; index: number }[] = [];
+  const pattern = /var\(\s*(--[a-z0-9-]+)\s*([,)])/gi;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(css)) !== null) {
+    if (match[2] === ',') continue;
+    used.push({ name: match[1]!, index: match.index });
+  }
+  return used;
+}
+
+/**
+ * A `var(--x)` whose `--x` is declared nowhere is the quiet half of a rename.
+ *
+ * Nothing complains about it: Astro compiles, `astro check` has nothing to say,
+ * the CSS ships, and the property simply has no value — the border loses its
+ * colour and somebody notices months later. It is the same shape of defect as
+ * the collapsed fallback, which is why it belongs here and not in a review
+ * checklist.
+ *
+ * Declarations are collected across the whole text handed in, so this has to
+ * be given **all** the CSS at once — dist/ on the build layer, the stylesheets
+ * and the component `<style>` blocks concatenated on the source layer. Given
+ * one file at a time it would report every token as undefined.
+ *
+ * Scope is not modelled: a property declared under `[data-cycle="2"]` counts
+ * as declared everywhere. Narrowing that would mean resolving the cascade,
+ * and the defect being hunted here is a name that exists nowhere at all.
+ */
+export function checkUndefinedCustomProperties(css: string): Violation[] {
+  const clean = stripComments(css);
+  const declared = declaredProperties(clean);
+
+  const reported = new Set<string>();
+  const violations: Violation[] = [];
+
+  for (const { name, index } of usedProperties(clean)) {
+    if (declared.has(name) || reported.has(name)) continue;
+    reported.add(name);
+    violations.push({
+      rule: 'tokens',
+      detail: `\`var(${name})\` on line ${lineNumber(clean, index)} reads a custom property that is declared nowhere: it resolves to nothing, silently. Either the declaration is missing or the name was left behind by a rename`,
+    });
   }
 
   return violations;

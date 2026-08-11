@@ -49,6 +49,9 @@ Fatto:
 - Token del design portati in `src/styles/`, senza `color-mix()` né `oklch()`
 - Caratteri self-hostati (Archivo, Archivo Black, IBM Plex Mono)
 - Schema tipizzato delle quattro collection, con un esempio ciascuna
+- Impianto di verifica: guardie ai vincoli, due strati di test, CI su ogni PR
+- Codice portato all'inglese — token, campi, commenti — con i nomi delle
+  collection lasciati in italiano di proposito, e favicon dal marchio
 
 Da fare: l'elenco completo dei passi, in ordine e uno per PR, sta in
 [piano.md](piano.md). In sintesi — impianto di verifica, utilità di dominio,

@@ -13,6 +13,14 @@ src/content/
   relatori/   chi interviene
 ```
 
+I **nomi delle collection restano in italiano**, contro la regola sulla lingua
+del [CLAUDE.md](../CLAUDE.md) e per una ragione dichiarata: sono l'unico pezzo
+di codice che si trova davanti chi redige i contenuti senza scrivere codice. I
+**campi dentro quei file sono in inglese** — `number`, `title`, `date`,
+`speakers` — perché nessuno li incontra: nel CMS ogni campo porta la sua
+etichetta italiana. L'unica eccezione sono i valori di `format`, che restano
+`incontro`, `proiezione`, `presentazione`: quelli arrivano al lettore.
+
 Cicli, sedi e relatori sono collection separate — e non campi di testo dentro
 l'evento — per una ragione sola: **i loro valori si ripetono**. Un relatore
 torna più volte; tenerlo dentro l'evento significherebbe ricaricare la stessa
@@ -24,10 +32,10 @@ almeno una volta.
 
 | Non c'è | Perché |
 |---|---|
-| `passato` / `futuro` | si calcolano da `data` alla build |
-| `dataBreve` ("20 mar") | è una formattazione di `data` |
+| passato / futuro | si calcolano da `date` alla build |
+| una data breve ("20 mar") | è una formattazione di `date` |
 | la data distesa ("giovedì 20 marzo, ore 21") | idem |
-| `nomeCiclo` | viene dal riferimento al ciclo |
+| il nome del ciclo | viene dal riferimento al ciclo |
 | `soloAudio` | **eliminato**: nel design era un bottone senza URL, quell'audio non esiste |
 
 Nei file di design la data era testo libero e senza anno. Non va replicato:
@@ -47,7 +55,7 @@ questa documentazione sono arrivati a **81**. Quel numero è l'URL pubblico
   diversa da quella che qualcuno ha mandato in chat.
 - Non va **derivato dall'ordine cronologico**: il giorno che salta fuori una
   serata dimenticata si rinumererebbe tutto.
-- Una serata **annullata conserva numero e pagina**, con il campo `annullato`.
+- Una serata **annullata conserva numero e pagina**, con il campo `cancelled`.
   Chi aveva già condiviso `/82` non deve trovarci un 404. Il numero resta
   bruciato, che è corretto: quella programmazione è esistita.
 
@@ -68,7 +76,7 @@ Il calcolo avviene alla build, quindi dipende dal rebuild notturno — vedi
 Più cicli possono essere aperti in contemporanea, e due serate consecutive
 possono appartenere a cicli diversi. Non hanno date di inizio e fine.
 
-Ogni ciclo porta il proprio colore, che diventa `--accento`. I cinque colori
+Ogni ciclo porta il proprio colore, che diventa `--accent`. I cinque colori
 predefiniti del design sono tarati a luminosità e saturazione uguali apposta,
 perché nessun ciclo prevalga sugli altri e il contrasto sul fondo blu resti
 garantito: **discostarsene molto rompe quella taratura.**
@@ -80,11 +88,16 @@ perché un ruolo cambia nel tempo e in una serata del 2025 va mostrato quello
 di allora:
 
 ```yaml
-relatori:
-  - persona: amina-belhaj                      # usa "educatrice"
-  - persona: piergiorgio-rosso
-    ruolo: presidente del comitato di quartiere # solo per questa serata
+speakers:
+  - person: amina-belhaj                      # usa "educatrice"
+  - person: piergiorgio-rosso
+    role: presidente del comitato di quartiere # solo per questa serata
 ```
+
+Due volte la stessa persona non si può: è il modo in cui ci si sbaglia quando
+si cerca dove sovrascrivere un ruolo, ed era il caso della serata 81. Lo
+segnala una guardia — Zod non lo vede, perché due riferimenti identici sono
+due riferimenti validi.
 
 ### Interventi
 

@@ -1,4 +1,4 @@
 ---
-nome: Amina Belhaj
-ruolo: educatrice
+name: Amina Belhaj
+role: educatrice
 ---

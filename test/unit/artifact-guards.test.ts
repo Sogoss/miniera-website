@@ -3,7 +3,7 @@ import { checkDesignRuntimeArtifacts } from '../guards/artifacts.ts';
 
 describe('checkDesignRuntimeArtifacts', () => {
   it('passes on ordinary markup', () => {
-    const html = '<section data-ciclo="3"><h2>Chi tiene aperto il quartiere</h2></section>';
+    const html = '<section data-cycle="3"><h2>Chi tiene aperto il quartiere</h2></section>';
     expect(checkDesignRuntimeArtifacts(html, 'dist/index.html')).toEqual([]);
   });
 

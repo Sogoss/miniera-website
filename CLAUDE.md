@@ -48,14 +48,14 @@ non una preferenza.
 
 3. **Niente `color-mix()` e niente `oklch()`.** Sono stati eliminati dai token
    per abbassare la soglia dei browser. Per le trasparenze si usa
-   `rgba(var(--crema-100-rgb), 0.68)` e simili. Se cambi un colore di base,
+   `rgba(var(--cream-100-rgb), 0.68)` e simili. Se cambi un colore di base,
    **cambia anche la sua terna `--*-rgb`**.
 
 4. **I ripieghi CSS si dichiarano in `@supports`, mai come doppia
    dichiarazione.** Il minificatore collassa la doppia dichiarazione e il
    ripiego non arriva mai in produzione. È già successo.
 
-5. **`svh`, non `dvh`.** Usa il token `--h-scena`. Con `dvh` la ritrazione
+5. **`svh`, non `dvh`.** Usa il token `--scene-height`. Con `dvh` la ritrazione
    della barra di Safari fa saltare le posizioni di snap.
 
 6. **Non "sistemare" `font-weight: 400 900` su Archivo Black** in
@@ -75,7 +75,7 @@ non una preferenza.
    React.** Sono presentazionali; l'unico con stato si replica con `:active`.
 
 10. **Il numero della serata è il suo URL e non si riassegna mai.**
-    `passato` / `futuro` non sono campi: si calcolano da `data` alla build.
+    Passato e futuro non sono campi: si calcolano da `date` alla build.
 
 ## Lingua
 
@@ -92,15 +92,18 @@ commenti**. Il design system usa quindi `Button`, `Label`, `Card`, `Brand`,
 documentazione e i messaggi di commit.
 
 Nei testi italiani accenti e caratteri speciali vanno scritti per intero:
-*perché*, non *perche*.
+*perché*, non *perche*. Nei contenuti lo verifica una guardia.
 
-> **Migrazione in corso.** La regola è stata cambiata quando il progetto era
-> già cominciato. `test/` e la CI nascono in inglese; i token CSS
-> (`--h-scena`, `--accento`, `--blu-700`, `--sp-*`), i campi dello schema in
-> `src/content.config.ts` (`numero`, `titolo`, `data`, `ciclo`…) e i commenti
-> in `src/` e `scripts/` sono ancora in italiano e vanno tradotti. Finché non
-> succede, **il codice esistente non è il modello da imitare**: il codice nuovo
-> si scrive in inglese comunque.
+**Un'eccezione sola, e dichiarata: i nomi delle quattro collection restano in
+italiano** — `eventi`, `cicli`, `sedi`, `relatori`, cartelle e chiavi. Sono
+l'unico pezzo di codice che si trova davanti chi redige i contenuti senza
+scrivere codice. I *campi* dentro quei file sono in inglese, perché nessuno li
+incontra: nel CMS ogni campo porta la sua etichetta italiana.
+
+> La regola sulla lingua è stata scritta quando il progetto era già cominciato,
+> e il codice che la precedeva — token CSS, campi dello schema, commenti in
+> `src/` e `scripts/` — è stato tradotto nella PR 2. Non resta niente da
+> migrare: il codice esistente è di nuovo il modello da imitare.
 
 ## Dove sta cosa
 
@@ -135,6 +138,7 @@ npm run preview      # anteprima della build
 npm test             # guardie e test, con una build dentro
 npm run check        # astro check, typecheck
 npm run fonts:sync   # ricopia i caratteri dai pacchetti @fontsource
+npm run favicon:build  # rigenera public/favicon.ico da public/favicon.svg
 ```
 
 `REUSE_DIST=1 npm test` salta la build quando `dist/` è già fresco.

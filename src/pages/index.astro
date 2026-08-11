@@ -1,25 +1,25 @@
 ---
-// PAGINA PROVVISORIA — serve solo a verificare che la catena regga:
-// import dei token, risoluzione dei file dei caratteri, caricamento delle
-// collection e dei riferimenti fra loro. Viene sostituita dallo scroller vero.
+// TEMPORARY PAGE — it only proves the chain holds up: importing the tokens,
+// resolving the font files, loading the collections and the references between
+// them. The real scroller replaces it.
 import '../styles/global.css';
 import { getCollection, getEntry } from 'astro:content';
 
-const eventi = (await getCollection('eventi')).sort(
-  (a, b) => a.data.numero - b.data.numero,
+const events = (await getCollection('eventi')).sort(
+  (a, b) => a.data.number - b.data.number,
 );
 
-const righe = await Promise.all(
-  eventi.map(async (evento) => {
-    const ciclo = await getEntry(evento.data.ciclo);
-    const sede = await getEntry(evento.data.sede);
-    const relatori = await Promise.all(
-      evento.data.relatori.map(async (r) => {
-        const persona = await getEntry(r.persona);
-        return { nome: persona?.data.nome, ruolo: r.ruolo ?? persona?.data.ruolo };
+const rows = await Promise.all(
+  events.map(async (event) => {
+    const cycle = await getEntry(event.data.cycle);
+    const venue = await getEntry(event.data.venue);
+    const speakers = await Promise.all(
+      event.data.speakers.map(async (s) => {
+        const person = await getEntry(s.person);
+        return { name: person?.data.name, role: s.role ?? person?.data.role };
       }),
     );
-    return { evento, ciclo, sede, relatori };
+    return { event, cycle, venue, speakers };
   }),
 );
 ---
@@ -28,29 +28,30 @@ const righe = await Promise.all(
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>La Miniera Culturale in Periferia</title>
   </head>
   <body>
-    <main style="padding: var(--sp-7) var(--gutter-page); max-width: var(--max-page); margin: 0 auto;">
+    <main style="padding: var(--space-7) var(--gutter-page); max-width: var(--max-page); margin: 0 auto;">
       <h1>Verifica della catena</h1>
       <p style="color: var(--text-secondary);">
         Token, caratteri self-hostati e collection. Nessun pezzo del sito vero.
       </p>
 
       {
-        righe.map(({ evento, ciclo, sede, relatori }) => (
-          <article data-ciclo={ciclo?.data.numero} style="border-top: 4px solid var(--accento); padding: var(--sp-5) 0; margin-top: var(--sp-5);">
-            <span style="font: var(--type-mono); text-transform: uppercase; letter-spacing: var(--tracking-caps); color: var(--accento);">
-              #{evento.data.numero} · Ciclo {ciclo?.data.nome} · {evento.data.formato}
+        rows.map(({ event, cycle, venue, speakers }) => (
+          <article data-cycle={cycle?.data.number} style="border-top: 4px solid var(--accent); padding: var(--space-5) 0; margin-top: var(--space-5);">
+            <span style="font: var(--type-mono); text-transform: uppercase; letter-spacing: var(--tracking-caps); color: var(--accent);">
+              #{event.data.number} · Ciclo {cycle?.data.name} · {event.data.format}
             </span>
-            <h2 style="margin: var(--sp-2) 0;">{evento.data.titolo}</h2>
-            <p style="color: var(--text-secondary);">{evento.data.descrizione}</p>
+            <h2 style="margin: var(--space-2) 0;">{event.data.title}</h2>
+            <p style="color: var(--text-secondary);">{event.data.description}</p>
             <p style="font: var(--type-mono); color: var(--text-muted);">
-              {evento.data.data.toISOString()} — {sede?.data.nome}, {sede?.data.indirizzo}, {sede?.data.citta}
+              {event.data.date.toISOString()} — {venue?.data.name}, {venue?.data.address}, {venue?.data.city}
             </p>
             <ul style="font: var(--type-small); color: var(--text-secondary);">
-              {relatori.map((r) => <li>{r.nome} — {r.ruolo}</li>)}
+              {speakers.map((s) => <li>{s.name} — {s.role}</li>)}
             </ul>
           </article>
         ))

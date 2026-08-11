@@ -139,7 +139,7 @@ costanti, che è innocuo perché al browser arriva già un esadecimale.
 
 **Una terna `--*-rgb` si confronta col colore dichiarato nel suo stesso
 blocco.** Lo stesso nome è legittimamente ridichiarato più volte —
-`[data-tema="carta"]` lo fa già, e la PR 4 emetterà un `--accento` per ciclo.
+`[data-theme="paper"]` lo fa già, e la PR 4 emetterà un `--accent` per ciclo.
 Un indice sull'intero foglio confronterebbe ogni terna con l'ultima
 dichiarazione incontrata e segnalerebbe derive inesistenti.
 
@@ -163,8 +163,37 @@ malinteso nel piano iniziale.
 **Il codice è in inglese, ciò che si legge è in italiano.** Cambia la regola
 precedente, che imponeva l'italiano ovunque. Confine: identificatori,
 commenti, nomi di file e campi in inglese; contenuti, stringhe visibili,
-documentazione e messaggi di commit in italiano. Il codice già scritto va
-migrato — vedi PR 2 in [piano.md](piano.md).
+documentazione e messaggi di commit in italiano. Il codice già scritto è stato
+migrato nella PR 2.
+
+**Ma i nomi delle quattro collection restano in italiano** — `eventi`,
+`cicli`, `sedi`, `relatori`, cartelle e chiavi. È l'unica eccezione, ed è
+motivata: sono l'unico pezzo di codice che si trova davanti chi redige i
+contenuti senza scrivere codice. I campi dentro quei file no, perché nessuno
+li incontra: nel CMS ogni campo porta la sua etichetta italiana. Restano
+italiani anche i valori di `format` — `incontro`, `proiezione`,
+`presentazione` — che sono contenuto e arrivano al lettore così come sono.
+*(PR 2)*
+
+**Il campo `interventi` diventa `materials`, non `recordings`.** Tiene
+registrazioni *e* materiali collegati, ed è generico apposta: domani può
+essere un articolo. *(PR 2)*
+
+**Nessuna guardia sulla lingua dei commenti.** Era prevista dal piano della
+PR 2 e non è stata scritta: costava un estrattore di commenti che salta
+stringhe e letterali regex — la parte più fragile della PR, per sorvegliare
+della prosa — e proteggeva da un difetto che si vede nel diff e non fa danno.
+Al suo posto c'è la guardia che copre il rischio vero di una rinomina: **ogni
+`var(--x)` deve trovare la sua dichiarazione**. Un nome rimasto indietro non è
+un errore per nessuno — Astro compila, `astro check` tace, il CSS si pubblica
+e la proprietà non ha valore — ed è lo stesso guasto muto del ripiego
+collassato. *(PR 2)*
+
+**Le guardie sullo stile leggono anche gli attributi `style` in linea.** Un
+`var()` scritto in un attributo non sta in nessun foglio di stile: né nel
+sorgente né in `dist/`. Rompendo un token di proposito nella pagina
+provvisoria, la suite passava. È la forma che userà lo scroller per l'accento
+di ogni scena. *(PR 2)*
 
 ## Rimandate
 

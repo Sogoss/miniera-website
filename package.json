@@ -14,7 +14,8 @@
     "check": "astro check",
     "test": "vitest run",
     "test:watch": "vitest",
-    "fonts:sync": "node scripts/sync-fonts.mjs"
+    "fonts:sync": "node scripts/sync-fonts.mjs",
+    "favicon:build": "node scripts/build-favicon.mjs"
   },
   "dependencies": {
     "astro": "^7.2.0",
@@ -29,6 +30,7 @@
     "@types/node": "^24.13.3",
     "typescript": "^5.9.3",
     "vitest": "^4.1.10",
-    "wrangler": "^4.120.0"
+    "wrangler": "^4.120.0",
+    "yaml": "^2.9.0"
   }
 }
