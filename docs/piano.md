@@ -322,6 +322,14 @@ dominio*. In breve:
 - **Guardia**: nessun `Intl.DateTimeFormat` e nessun `toLocale…` senza
   `timeZone` in `src/`; nessuna lettura dell'orologio in `src/lib/events.ts`.
   Entrambe con i loro casi negativi (regola 11)
+- **Guardia**: in `dist/` non compare nessuna data scritta dalla macchina —
+  `Thu Sep 24 2026`, `GMT+0200` — che è la sola via per cui una `Date` supera
+  le guardie sul codice: `{scene.date}` è un `toString()` come tutti gli altri
+- Lo stato di ogni serata si legge da `data-state` e non dalle parole italiane,
+  e la coppia stato-nota copre anche l'annullamento
+- Le attese dello strato `build` si ricavano dai contenuti: aggiungere una
+  serata, aprire una seconda sede o annullarne una non fa diventare rossa la
+  suite
 - Il ruolo dichiarato sull'evento vince su quello della persona; se manca, vale
   quello della persona
 - Una serata annullata resta nell'elenco, conserva il suo numero e prende la
@@ -355,6 +363,33 @@ dominio*. In breve:
 > strato `build` sarebbero diventate rosse da sole il 9 ottobre 2026, quando la
 > serata 82 passa, e si appoggiavano al `#78 · ` della pagina provvisoria
 > invece che a un `data-number` che lo scroller porterà comunque.
+
+> **Trovato nella seconda revisione.** Altri dieci, e i due temi sono gli
+> stessi di prima visti da un altro lato. Le guardie sul fuso fallivano aperte
+> in due modi nuovi: un `timeZone` scritto dentro un commento veniva letto come
+> se fosse codice — bastava commentarlo mentre si debugga — e una costante di
+> fuso importata da un altro file passava senza controllo, che è esattamente il
+> refactoring che la PR 8 inviterà a fare. `REUSE_DIST=1` saltava l'unico posto
+> in cui `TZ=UTC` era dichiarato, così un `dist/` costruito a Torino passava per
+> il motivo che quelle asserzioni escludono: il fuso è passato nello script
+> `build`. E lo strato `build` era saldato alle tre serate d'esempio e alla
+> prosa italiana — annullare una serata, aggiungere la 083, aprire una seconda
+> sede o scrivere una descrizione che contiene *in programma* facevano diventare
+> rossa la suite senza che niente fosse rotto, con l'errore puntato su un test
+> invece che sul contenuto.
+>
+> Gli altri: `loadProgramme` rileggeva l'orologio a ogni chiamata, e la garanzia
+> che il suo stesso commento dichiarava valeva solo dentro una pagina; nessuna
+> guardia vedeva una `Date` data in pasto a qualcosa che si aspetta una stringa,
+> che è la stessa differenza di due ore per una via che nessun controllo sulla
+> forma della chiamata può riconoscere; la regola 11 elencava quattro metodi
+> vietati e la guardia ne vietava nove, cioè la CI poteva citare una regola che
+> non nomina il metodo su cui è scattata — e la reazione naturale a quello è
+> allargare l'elenco della guardia; e la pagina provvisoria era stata estesa
+> contro quello che il `CLAUDE.md` prescrive, senza dirlo. L'estensione è
+> deliberata e ora è scritta nella regola: quella pagina è l'unica prova
+> pubblicata che lo strato `build` ha, e porta `data-number` e `data-state` per
+> questo.
 
 ### Test manuali
 

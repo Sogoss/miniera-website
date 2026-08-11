@@ -28,7 +28,7 @@ import {
   checkItalianDataAttributes,
 } from '../guards/language.ts';
 import { checkDevDepsInLockfile, checkNoTailwind } from '../guards/packages.ts';
-import { collectionEntries } from '../support/frontmatter.ts';
+import { collectionEntries, dateOf } from '../support/frontmatter.ts';
 import { filesWithExtension, read, readJson, repoRoot } from '../support/paths.ts';
 import { componentCss } from '../support/styles.ts';
 
@@ -209,12 +209,6 @@ describe('src/content', () => {
     },
   );
 
-  /* The date as the frontmatter has it. YAML 1.2 has no timestamp type, so
-     what comes out of the parser is a string; Astro coerces it with Zod. Both
-     shapes are accepted here rather than depending on which. */
-  const dateOf = (entry: (typeof events)[number]): Date =>
-    entry.data.date instanceof Date ? entry.data.date : new Date(String(entry.data.date));
-
   it.each(events.map((event) => [event.path, event] as const))(
     '%s has a date that parses',
     (_path, event) => {
@@ -303,5 +297,15 @@ describe('package.json', () => {
 
   it('agrees with the lockfile about what is development-only', () => {
     expect(checkDevDepsInLockfile(manifest, readJson('package-lock.json'))).toEqual([]);
+  });
+
+  it('builds in UTC, the zone Cloudflare builds in', () => {
+    // The zone belongs to the build script and not only to the globalSetup of
+    // the test layer, and this is what holds it there. Set in the setup alone,
+    // the invariant «the dist under test was built in UTC» held only when the
+    // setup actually built: `REUSE_DIST=1` over a dist built by hand in Turin
+    // published Italian hours for the wrong reason and the suite agreed.
+    const scripts = (manifest as { scripts?: Record<string, string> }).scripts ?? {};
+    expect(scripts.build ?? '').toContain('TZ=UTC');
   });
 });

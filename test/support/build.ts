@@ -6,6 +6,13 @@
  *
  * Set REUSE_DIST=1 to skip it while iterating locally on a dist/ you know is
  * fresh. CI never sets it: there, the build has to happen.
+ *
+ * The zone is pinned in the `build` script of package.json, not only here.
+ * Pinned here alone it would have held only on the branch that actually builds:
+ * `npm run build` by hand in Turin followed by `REUSE_DIST=1 npm test` reads a
+ * dist/ built in Italian time, finds «ore 21» for the wrong reason, and the one
+ * assertion written to rule that out passes. A test in sources.test.ts keeps
+ * the script from losing it again.
  */
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -25,7 +32,8 @@ export default function setup(): void {
     // zone Cloudflare builds in, and the dates published from a machine in
     // Italy would agree with Europe/Rome for the wrong reason. The assertions
     // in test/build/published-dates.test.ts expect Italian time out of a
-    // build that has no idea Italy exists.
+    // build that has no idea Italy exists. The script pins it too — this is
+    // the belt over that brace, and says so where the build is run.
     env: { ...process.env, TZ: 'UTC' },
   });
 }

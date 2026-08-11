@@ -62,14 +62,32 @@ export type Programme = {
 };
 
 /**
+ * What time it is, read once for the whole build.
+ *
+ * At module scope and not in the default of the parameter below, which is
+ * evaluated at every call: `loadProgramme()` is called once per page, and the
+ * pages of one build are rendered over several seconds. A build that started at
+ * 23:59:59 would classify an evening as upcoming on the home page and as past
+ * on its own page a second later — a site contradicting itself about the same
+ * evening, published with nothing failing. The module is loaded once per
+ * process, so this is read once, and every page of a build reasons about the
+ * same day.
+ *
+ * In `astro dev` it means the day is the one the server was started on. That is
+ * the right trade: a dev server left running across midnight shows a stale
+ * label until it restarts, and nothing it renders is published.
+ */
+const BUILD_TIME = new Date();
+
+/**
  * The whole programme, ready to render.
  *
  * `now` is a parameter so that a test can hand it a different day; the default
- * is the only place in the codebase that reads the clock. The value is taken
- * once and passed down, so that a build straddling midnight cannot classify
+ * is the one clock read above, and the only one in the codebase. The value is
+ * passed down from here, so that a build straddling midnight cannot classify
  * the first evening against one day and the last against the next.
  */
-export async function loadProgramme(now: Date = new Date()): Promise<Programme> {
+export async function loadProgramme(now: Date = BUILD_TIME): Promise<Programme> {
   const events = sortByNumber((await getCollection('eventi')).map((entry) => entry.data));
 
   const conflicts = findNumberDateConflicts(events);
