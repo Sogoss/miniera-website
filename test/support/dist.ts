@@ -4,6 +4,7 @@
  * out. Everything in this file therefore looks at dist/, never at src/.
  */
 import { distDir, filesWithExtension, read, walk } from './paths.ts';
+import { extractStyleBlocks } from './styles.ts';
 
 /** Files in dist/ that are worth scanning as text. */
 const TEXT_EXTENSIONS = ['.html', '.css', '.js', '.mjs', '.json', '.svg', '.xml', '.txt'];
@@ -27,12 +28,7 @@ export function readPublishedCss(): string {
   }
 
   for (const path of filesWithExtension(distDir, ['.html'])) {
-    const html = read(path);
-    const pattern = /<style[^>]*>([\s\S]*?)<\/style>/gi;
-    let match: RegExpExecArray | null;
-    while ((match = pattern.exec(html)) !== null) {
-      pieces.push(match[1] ?? '');
-    }
+    pieces.push(...extractStyleBlocks(read(path)));
   }
 
   return pieces.join('\n');

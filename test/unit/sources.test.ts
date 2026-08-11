@@ -11,10 +11,13 @@ import {
   checkRgbTriples,
   checkSceneHeightFallback,
 } from '../guards/css.ts';
+import { checkDisplayFontWeightRange } from '../guards/fonts.ts';
 import { checkDevDepsInLockfile, checkNoTailwind } from '../guards/packages.ts';
 import { filesWithExtension, read, readJson, repoRoot } from '../support/paths.ts';
+import { styleBlocksOf } from '../support/styles.ts';
 
 const styleFiles = filesWithExtension(join(repoRoot, 'src/styles'), ['.css']);
+const astroFiles = filesWithExtension(join(repoRoot, 'src'), ['.astro']);
 
 describe('src/styles', () => {
   it('has stylesheets to check in the first place', () => {
@@ -32,6 +35,29 @@ describe('src/styles', () => {
   });
 });
 
+/* The component styles, which dist/ cannot speak for.
+ *
+ * Rule 4 is the reason this block exists. A double declaration written in a
+ * component's <style> is collapsed by the minifier before it reaches dist/, so
+ * the build layer cannot see it even in principle — the source is the only
+ * place the evidence survives. Rule 3 is checked here as well, though there
+ * the build layer does carry it: `oklch()` and any `color-mix()` over a
+ * `var()` both reach dist/ intact.
+ */
+describe('src/**/*.astro <style> blocks', () => {
+  it('has .astro files to check in the first place', () => {
+    expect(astroFiles.length).toBeGreaterThan(0);
+  });
+
+  it.each(astroFiles)('%s uses neither color-mix() nor oklch()', (path) => {
+    expect(checkNoColorMixOrOklch(styleBlocksOf(read(path)))).toEqual([]);
+  });
+
+  it.each(astroFiles)('%s declares no property twice in one block', (path) => {
+    expect(checkDuplicateDeclarations(styleBlocksOf(read(path)))).toEqual([]);
+  });
+});
+
 describe('src/styles/tokens/colors.css', () => {
   it('keeps every --*-rgb triple in step with its hex colour', () => {
     expect(checkRgbTriples(read('src/styles/tokens/colors.css'))).toEqual([]);
@@ -41,6 +67,14 @@ describe('src/styles/tokens/colors.css', () => {
 describe('src/styles/tokens/spacing.css', () => {
   it('writes the scene-height fallback as @supports', () => {
     expect(checkSceneHeightFallback(read('src/styles/tokens/spacing.css'))).toEqual([]);
+  });
+});
+
+describe('src/styles/tokens/fonts.css', () => {
+  it('declares Archivo Black as a weight range, not a single weight', () => {
+    expect(
+      checkDisplayFontWeightRange(read('src/styles/tokens/fonts.css')),
+    ).toEqual([]);
   });
 });
 

@@ -103,6 +103,15 @@ facili da violare senza accorgersene.
 > controllo che intercetta davvero la deriva è rigenerare il lockfile e
 > confrontarlo, ed è quello che fa la CI.
 
+> **Aggiunto in revisione.** La revisione della PR ha trovato due buchi e una
+> regola scoperta, tutti chiusi qui. Le guardie sullo stile leggevano solo
+> `src/styles/**/*.css`: una doppia dichiarazione scritta nel `<style>` di un
+> componente passava con la suite tutta verde, ed è esattamente dove gli stili
+> andranno a stare dalla PR 6 in poi. `checkRgbTriples` indicizzava i colori
+> sull'intero foglio con l'ultima dichiarazione che vinceva, e avrebbe
+> cominciato a mentire alla PR 4. La regola 6 non aveva guardia, pur essendo
+> l'unica del `CLAUDE.md` che qualcuno viola credendo di fare manutenzione.
+
 ### Test automatici
 
 - Il ripiego `--h-scena: 100vh` **e** il blocco `@supports (height: 100svh)`
@@ -112,7 +121,16 @@ facili da violare senza accorgersene.
 - Nessun `color-mix(` né `oklch(` nei token e nel CSS pubblicato (regola 3)
 - Ogni colore base che ha una terna `--*-rgb` è coerente con essa: si legge
   `colors.css`, si converte l'esadecimale, si confronta (regola 3, seconda
-  metà — è la parte che nessuno si accorge di aver rotto)
+  metà — è la parte che nessuno si accorge di aver rotto). Il colore si
+  risolve **dentro il blocco** in cui sta la terna, perché lo stesso nome è
+  legittimamente ridichiarato più volte — da `[data-tema="carta"]` oggi, da un
+  `--accento` per ciclo alla PR 4
+- Nessuna doppia dichiarazione e nessun `color-mix()` nei blocchi `<style>` dei
+  componenti `.astro`. Per la regola 4 il sorgente è **l'unico** strato
+  possibile: in `dist/` il minificatore ha già collassato le due righe e non
+  resta niente da osservare
+- `Archivo Black` è dichiarato come intervallo `font-weight: 400 900` e non
+  come peso unico, nel sorgente e nel CSS pubblicato (regola 6)
 - Nessuna dipendenza da Tailwind in `package.json` (regola 2)
 - Il lockfile concorda con `package.json` su cosa è di sviluppo — controllo
   offline, senza rete e senza git

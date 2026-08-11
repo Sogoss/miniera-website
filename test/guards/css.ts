@@ -212,6 +212,22 @@ function channels(hex: string): [number, number, number] | null {
 const LITERAL_TRIPLE = /^(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})$/;
 
 /**
+ * Every `--name: #hex` declaration in a chunk of CSS, in source order.
+ *
+ * The lookahead accepts the end of the string as well as `;` and `}` because
+ * this runs over the *body* of a block, where the last declaration has neither.
+ */
+function baseColors(css: string): [string, string][] {
+  const found: [string, string][] = [];
+  const pattern = /--([a-z0-9-]+)\s*:\s*(#[0-9a-fA-F]{3,8})\s*(?=[;}]|$)/gi;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(css)) !== null) {
+    found.push([match[1]!, match[2]!]);
+  }
+  return found;
+}
+
+/**
  * Every colour used with transparency carries its own `--*-rgb` triple,
  * because there is no color-mix() to derive it. The two are the same fact
  * written twice: change the colour and forget the triple and nothing breaks —
@@ -220,63 +236,86 @@ const LITERAL_TRIPLE = /^(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})$/;
  * Iteration goes **from the triples to the hex values**, never the other way:
  * a dozen colours (--blu-800, the --arancio-*, --nero, the --stato-*) have no
  * triple and are not supposed to have one.
+ *
+ * A colour is resolved **inside the block its triple sits in**, not across the
+ * whole stylesheet. The same name is legitimately declared more than once —
+ * `[data-tema="carta"]` already redeclares several, and the per-cycle accent
+ * rules will declare one --accento each — so a flat file-wide index would
+ * compare every triple against whichever declaration happened to come last and
+ * report drift that is not there. The file-wide index survives only as a
+ * fallback, and only where the whole file agrees on one value: guessing
+ * between two would be the same mistake in a quieter form.
  */
 export function checkRgbTriples(css: string): Violation[] {
   const violations: Violation[] = [];
   const clean = stripComments(css);
+  const blocks = innermostBlocks(clean);
 
-  const bases = new Map<string, string>();
-  const basePattern = /--([a-z0-9-]+)\s*:\s*(#[0-9a-fA-F]{3,8})\s*(?=[;}])/gi;
-  let base: RegExpExecArray | null;
-  while ((base = basePattern.exec(clean)) !== null) {
-    bases.set(base[1]!, base[2]!);
+  const elsewhere = new Map<string, Set<string>>();
+  for (const { body } of blocks) {
+    for (const [name, hex] of baseColors(body)) {
+      const seen = elsewhere.get(name) ?? new Set<string>();
+      seen.add(hex.toLowerCase());
+      elsewhere.set(name, seen);
+    }
   }
 
-  const triplePattern = /--([a-z0-9-]+)-rgb\s*:\s*([^;}]+)/g;
-  let triple: RegExpExecArray | null;
-  while ((triple = triplePattern.exec(clean)) !== null) {
-    const name = triple[1]!;
-    const value = (triple[2] ?? '').trim();
+  for (const { body } of blocks) {
+    const local = new Map(baseColors(body));
 
-    // --accento-rgb holds `var(--ciclo-N-rgb)`: a pointer, not a triple. It
-    // has to be skipped, otherwise parseInt yields NaN and the guard passes
-    // for the wrong reason.
-    const parts = LITERAL_TRIPLE.exec(value);
-    if (!parts) continue;
+    const triplePattern = /--([a-z0-9-]+)-rgb\s*:\s*([^;}]+)/g;
+    let triple: RegExpExecArray | null;
+    while ((triple = triplePattern.exec(body)) !== null) {
+      const name = triple[1]!;
+      const value = (triple[2] ?? '').trim();
 
-    const hex = bases.get(name);
-    if (!hex) {
-      violations.push({
-        rule: 'rule 3',
-        detail: `the triple \`--${name}-rgb\` has no hex base colour \`--${name}\``,
-      });
-      continue;
-    }
+      // --accento-rgb holds `var(--ciclo-N-rgb)`: a pointer, not a triple. It
+      // has to be skipped, otherwise parseInt yields NaN and the guard passes
+      // for the wrong reason.
+      const parts = LITERAL_TRIPLE.exec(value);
+      if (!parts) continue;
 
-    const expected = channels(hex);
-    if (!expected) {
-      violations.push({
-        rule: 'rule 3',
-        detail: `\`--${name}: ${hex}\` is not a readable hex value`,
-      });
-      continue;
-    }
+      const shared = elsewhere.get(name);
+      const hex =
+        local.get(name) ?? (shared?.size === 1 ? [...shared][0] : undefined);
 
-    const declared: [number, number, number] = [
-      Number(parts[1]),
-      Number(parts[2]),
-      Number(parts[3]),
-    ];
+      if (!hex) {
+        // Declared in several blocks with different values and in none of them
+        // next to this triple: there is no single answer to check against, and
+        // inventing one would report a drift that may not exist.
+        if (shared && shared.size > 1) continue;
+        violations.push({
+          rule: 'rule 3',
+          detail: `the triple \`--${name}-rgb\` has no hex base colour \`--${name}\``,
+        });
+        continue;
+      }
 
-    if (
-      expected[0] !== declared[0] ||
-      expected[1] !== declared[1] ||
-      expected[2] !== declared[2]
-    ) {
-      violations.push({
-        rule: 'rule 3',
-        detail: `\`--${name}\` is ${hex}, i.e. ${expected.join(', ')}, but \`--${name}-rgb\` declares ${declared.join(', ')}`,
-      });
+      const expected = channels(hex);
+      if (!expected) {
+        violations.push({
+          rule: 'rule 3',
+          detail: `\`--${name}: ${hex}\` is not a readable hex value`,
+        });
+        continue;
+      }
+
+      const declared: [number, number, number] = [
+        Number(parts[1]),
+        Number(parts[2]),
+        Number(parts[3]),
+      ];
+
+      if (
+        expected[0] !== declared[0] ||
+        expected[1] !== declared[1] ||
+        expected[2] !== declared[2]
+      ) {
+        violations.push({
+          rule: 'rule 3',
+          detail: `\`--${name}\` is ${hex}, i.e. ${expected.join(', ')}, but \`--${name}-rgb\` declares ${declared.join(', ')}`,
+        });
+      }
     }
   }
 

@@ -138,6 +138,49 @@ describe('checkRgbTriples', () => {
   it('accepts the minified spacing produced by the build', () => {
     expect(checkRgbTriples(':root{--blu-700:#003049;--blu-700-rgb:0, 48, 73}')).toEqual([]);
   });
+
+  it('resolves a colour inside its own block, not across the file', () => {
+    // colors.css already redeclares several base colours under
+    // [data-tema="carta"]. Reading the file as one flat namespace would
+    // compare the :root triple against the theme's value and report a drift
+    // that does not exist.
+    const css = `
+      :root { --crema-100: #fcefd4; --crema-100-rgb: 252, 239, 212; }
+      [data-tema="carta"] { --crema-100: #000000; }
+    `;
+    expect(checkRgbTriples(css)).toEqual([]);
+  });
+
+  it('checks each cycle against its own accent, as PR 4 will emit them', () => {
+    // The accent rules are generated one per cycle from the collection. Every
+    // block declares the same two property names with different values, so
+    // this is the shape that would break a file-wide index.
+    const css = `
+      [data-ciclo="1"] { --accento: #f26419; --accento-rgb: 242, 100, 25; }
+      [data-ciclo="2"] { --accento: #cb9e00; --accento-rgb: 203, 158, 0; }
+      [data-ciclo="3"] { --accento: #3baa73; --accento-rgb: 59, 170, 115; }
+    `;
+    expect(checkRgbTriples(css)).toEqual([]);
+  });
+
+  it('still reports drift inside one of those blocks', () => {
+    // The fix must not buy its silence by giving up on the check.
+    const css = `
+      [data-ciclo="1"] { --accento: #f26419; --accento-rgb: 242, 100, 25; }
+      [data-ciclo="2"] { --accento: #cb9e00; --accento-rgb: 203, 158, 1; }
+    `;
+    const violations = checkRgbTriples(css);
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain('203, 158, 0');
+  });
+
+  it('falls back to the rest of the file when the block agrees with it', () => {
+    const css = `
+      :root { --blu-900: #001c2b; }
+      .barra { --blu-900-rgb: 0, 28, 43; }
+    `;
+    expect(checkRgbTriples(css)).toEqual([]);
+  });
 });
 
 describe('checkDuplicateDeclarations', () => {

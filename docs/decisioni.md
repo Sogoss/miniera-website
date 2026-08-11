@@ -128,6 +128,26 @@ sei mesi deve dire *quale* colore è incoerente e a che riga.
 che finisce in `dist/`. Il secondo esiste perché per lo stile il sorgente non
 è una prova: il minificatore può togliere cose, e una volta l'ha fatto.
 
+**Ma per la regola 4 vale il contrario, e il sorgente è l'unico strato
+possibile.** Una doppia dichiarazione in `dist/` non c'è più per definizione:
+il minificatore l'ha collassata, ed è proprio quello il guasto. Le guardie
+sullo stile leggono quindi anche i blocchi `<style>` dei componenti `.astro`,
+non solo `src/styles/**/*.css`. Simmetricamente, per la regola 3 lo strato
+`build` basta e avanza: `oklch()` e ogni `color-mix()` su un `var()` arrivano
+in `dist/` intatti — viene abbassato solo il `color-mix()` a operandi
+costanti, che è innocuo perché al browser arriva già un esadecimale.
+
+**Una terna `--*-rgb` si confronta col colore dichiarato nel suo stesso
+blocco.** Lo stesso nome è legittimamente ridichiarato più volte —
+`[data-tema="carta"]` lo fa già, e la PR 4 emetterà un `--accento` per ciclo.
+Un indice sull'intero foglio confronterebbe ogni terna con l'ultima
+dichiarazione incontrata e segnalerebbe derive inesistenti.
+
+**La regola 6 ha la sua guardia.** `font-weight: 400 900` su una famiglia a
+peso unico legge come un errore, e infatti è l'unica regola del `CLAUDE.md`
+che qualcuno viola credendo di fare pulizia. Il guasto è muto: nessun errore,
+solo tutti i titoli un po' più grassi del disegno.
+
 **La build gira una volta per suite**, in `globalSetup`, non una volta per
 file. `REUSE_DIST=1` la salta in locale.
 

@@ -10,6 +10,7 @@ import {
   checkRgbTriples,
   checkSceneHeightFallback,
 } from '../guards/css.ts';
+import { checkDisplayFontWeightRange } from '../guards/fonts.ts';
 import { readPublishedCss } from '../support/dist.ts';
 
 let css = '';
@@ -36,5 +37,11 @@ describe('the CSS that actually ships', () => {
 
   it('keeps every --*-rgb triple in step with its hex colour', () => {
     expect(checkRgbTriples(css)).toEqual([]);
+  });
+
+  it('still declares Archivo Black as a weight range', () => {
+    // The @font-face survives bundling, so unlike rule 4 this one can be
+    // checked on the published file — which is where the browser reads it.
+    expect(checkDisplayFontWeightRange(css)).toEqual([]);
   });
 });
