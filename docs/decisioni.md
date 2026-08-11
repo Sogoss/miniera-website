@@ -189,11 +189,69 @@ un errore per nessuno — Astro compila, `astro check` tace, il CSS si pubblica
 e la proprietà non ha valore — ed è lo stesso guasto muto del ripiego
 collassato. *(PR 2)*
 
+**Nemmeno gli accenti nei contenuti hanno una guardia.** Ce n'era una, ed è
+stata tolta: teneva una lista chiusa di sedici refusi — *perche*, *gia*,
+*piu* — e sbagliava in tutte e due le direzioni. Lasciava passare le forme con
+l'apostrofo, `perche'` e `piu'`, perché l'apostrofo entrava nella parola e la
+parola non era più nella lista; e scattava su `citta` dentro un URL del comune,
+cioè su un contenuto giusto, dove l'accento non si può mettere. La seconda metà
+è quella che conta: una guardia che si può soddisfare solo cancellando un link
+la si spegne, e si porta dietro il resto.
+
+Si poteva restringere — passarle i soli campi di prosa del frontmatter invece
+del file intero — e sarebbe diventata decidibile. **Si è preferito toglierla:
+la regola resta, il modo di farla rispettare è rileggere.** Un accento mancante
+si vede nel diff di una PR, e nessuna lista chiusa può coprire più di una
+manciata di parole: verificare l'ortografia italiana per davvero vorrebbe un
+dizionario con la morfologia e i nomi propri, che sbaglierebbe sui titoli delle
+serate e sui cognomi dei relatori. Il confine del `CLAUDE.md` è lo stesso della
+guardia sui commenti, appena sopra: **le guardie non leggono prosa.** Se un
+giorno servirà, il posto è un correttore ortografico dove il testo si scrive,
+non un test nella suite. *(PR 2)*
+
 **Le guardie sullo stile leggono anche gli attributi `style` in linea.** Un
 `var()` scritto in un attributo non sta in nessun foglio di stile: né nel
 sorgente né in `dist/`. Rompendo un token di proposito nella pagina
 provvisoria, la suite passava. È la forma che userà lo scroller per l'accento
-di ogni scena. *(PR 2)*
+di ogni scena. **Vale per tutte, non solo per quella sui `var()`**: le regole 3
+e 4 erano rimaste ai blocchi `<style>`, e un `color-mix()` in un attributo —
+che è come lo scrive l'export di Claude Design — non lo vedeva nessuno strato.
+`componentCss()` è l'unica cosa che si passa ora a una guardia su un
+componente. *(PR 2)*
+
+**Il `data-*` ha due guardie, perché ha due metà.** `[data-cycle="3"]` è CSS,
+`data-cycle={n}` è markup, e una guardia che legge fogli di stile vede solo la
+prima: rinominato il selettore e non l'attributo, le regole non corrispondono
+più a niente e ogni serata resta sull'accento predefinito, senza un errore da
+nessuna parte. La seconda guardia legge il sorgente `.astro` e l'HTML
+pubblicato — è lì che un attributo scritto come espressione diventa leggibile.
+Guarda solo l'attributo con un valore, così una riga di commento che nomina il
+nome vecchio non la fa scattare. *(PR 2)*
+
+**Gli id delle entry si ricavano come li ricava Astro**, non con il nome del
+file: il glob loader passa ogni segmento del percorso per `github-slugger` e
+un campo `slug` nel frontmatter vince su tutto. Con `basename()` andava bene
+solo finché ogni file era già uno slug — e il giorno che non lo fosse più il
+guasto sarebbe muto: il riferimento non risolve, il nome del ciclo diventa la
+stringa vuota, e la guardia sull'occhiello smette di controllare restituendo
+zero violazioni. *(PR 2)*
+
+**Un file di contenuto che non si legge fa fallire un test, non la
+raccolta.** Le collection si leggono nel corpo di un `describe`, quindi
+un'eccezione lì dentro non fallisce un test: impedisce a vitest di caricare
+`sources.test.ts`, e tutte le guardie che ci stanno dentro risultano non
+eseguite per via di un due punti nel titolo di una serata. L'errore viaggia
+sull'entry e porta con sé il nome del file. *(PR 2)*
+
+**Il `.ico` della favicon lo rigenera la build.** Era generato da uno script
+che non girava da nessuna parte: due artefatti versionati, uno disegnato a
+mano e uno derivato, tenuti insieme dalla buona memoria. Ora `npm run build`
+lo rifà e un test dello strato `build` pretende che quello pubblicato sia
+quello che il disegno corrente produce. Il confronto è sui byte, ed è lecito
+proprio perché la build lo rigenera: i due lati nascono dallo stesso sharp
+sulla stessa macchina. Su un `.ico` committato a mano sarebbe una guardia che
+scatta sul lavoro giusto appena qualcuno compila su un'altra piattaforma.
+*(PR 2)*
 
 ## Rimandate
 

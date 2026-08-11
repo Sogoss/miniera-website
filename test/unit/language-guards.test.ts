@@ -9,7 +9,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   checkItalianCustomProperties,
-  checkMissingAccents,
+  checkItalianDataAttributes,
 } from '../guards/language.ts';
 
 describe('checkItalianCustomProperties', () => {
@@ -65,51 +65,57 @@ describe('checkItalianCustomProperties', () => {
   });
 });
 
-describe('checkMissingAccents', () => {
-  it('passes on Italian written with its accents', () => {
-    const text = 'Perché è già così, e non si può fare di più.';
-    expect(checkMissingAccents(text, 'x.md')).toEqual([]);
+describe('checkItalianDataAttributes', () => {
+  it('passes on the renamed attribute', () => {
+    const markup = '<article data-cycle={cycle.number} data-theme="paper">x</article>';
+    expect(checkItalianDataAttributes(markup)).toEqual([]);
   });
 
-  it('reports the forms an Italian keyboard drops', () => {
-    const text = 'Si fa cosi perche e gia deciso, e piu avanti non si puo tornare.';
-    const violations = checkMissingAccents(text, 'x.md');
-    expect(violations.map((v) => v.detail.match(/`([^`]+)`/)?.[1])).toEqual([
-      'cosi',
-      'perche',
-      'gia',
-      'piu',
-      'puo',
-    ]);
+  it('reports an attribute left in Italian in the markup', () => {
+    // The half the CSS guard cannot see. Written this way the stylesheet's
+    // [data-cycle="N"] rules match nothing and every evening keeps the default
+    // accent, with the build and `astro check` both perfectly happy.
+    const violations = checkItalianDataAttributes(
+      '<article data-ciclo={cycle.number}>x</article>',
+      'src/pages/index.astro',
+    );
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.rule).toBe('language');
+    expect(violations[0]!.detail).toContain('data-ciclo');
+    expect(violations[0]!.detail).toContain('src/pages/index.astro');
   });
 
-  it('suggests the correct spelling', () => {
-    const violations = checkMissingAccents('perche no', 'x.md');
-    expect(violations[0]!.detail).toContain('perché');
+  it('sees the published form as well as the source one', () => {
+    // Astro writes the expression out as an ordinary attribute: dist/ is where
+    // an attribute the source builds at runtime becomes readable at all.
+    expect(checkItalianDataAttributes('<article data-ciclo="3">x</article>')).toHaveLength(1);
   });
 
   it('gives the line number', () => {
-    const violations = checkMissingAccents('prima riga\nseconda con perche\n', 'x.md');
+    const violations = checkItalianDataAttributes('<main>\n  <p data-serata="81">x</p>\n</main>');
     expect(violations[0]!.detail).toContain('on line 2');
   });
 
-  it('leaves alone the words that are correct without an accent', () => {
-    // `meta` is a word of its own — and a technical one; `sara` is a name.
-    // Both were deliberately left out of the list: a guard that fires on a
-    // correct word is a guard somebody disables.
-    const text = 'La meta era Sara, e i meta Open Graph sono a posto.';
-    expect(checkMissingAccents(text, 'x.md')).toEqual([]);
+  it('leaves the attribute selector to the guard that owns it', () => {
+    // Otherwise a stylesheet with an Italian selector is reported twice, and
+    // whoever reads the output learns that the two guards overlap.
+    expect(checkItalianDataAttributes('[ data-ciclo="2" ] { --accent: #cb9e00; }')).toEqual([]);
+    expect(checkItalianDataAttributes('[data-ciclo="2"] { --accent: #cb9e00; }')).toEqual([]);
   });
 
-  it('does not fire inside a longer word', () => {
-    expect(checkMissingAccents('giacimento piumaggio perchezza', 'x.md')).toEqual([]);
+  it('says nothing about an attribute named inside a comment', () => {
+    const markup = '<!-- data-ciclo="2" era il nome vecchio -->\n<article data-cycle="2">x</article>';
+    expect(checkItalianDataAttributes(markup)).toEqual([]);
   });
 
-  it('leaves kebab-case identifiers alone', () => {
-    // A slug cannot carry an accent: `citta` inside one is not a mistake, and
-    // the frontmatter of the content files is full of them.
-    expect(checkMissingAccents('venue: palazzo-citta-studi', 'x.md')).toEqual([]);
-    // The same word in prose still is.
-    expect(checkMissingAccents('la citta chiude', 'x.md')).toHaveLength(1);
+  it('compares whole segments, not substrings', () => {
+    // `data-blurred` contains `blu`, and reporting it would be the end of the
+    // guard.
+    expect(checkItalianDataAttributes('<p data-blurred="1" data-format="short">x</p>')).toEqual([]);
+  });
+
+  it('reports each attribute once, however often it appears', () => {
+    const markup = '<p data-ciclo="1">a</p>\n<p data-ciclo="2">b</p>';
+    expect(checkItalianDataAttributes(markup)).toHaveLength(1);
   });
 });

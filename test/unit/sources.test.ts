@@ -19,12 +19,12 @@ import {
 import { checkDisplayFontWeightRange } from '../guards/fonts.ts';
 import {
   checkItalianCustomProperties,
-  checkMissingAccents,
+  checkItalianDataAttributes,
 } from '../guards/language.ts';
 import { checkDevDepsInLockfile, checkNoTailwind } from '../guards/packages.ts';
 import { collectionEntries } from '../support/frontmatter.ts';
 import { filesWithExtension, read, readJson, repoRoot } from '../support/paths.ts';
-import { styleAttributesOf, styleBlocksOf } from '../support/styles.ts';
+import { componentCss } from '../support/styles.ts';
 
 const styleFiles = filesWithExtension(join(repoRoot, 'src/styles'), ['.css']);
 const astroFiles = filesWithExtension(join(repoRoot, 'src'), ['.astro']);
@@ -37,8 +37,7 @@ const astroFiles = filesWithExtension(join(repoRoot, 'src'), ['.astro']);
    undefined. */
 const allSourceCss = [
   ...styleFiles.map((path) => read(path)),
-  ...astroFiles.map((path) => styleBlocksOf(read(path))),
-  ...astroFiles.map((path) => styleAttributesOf(read(path))),
+  ...astroFiles.map((path) => componentCss(read(path))),
 ].join('\n');
 
 describe('src/styles', () => {
@@ -87,46 +86,81 @@ describe('all the source CSS together', () => {
  * place the evidence survives. Rule 3 is checked here as well, though there
  * the build layer does carry it: `oklch()` and any `color-mix()` over a
  * `var()` both reach dist/ intact.
+ *
+ * All three read `componentCss`: the <style> blocks and the inline `style`
+ * attributes together. Reading only the blocks left the attributes exempt from
+ * rule 3 and rule 4 — and an attribute is where the temporary page keeps every
+ * token it reads, and where the scroller will set the accent of each scene.
  */
-describe('src/**/*.astro <style> blocks', () => {
+describe('src/**/*.astro component styles', () => {
   it('has .astro files to check in the first place', () => {
     expect(astroFiles.length).toBeGreaterThan(0);
   });
 
   it.each(astroFiles)('%s uses neither color-mix() nor oklch()', (path) => {
-    expect(checkNoColorMixOrOklch(styleBlocksOf(read(path)))).toEqual([]);
+    expect(checkNoColorMixOrOklch(componentCss(read(path)))).toEqual([]);
   });
 
   it.each(astroFiles)('%s declares no property twice in one block', (path) => {
-    expect(checkDuplicateDeclarations(styleBlocksOf(read(path)))).toEqual([]);
+    expect(checkDuplicateDeclarations(componentCss(read(path)))).toEqual([]);
   });
 
   it.each(astroFiles)('%s names its custom properties in English', (path) => {
-    // The <style> blocks and the inline `style` attributes alike: the
-    // temporary page carries its tokens in the markup, and from PR 6 the
-    // components will carry theirs in a block.
-    expect(checkItalianCustomProperties(read(path), path)).toEqual([]);
+    // The CSS, and only the CSS. Handed the whole file, the guard would read
+    // the `//` comments of the frontmatter too — which stripComments cannot
+    // blank — and report the Italian in a line explaining the rename.
+    expect(checkItalianCustomProperties(componentCss(read(path)), path)).toEqual([]);
+  });
+
+  it.each(astroFiles)('%s names its data-* attributes in English', (path) => {
+    // This one does want the whole file: the attribute lives in the markup,
+    // which is exactly the half no stylesheet can speak for.
+    expect(checkItalianDataAttributes(read(path), path)).toEqual([]);
   });
 });
 
 /* The content, which is the other side of the language boundary.
  *
- * Everything above asks that the code be English. These two ask that the
- * Italian be Italian — written with its accents — and that the four sample
- * files hold together on their own terms.
+ * Nothing here reads the Italian itself: whether it is written well is read by
+ * a person, and the guard that tried to check the accents was removed for it
+ * — decisioni.md says why. What is left are the things a reader cannot see by
+ * reading: that every file parses, and that the four samples hold together on
+ * their own terms.
  */
 describe('src/content', () => {
   const events = collectionEntries('eventi');
   const cycles = collectionEntries('cicli');
-  const files = filesWithExtension(join(repoRoot, 'src/content'), ['.md']);
 
   it('has content to check in the first place', () => {
     expect(events.length).toBeGreaterThan(0);
     expect(cycles.length).toBeGreaterThan(0);
   });
 
-  it.each(files)('%s writes its accents in full', (path) => {
-    expect(checkMissingAccents(read(path), path)).toEqual([]);
+  it.each([...events, ...cycles].map((entry) => [entry.path, entry] as const))(
+    '%s has frontmatter that parses',
+    (_path, entry) => {
+      // One failing file, one failing test — instead of the parse error taking
+      // the whole file down while it is being collected and every guard below
+      // going unrun.
+      expect(entry.error).toBeUndefined();
+    },
+  );
+
+  it('keeps a sample of a role overridden on the event', () => {
+    // The `speakers[].role ?? person.role` branch has no other coverage: no
+    // guard can see it, and the day no content file carries an override the
+    // pages resolve it in whichever order they were written, undisturbed. The
+    // field exists so that an evening from 2019 shows the role held then, and
+    // that is the kind of mistake nobody notices for a year.
+    const overrides = events.flatMap((event) => {
+      const speakers = event.data.speakers;
+      return Array.isArray(speakers) ? speakers : [];
+    });
+    expect(
+      overrides.filter(
+        (speaker) => typeof (speaker as { role?: unknown })?.role === 'string',
+      ).length,
+    ).toBeGreaterThan(0);
   });
 
   it.each(events.map((event) => [event.path, event] as const))(

@@ -195,9 +195,11 @@ usati da tutto il resto.
 - [x] La favicon viene dal marchio e non da Astro, in `.svg` e `.ico`. Il
       marchio esteso a 16px è illeggibile e la variante breve non esiste
       (regola 7): la riduzione è la tessera blu con la barra arancio e
-      l'iniziale. Il `.ico` lo rigenera `npm run favicon:build`
+      l'iniziale. Il `.ico` lo rigenera `npm run build`, non una mano che se ne
+      ricorda
 - [x] Esiste `src/content/relatori/piergiorgio-rosso.md` e la serata 81 non
-      elenca più due volte la stessa persona
+      elenca più due volte la stessa persona — ma sovrascrive il ruolo di uno
+      dei due, che è l'unico modo di tenere esercitato quel ramo
 - [x] La serata 81 non ha più un `occhiello` che ripete il nome del ciclo
 - [x] `npm run build` continua a passare
 
@@ -205,14 +207,19 @@ usati da tutto il resto.
 
 - Nessuna proprietà personalizzata CSS, e nessun attributo `data-*`, con un
   nome italiano — nel sorgente e in `dist/`. Il confronto è per segmento fra
-  trattini, non per sottostringa: un futuro `--shadow-blur` non contiene *blu*
+  trattini, non per sottostringa: un futuro `--shadow-blur` non contiene *blu*.
+  Due guardie, non una: il selettore `[data-cycle="3"]` è CSS, l'attributo
+  `data-cycle={n}` è markup, e la rinomina può fermarsi a metà
+- Le regole 3 e 4 valgono anche per gli attributi `style` in linea, non solo
+  per i blocchi `<style>`
+- Il frontmatter di ogni file di contenuto si legge: uno che non si legge fa
+  fallire un test che lo nomina, non l'intero file di test mentre si raccoglie
+- Almeno un evento sovrascrive il ruolo di un relatore
 - **Ogni `var(--x)` trova la sua dichiarazione**, in `dist/` e nel sorgente
   concatenato. Comprese le letture scritte negli attributi `style` in linea,
   che non stanno in nessun foglio di stile
 - Nessun evento elenca due volte la stessa persona fra i relatori
 - L'occhiello di un evento non contiene il nome del ciclo a cui appartiene
-- Nei contenuti gli accenti sono scritti per intero — *perché*, non *perche* —
-  saltando i segmenti in kebab-case, che un accento non può portarlo
 - Le guardie della PR 1 continuano a passare **dopo** la rinomina dei token:
   è il vero collaudo della loro indipendenza dai nomi
 
@@ -222,6 +229,18 @@ usati da tutto il resto.
 > stile, né nel sorgente né in `dist/`. Ora `readPublishedCss()` legge anche
 > quelli, e con essa tutte le guardie sullo stile. È la forma che userà lo
 > scroller della PR 7 per l'accento di ogni scena.
+
+> **Trovato rileggendo.** Quell'allargamento agli attributi in linea era
+> arrivato a metà: `readPublishedCss()` li leggeva, ma nel sorgente le regole 3
+> e 4 continuavano a guardare i soli blocchi `<style>` — e un `color-mix()`
+> scritto in un attributo, che è la forma dell'export di Claude Design, non lo
+> vedeva nessuno strato. Insieme sono venuti fuori altri tre buchi dello stesso
+> tipo, tutti «la suite è verde e non sta guardando»: il `data-*` italiano nel
+> markup, gli id delle entry ricavati col nome del file invece che come li
+> ricava Astro — con la guardia sull'occhiello che smetteva di controllare in
+> silenzio — e un `yaml.parse` senza rete che, capitando mentre vitest
+> raccoglie i test, portava giù `sources.test.ts` intero senza dire quale file
+> di contenuto lo avesse rotto.
 
 ### Test manuali
 

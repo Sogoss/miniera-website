@@ -89,10 +89,15 @@ di allora:
 
 ```yaml
 speakers:
-  - person: amina-belhaj                      # usa "educatrice"
+  - person: amina-belhaj                            # usa "educatrice"
   - person: piergiorgio-rosso
-    role: presidente del comitato di quartiere # solo per questa serata
+    role: coordinatore della portineria di via Cigna # solo per questa serata
 ```
+
+È la forma che tiene la serata 81, e non per caso: finché nessun contenuto
+sovrascrive un ruolo, il ramo che lo risolve non lo esercita nessuno e
+l'ordine di precedenza può essere scritto al contrario senza che si veda. Un
+test lo pretende.
 
 Due volte la stessa persona non si può: è il modo in cui ci si sbaglia quando
 si cerca dove sovrascrivere un ruolo, ed era il caso della serata 81. Lo

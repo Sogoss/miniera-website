@@ -92,7 +92,8 @@ commenti**. Il design system usa quindi `Button`, `Label`, `Card`, `Brand`,
 documentazione e i messaggi di commit.
 
 Nei testi italiani accenti e caratteri speciali vanno scritti per intero:
-*perché*, non *perche*. Nei contenuti lo verifica una guardia.
+*perché*, non *perche*. Non lo verifica nessuna guardia: si legge — vedi
+[`docs/decisioni.md`](docs/decisioni.md).
 
 **Un'eccezione sola, e dichiarata: i nomi delle quattro collection restano in
 italiano** — `eventi`, `cicli`, `sedi`, `relatori`, cartelle e chiavi. Sono
@@ -138,7 +139,8 @@ npm run preview      # anteprima della build
 npm test             # guardie e test, con una build dentro
 npm run check        # astro check, typecheck
 npm run fonts:sync   # ricopia i caratteri dai pacchetti @fontsource
-npm run favicon:build  # rigenera public/favicon.ico da public/favicon.svg
+npm run favicon:build  # rigenera public/favicon.ico da public/favicon.svg —
+                       # lo fa già `npm run build`, e un test lo pretende
 ```
 
 `REUSE_DIST=1 npm test` salta la build quando `dist/` è già fresco.

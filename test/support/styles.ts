@@ -60,3 +60,20 @@ export function styleAttributesOf(markup: string): string {
     .map((value) => `[style] { ${value} }`)
     .join('\n');
 }
+
+/**
+ * Every declaration a component writes: the `<style>` blocks and the inline
+ * attributes together.
+ *
+ * The two were kept apart for a while and the guards picked one or the other
+ * file by file, which meant `color-mix()` in an attribute passed the rule 3
+ * check and a double declaration in an attribute passed the rule 4 one — the
+ * only layer where rule 4 can be seen at all. There is no reason for a guard
+ * over a component to want less than all of its CSS, so this is what they are
+ * given now.
+ */
+export function componentCss(markup: string): string {
+  return [styleBlocksOf(markup), styleAttributesOf(markup)]
+    .filter((piece) => piece.trim())
+    .join('\n');
+}
