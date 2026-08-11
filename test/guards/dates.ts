@@ -34,7 +34,10 @@
  * comment takes around a match, which is how these names appear in prose here
  * — including in the file you are reading. Inside the arguments of one call,
  * where the scan is already walking character by character, the comments are
- * blanked out: see argumentsAt.
+ * blanked out: see argumentsAt. And what the *strings* of a file contain is
+ * blanked before any of that — see maskStrings, which is there because
+ * the glob of a content collection reads as an open comment and switched three
+ * guards off.
  */
 import { type Violation, lineNumber } from './types.ts';
 
@@ -138,19 +141,67 @@ function argumentsAt(source: string, open: number): string {
   return '';
 }
 
+/**
+ * The source with the contents of its string literals blanked out — same
+ * length, same lines, same offsets, so a match found in the original is at the
+ * same index here.
+ *
+ * It exists for one reason: the glob a content collection is loaded with. Write
+ * that glob out here and this comment ends in the middle of the sentence, which
+ * is exactly the point — it carries a comment closer at its second character
+ * and an opener at its third. The open-comment test below therefore found an
+ * unclosed opener and declared everything after it commented out.
+ * `src/content.config.ts` writes that glob four times, the first on line 31:
+ * from there down, all three source guards returned `[]` for a file nobody had
+ * exempted. A formatter without a zone, a `getHours()`, a `new Date()` — none
+ * of them was being looked at, and the suite was green.
+ *
+ * Quotes are tracked one line at a time, so an apostrophe in Italian prose
+ * blanks the rest of its own line and nothing more. This is still not a
+ * comment extractor — the fragile thing decisioni.md keeps refusing to write —
+ * and it does not need to be: blanking a string can only take comment markers
+ * away, and every marker it takes away is one that was never a comment.
+ */
+function maskStrings(source: string): string {
+  const masked = [...source];
+  let quote = '';
+
+  for (let i = 0; i < source.length; i++) {
+    const character = source[i];
+    if (character === '\n') {
+      quote = '';
+      continue;
+    }
+    if (quote) {
+      if (character === '\\') {
+        masked[i] = ' ';
+        if (source[i + 1] !== '\n') masked[i + 1] = ' ';
+        i++;
+        continue;
+      }
+      if (character === quote) quote = '';
+      else masked[i] = ' ';
+      continue;
+    }
+    if (character === '"' || character === "'" || character === '`') quote = character;
+  }
+
+  return masked.join('');
+}
+
 /** Whether `index` sits inside a comment.
  *
  *  Two shapes, both of them line-and-position work rather than parsing: an
  *  unclosed `/*` before it, and a `//` earlier on its own line. The second
- *  ignores the `//` of a URL, which is the one that turns up in prose. A `/*`
- *  written inside a string would fool it, and no line in this project does
- *  that. */
-function inComment(source: string, index: number): boolean {
-  const opened = source.lastIndexOf('/*', index);
-  if (opened !== -1 && opened > source.lastIndexOf('*/', index)) return true;
+ *  ignores the `//` of a URL, which is the one that turns up in prose. Takes
+ *  the masked source, not the original: a comment marker written inside a
+ *  string is not a comment, and one of those switched off three guards. */
+function inComment(masked: string, index: number): boolean {
+  const opened = masked.lastIndexOf('/*', index);
+  if (opened !== -1 && opened > masked.lastIndexOf('*/', index)) return true;
 
-  const lineStart = source.lastIndexOf('\n', index - 1) + 1;
-  const before = source.slice(lineStart, index);
+  const lineStart = masked.lastIndexOf('\n', index - 1) + 1;
+  const before = masked.slice(lineStart, index);
   return /(^|[^:])\/\//.test(before) || /^\s*\*/.test(before);
 }
 
@@ -200,11 +251,12 @@ function declaredZone(
  */
 export function checkMissingTimeZone(source: string, path: string): Violation[] {
   const violations: Violation[] = [];
+  const masked = maskStrings(source);
   FORMATTERS.lastIndex = 0;
 
   let match: RegExpExecArray | null;
   while ((match = FORMATTERS.exec(source)) !== null) {
-    if (inComment(source, match.index)) continue;
+    if (inComment(masked, match.index)) continue;
 
     const call = match[1] ?? '';
     const where = `${path}:${lineNumber(source, match.index)}`;
@@ -268,11 +320,12 @@ const LOCAL_CALLS = new RegExp(`\\.(${LOCAL_METHODS.join('|')})\\s*\\(`, 'g');
  */
 export function checkLocalDateMethods(source: string, path: string): Violation[] {
   const violations: Violation[] = [];
+  const masked = maskStrings(source);
   LOCAL_CALLS.lastIndex = 0;
 
   let match: RegExpExecArray | null;
   while ((match = LOCAL_CALLS.exec(source)) !== null) {
-    if (inComment(source, match.index)) continue;
+    if (inComment(masked, match.index)) continue;
     violations.push({
       rule: 'rule 11',
       detail: `${path}:${lineNumber(source, match.index)} calls \`${match[1]}()\`, which answers in the zone of whatever machine is building — UTC, on Cloudflare. There is no option to declare a zone on it: the date strings come from src/lib/events.ts, and what has to be compared instead is \`getTime()\``,
@@ -282,17 +335,26 @@ export function checkLocalDateMethods(source: string, path: string): Violation[]
   return violations;
 }
 
-/* A date as `Date.prototype.toString()` writes it: `Thu Sep 24 2026 21:00:00
-   GMT+0200 (Ora legale dell'Europa centrale)`. Two independent halves of the
-   same string, because either can arrive alone — `toDateString()` has no
-   offset, `toTimeString()` has no weekday — and one of the two is enough. */
+const WEEKDAY = 'Mon|Tue|Wed|Thu|Fri|Sat|Sun';
+const MONTH = 'Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec';
+
+/* A date as the `Date` methods that write English write it. Separate patterns
+   rather than one, because each arrives alone: `toDateString()` has no offset,
+   `toTimeString()` has no weekday, and `toUTCString()` — `Thu, 24 Sep 2026
+   19:00:00 GMT` — has a comma, the day before the month and a bare `GMT`, so
+   nothing written for `toString()` matches a character of it. That last one is
+   the shape a `datetime` attribute gets written in by hand, and it is two hours
+   early in exactly the same way. */
 const MACHINE_DATE_TEXT = [
   {
-    pattern:
-      /\b(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{2} \d{4}\b/g,
+    pattern: new RegExp(`\\b(?:${WEEKDAY}) (?:${MONTH}) \\d{2} \\d{4}\\b`, 'g'),
     what: 'a date in English, in the shape `Thu Sep 24 2026`',
   },
-  { pattern: /\bGMT[+-]\d{4}\b/g, what: 'the offset of the build machine, `GMT+0200`' },
+  {
+    pattern: new RegExp(`\\b(?:${WEEKDAY}), \\d{2} (?:${MONTH}) \\d{4}\\b`, 'g'),
+    what: 'a date in English, in the shape `Thu, 24 Sep 2026`',
+  },
+  { pattern: /\bGMT(?:[+-]\d{4})?\b/g, what: 'the offset of the build machine, `GMT+0200`' },
 ];
 
 /**
@@ -345,12 +407,13 @@ const AMBIENT = [
  */
 export function checkAmbientTime(source: string, path: string): Violation[] {
   const violations: Violation[] = [];
+  const masked = maskStrings(source);
 
   for (const { pattern, called } of AMBIENT) {
     pattern.lastIndex = 0;
     let match: RegExpExecArray | null;
     while ((match = pattern.exec(source)) !== null) {
-      if (inComment(source, match.index)) continue;
+      if (inComment(masked, match.index)) continue;
       violations.push({
         rule: 'rule 11',
         detail: `${path}:${lineNumber(source, match.index)} calls \`${called}\`: this module has to stay testable, and a boundary that reads the clock can only be waited for. \`now\` belongs in the arguments — src/lib/programme.ts is the one place that creates it`,

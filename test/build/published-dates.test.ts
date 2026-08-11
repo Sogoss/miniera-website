@@ -30,7 +30,7 @@
 import { describe, expect, it } from 'vitest';
 import { longDate, noteOf, shortDate, sortByNumber } from '../../src/lib/events.ts';
 import { checkMachineDateText } from '../guards/dates.ts';
-import { readPublishedFiles } from '../support/dist.ts';
+import { decodeEntities, readPublishedFiles } from '../support/dist.ts';
 import { collectionEntries, dateOf } from '../support/frontmatter.ts';
 import { read } from '../support/paths.ts';
 
@@ -48,6 +48,7 @@ const evenings = sortByNumber(
       number: Number(entry.data.number),
       date: dateOf(entry),
       venue: String(entry.data.venue ?? ''),
+      cycle: String(entry.data.cycle ?? ''),
       cancelled: entry.data.cancelled === true,
       note: typeof entry.data.note === 'string' ? entry.data.note : undefined,
       /** The roles an evening overrides on its speakers, if it overrides any. */
@@ -58,23 +59,31 @@ const evenings = sortByNumber(
   }),
 );
 
-/** The name of every venue, by the id the evenings refer to it with. */
-const venues = new Map(
-  collectionEntries('sedi').map((entry) => [entry.id, String(entry.data.name ?? '')]),
-);
+/** The name of every venue and of every cycle, by the id the evenings refer to
+ *  them with. */
+const named = (collection: string): Map<string, string> =>
+  new Map(collectionEntries(collection).map((entry) => [entry.id, String(entry.data.name ?? '')]));
 
-/** The published markup of one evening: from its own tag to the next one's. */
+const venues = named('sedi');
+const cycles = named('cicli');
+
+/** The published markup of one evening: from its own tag to the next one's.
+ *
+ *  Decoded, because everything compared against it comes from the content and
+ *  Astro escapes what it renders: `quarant'anni` is `quarant&#39;anni` in
+ *  dist/, and a role or a venue with an apostrophe in it — which is most
+ *  Italian — would fail against a page that is perfectly correct. */
 function section(number: number): string {
   const at = marks.findIndex((mark) => mark[1] === String(number));
   expect(at, `evening #${number} is not on the page`).toBeGreaterThan(-1);
-  return home.slice(marks[at]!.index, marks[at + 1]?.index);
+  return decodeEntities(home.slice(marks[at]!.index, marks[at + 1]?.index));
 }
 
 /** The state the page publishes for an evening, read from the attribute it
  *  puts it in. Not from the Italian words: those sit in the same block as the
  *  evening's own description, and a night whose text says «in programma» would
  *  read as two states at once. */
-function stateOf(number: number): string {
+function publishedState(number: number): string {
   const state = /data-state="([a-z]+)"/.exec(section(number));
   expect(state, `evening #${number} publishes no state`).not.toBeNull();
   return state![1]!;
@@ -113,8 +122,15 @@ describe('the dates published by a build in UTC', () => {
     // instead of writing one. Neither side of it depends on today: which
     // evenings are past is left to the clock, but a cancelled one is cancelled
     // whatever the day, and the note follows from the state either way.
+    //
+    // No sample evening is cancelled, so that half of the pairing is only
+    // asserted here in the negative — and an assertion nobody has seen fail is
+    // not one to lean on. The mapping itself is a pure function with its own
+    // test, `stateOf` in src/lib/events.ts: what cannot be proved out of dist/
+    // without inventing an evening the association never held is proved where
+    // it can be.
     for (const evening of evenings) {
-      const state = stateOf(evening.number);
+      const state = publishedState(evening.number);
       expect(['past', 'upcoming', 'cancelled']).toContain(state);
       expect(state === 'cancelled', `evening #${evening.number} disagrees about being cancelled`)
         .toBe(evening.cancelled);
@@ -126,8 +142,11 @@ describe('the dates published by a build in UTC', () => {
 
   it('opens on exactly one evening', () => {
     // nextIndex reaches the markup: without this, an index nobody renders
-    // would be an index nobody notices is wrong.
-    expect([...home.matchAll(/apertura dello scroller/g)]).toHaveLength(1);
+    // would be an index nobody notices is wrong. Read from `data-open` and not
+    // from the Italian words this page happens to write next to it: the
+    // scroller has to carry the attribute, and CLAUDE.md promises that carrying
+    // the three attributes is all it has to do.
+    expect([...home.matchAll(/data-open="true"/g)]).toHaveLength(1);
   });
 
   it('shows the role an evening overrides, not the one on the person', () => {
@@ -146,15 +165,20 @@ describe('the dates published by a build in UTC', () => {
   });
 
   it('resolves the references of every evening', () => {
-    // A cycle name and the evening's own venue in each section: a reference
-    // that failed to resolve stops the build, but a field forgotten in the
-    // view model would just leave a gap.
+    // The evening's own cycle and its own venue, by name, in its own section: a
+    // reference that failed to resolve stops the build, but a field forgotten
+    // in the view model would just leave a gap. Both names come from the
+    // collections rather than from a shape this page gives them — `Ciclo …` is
+    // decoration, and the scroller will write the cycle differently.
     for (const evening of evenings) {
       const published = section(evening.number);
       const venue = venues.get(evening.venue);
+      const cycle = cycles.get(evening.cycle);
       expect(venue, `evening #${evening.number} names a venue that is not in src/content/sedi`)
         .toBeTruthy();
-      expect(published, `evening #${evening.number} has no cycle`).toMatch(/Ciclo \S/);
+      expect(cycle, `evening #${evening.number} names a cycle that is not in src/content/cicli`)
+        .toBeTruthy();
+      expect(published, `evening #${evening.number} has no cycle`).toContain(cycle!);
       expect(published, `evening #${evening.number} has no venue`).toContain(venue!);
     }
   });

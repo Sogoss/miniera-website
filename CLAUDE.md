@@ -97,6 +97,10 @@ non una preferenza.
     pubblicato in `dist/`. La build gira con `TZ=UTC`, fissato nello script
     `build`: è il fuso di Cloudflare, e senza quel vincolo un `dist/` costruito
     a Torino e riusato con `REUSE_DIST=1` passerebbe per il motivo sbagliato.
+    **E lo stesso vincolo vale nei contenuti: il campo `date` porta sempre il
+    suo scostamento** — `+02:00` d'estate, `+01:00` d'inverno. Senza, lo legge
+    la macchina che builda, cioè UTC, e una serata delle 21 si pubblica *ore
+    22*: `checkDateHasOffset` in `test/guards/content.ts`.
 
 ## Lingua
 
@@ -150,10 +154,12 @@ sostituita dallo scroller vero, non estesa — con un'eccezione dichiarata, che
 vale la pena conoscere prima della PR 7.
 
 È anche **l'unica prova pubblicata che lo strato `build` può leggere**, e per
-questo porta su ogni serata due ancoraggi che non sono decorazione:
-`data-number` e `data-state`. Le asserzioni di
-`test/build/published-dates.test.ts` cercano quelli, non il `#78 · ` che la
-pagina scrive: sostituirla vuol dire riportare i due attributi sullo scroller,
+questo porta su ogni serata tre ancoraggi che non sono decorazione:
+`data-number`, `data-state` e `data-open` sulla scena di apertura. Le
+asserzioni di `test/build/published-dates.test.ts` cercano quelli e i contenuti
+— il nome del ciclo, quello della sede, la nota del dominio — mai il `#78 · `
+o l'*apertura dello scroller* che questa pagina scrive intorno. Sostituirla
+vuol dire riportare i tre attributi sullo scroller e mostrare le stesse cose,
 non riscrivere le prove sul fuso. Tutto il resto di questa pagina si butta.
 
 ## Comandi

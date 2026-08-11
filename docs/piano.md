@@ -323,8 +323,11 @@ dominio*. In breve:
   `timeZone` in `src/`; nessuna lettura dell'orologio in `src/lib/events.ts`.
   Entrambe con i loro casi negativi (regola 11)
 - **Guardia**: in `dist/` non compare nessuna data scritta dalla macchina —
-  `Thu Sep 24 2026`, `GMT+0200` — che è la sola via per cui una `Date` supera
-  le guardie sul codice: `{scene.date}` è un `toString()` come tutti gli altri
+  `Thu Sep 24 2026`, `Thu, 24 Sep 2026`, `GMT` — che è la sola via per cui una
+  `Date` supera le guardie sul codice: `{scene.date}` è un `toString()` come
+  tutti gli altri
+- **Guardia**: ogni `date` nel frontmatter porta il suo scostamento dal fuso,
+  perché senza lo decide la macchina che builda
 - Lo stato di ogni serata si legge da `data-state` e non dalle parole italiane,
   e la coppia stato-nota copre anche l'annullamento
 - Le attese dello strato `build` si ricavano dai contenuti: aggiungere una
@@ -390,6 +393,35 @@ dominio*. In breve:
 > deliberata e ora è scritta nella regola: quella pagina è l'unica prova
 > pubblicata che lo strato `build` ha, e porta `data-number` e `data-state` per
 > questo.
+
+> **Trovata nella terza revisione.** Dieci, e la prima vale da sola tutte le
+> altre: `'**` seguito da `/*` — il glob con cui si carica una collection —
+> conteneva un apri-commento, così il controllo «questo indice sta dentro un
+> commento?» dichiarava commentato tutto quello che veniva dopo. In
+> `content.config.ts` quel glob sta alla riga 31: da lì in giù **le tre guardie
+> sul codice non guardavano niente**, ed era la terza revisione di fila a
+> trovare una guardia che non guarda. Le stringhe si cancellano ora prima di
+> cercare i commenti.
+>
+> Due difetti erano nel dominio: il controllo d'ordine confrontava istanti e non
+> giorni civili, quindi due serate lo stesso giorno facevano fallire la build con
+> una frase che nominava la stessa data da tutte e due le parti; e un numero
+> doppio lasciava dentro il gemello sbagliato, a seconda dell'ordine dei file,
+> facendo accusare del disordine la serata giusta. Due erano nello strato
+> `build`: confrontava il frontmatter grezzo con il markup, dove Astro fa
+> l'escape degli apostrofi — un ruolo come *coordinatrice dell'archivio* bastava
+> a far diventare rossa la suite — e si appoggiava ancora a due stringhe italiane
+> della pagina provvisoria che il `CLAUDE.md` prometteva di non dover
+> conservare.
+>
+> Gli altri: `toUTCString()` passava tutte e quattro le guardie, la guardia
+> sull'orologio guardava solo `src/lib`, lo stato di una serata era un ternario
+> nel markup senza test — con la sola serata annullata che nessun contenuto
+> d'esempio ha — e `TZ=UTC` alla build cambia come `z.coerce.date()` legge una
+> data senza scostamento, che è l'unica regola sul tempo che vive nei contenuti
+> e ora ha la sua guardia. Uno solo è stato lasciato aperto per scelta: il
+> prefisso `TZ=UTC` non funziona su Windows, che questo repository non supporta
+> comunque.
 
 ### Test manuali
 

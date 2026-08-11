@@ -18,6 +18,7 @@ import {
   romeDay,
   shortDate,
   sortByNumber,
+  stateOf,
   speakerRole,
 } from '../../src/lib/events.ts';
 
@@ -221,6 +222,32 @@ describe('noteOf', () => {
   });
 });
 
+describe('stateOf', () => {
+  // The page publishes this as `data-state`, PR 7 will hang the struck-through
+  // styling off it and PR 9 the evening's own page. No sample evening is
+  // cancelled, so dist/ can prove neither branch of the cancellation: this is
+  // where it is proved.
+  it('gives an evening still to come, then one behind us', () => {
+    expect(stateOf({}, false)).toBe('upcoming');
+    expect(stateOf({}, true)).toBe('past');
+  });
+
+  it('puts cancelled before both, whichever side of today the evening is on', () => {
+    // The ternary this replaces published a called-off evening as «in
+    // programma» with «Serata annullata» written underneath it.
+    expect(stateOf({ cancelled: true }, false)).toBe('cancelled');
+    expect(stateOf({ cancelled: true }, true)).toBe('cancelled');
+  });
+
+  it('agrees with the note the same evening carries', () => {
+    // The pairing the build layer asserts on the published page: both sides
+    // have to answer the same question the same way, or a page can show a
+    // state and a note that contradict each other.
+    expect(noteOf({ cancelled: true }, true)).toBe(NOTE_CANCELLED);
+    expect(stateOf({ cancelled: true }, true)).toBe('cancelled');
+  });
+});
+
 describe('findNumberDateConflicts', () => {
   const programme = [
     { number: 78, title: 'Il cinema che guarda i margini', date: new Date('2026-06-18T21:00:00+02:00') },
@@ -292,12 +319,51 @@ describe('findNumberDateConflicts', () => {
     expect(problems[1]).toContain('numbered before');
   });
 
+  it('does not accuse the correct evening when the duplicate sorts first', () => {
+    // Which twin survived used to depend on the order the loader handed them
+    // over — the files are read by name, so a stray `080b.md` claiming 81 came
+    // first, was kept, and its 2020 date made the *correct* #78 before it look
+    // out of order: two messages, the second false. Both twins step out of the
+    // ordering pass now, because while a number belongs to two evenings there
+    // is nothing true to say about where it sits.
+    const broken = [
+      { number: 81, title: 'Un doppione', date: new Date('2020-06-01T21:00:00+02:00') },
+      ...programme,
+    ];
+    const problems = findNumberDateConflicts(broken);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('same number');
+  });
+
   it('allows two evenings on the same day', () => {
     const sameDay = [
       programme[0]!,
       { ...programme[1]!, number: 79, date: programme[0]!.date },
     ];
     expect(findNumberDateConflicts(sameDay)).toEqual([]);
+  });
+
+  it('allows two evenings on the same day at different hours', () => {
+    // A screening in the afternoon and a talk at nine, numbered in the order
+    // they were booked. Comparing instants failed the build on this with «#79
+    // (2026-06-18) is numbered before #80 (2026-06-18) but happens after it» —
+    // the same date on both sides, which reads as nonsense to whoever has to
+    // fix it, and there is nothing to fix: the site orders by number and the
+    // rest of the domain reasons in civil days.
+    const sameDay = [
+      { number: 79, title: 'La sera', date: new Date('2026-06-18T21:00:00+02:00') },
+      { number: 80, title: 'Il pomeriggio', date: new Date('2026-06-18T18:00:00+02:00') },
+    ];
+    expect(findNumberDateConflicts(sameDay)).toEqual([]);
+  });
+
+  it('still reports the pair that crosses a day, whatever the hour', () => {
+    // The other side of it: day granularity must not swallow a real inversion.
+    const broken = [
+      { number: 79, title: 'La sera', date: new Date('2026-06-19T21:00:00+02:00') },
+      { number: 80, title: 'Il giorno prima', date: new Date('2026-06-18T23:00:00+02:00') },
+    ];
+    expect(findNumberDateConflicts(broken)).toHaveLength(1);
   });
 
   it('checks the order it is given nothing about', () => {

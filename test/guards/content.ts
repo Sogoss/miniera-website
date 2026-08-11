@@ -67,6 +67,59 @@ export function checkDuplicateSpeakers(
   return violations;
 }
 
+/* An ISO date carrying the offset Italy was on that day: `+02:00` in summer,
+   `+01:00` in winter, or `Z` for whoever writes it in UTC. Seconds optional,
+   because that is how a datetime widget writes them. */
+const DATE_WITH_OFFSET = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2})?(\.\d+)?(Z|[+-]\d{2}:?\d{2})$/;
+
+/**
+ * The `date` of an evening must say which zone it is in.
+ *
+ * This is the one content rule with the whole time zone behind it. Astro
+ * coerces the field with `z.coerce.date()`, which is `new Date(string)`, and a
+ * string with no offset — `2026-11-05T21:00:00` — is read **in the zone of the
+ * machine doing the reading**. The build machine is Cloudflare, in UTC, so an
+ * evening entered as starting at nine is published as «ore 22», an hour later
+ * than the association wrote and than the poster on the door says; on a laptop
+ * in Turin the same file reads correctly, so nothing looks wrong until it is
+ * live. Every date guard in this suite reads the shape of a *call* and none of
+ * them can see this, because there is no call: the defect is in the content.
+ *
+ * A date is a date, so what is asked for is the offset and not a particular
+ * one: `+02:00` in summer, `+01:00` in winter — the two are not
+ * interchangeable, and the file has to carry whichever Italy was on that night.
+ */
+export function checkDateHasOffset(
+  data: Record<string, unknown>,
+  path: string,
+): Violation[] {
+  const date = data.date;
+
+  /* What the file says, not what something made of it. YAML 1.2 has no
+     timestamp type, so `yaml` hands back the text and this reads it. A `Date`
+     arriving here would mean the parser started coercing — and then the text
+     is gone, `toISOString()` ends in `Z` whatever was written, and the check
+     would pass on the very files it exists to catch. It says so instead. */
+  if (date instanceof Date) {
+    return [
+      {
+        rule: 'content',
+        detail: `the date of ${path} reaches this guard already parsed, so what the file writes cannot be seen any more: the offset has to be checked on the text of the frontmatter, not on the value`,
+      },
+    ];
+  }
+
+  const written = String(date ?? '').trim();
+  if (DATE_WITH_OFFSET.test(written)) return [];
+
+  return [
+    {
+      rule: 'content',
+      detail: `the date of ${path} («${written}») does not say which zone it is in: without an offset — \`+02:00\` in summer, \`+01:00\` in winter — the build machine decides, and on Cloudflare that machine is in UTC, so an evening at 21 is published as «ore 22»`,
+    },
+  ];
+}
+
 /**
  * The kicker must not repeat the name of the cycle the event belongs to.
  *

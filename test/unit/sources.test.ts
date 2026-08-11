@@ -13,6 +13,7 @@ import {
   checkUndefinedCustomProperties,
 } from '../guards/css.ts';
 import {
+  checkDateHasOffset,
   checkDuplicateSpeakers,
   checkKickerRepeatsCycle,
 } from '../guards/content.ts';
@@ -38,13 +39,14 @@ const astroFiles = filesWithExtension(join(repoRoot, 'src'), ['.astro']);
    of the components. */
 const codeFiles = filesWithExtension(join(repoRoot, 'src'), ['.ts', '.astro']);
 
-/* The one file allowed to read the clock, and the pure modules that are not.
+/* The one file allowed to read the clock, and everything else that is not.
    A list built from the folder, not a path written by hand: the second pure
-   module under src/lib/ has to arrive guarded. */
+   module under src/lib/ has to arrive guarded — and so does the scroller.
+   Pointed at src/lib alone, this left every component and page free to write
+   its own `new Date()`, which is the same self-contradicting build the one
+   clock read in programme.ts exists to prevent. */
 const CLOCK_HOLDER = 'src/lib/programme.ts';
-const pureModules = filesWithExtension(join(repoRoot, 'src/lib'), ['.ts']).filter(
-  (path) => path !== CLOCK_HOLDER,
-);
+const clocklessFiles = codeFiles.filter((path) => path !== CLOCK_HOLDER);
 
 /* All the CSS the source has to offer, in one string: the stylesheets, the
    <style> blocks of the components, and the inline `style` attributes — which
@@ -151,7 +153,7 @@ describe('src/**/*.astro component styles', () => {
 describe('the code that handles dates', () => {
   it('has code to check in the first place', () => {
     expect(codeFiles.length).toBeGreaterThan(0);
-    expect(pureModules.length).toBeGreaterThan(0);
+    expect(clocklessFiles.length).toBeGreaterThan(0);
   });
 
   it.each(codeFiles)('%s names the time zone wherever it formats a date', (path) => {
@@ -166,16 +168,17 @@ describe('the code that handles dates', () => {
     );
   });
 
-  it.each(pureModules)('%s does not read the clock', (path) => {
-    // Every module of src/lib/ except the one place the clock is allowed:
+  it.each(clocklessFiles)('%s does not read the clock', (path) => {
+    // Every file of src/ except the one place the clock is allowed:
     // loadProgramme(), once, with the value passed down from there. Named as
-    // an exception rather than as the only file checked — the guard used to
-    // be pointed at a single hard-coded path, so the second pure module
-    // would have arrived unguarded.
+    // an exception rather than as the only file checked — the guard used to be
+    // pointed at a single hard-coded path, then at src/lib alone, which left a
+    // component free to work out its own «adesso» and publish an evening as
+    // upcoming on one page and past on the next.
     expect(checkAmbientTime(read(path), path).map((violation) => violation.detail)).toEqual([]);
   });
 
-  it('has the clock in programme.ts and nowhere else in src/lib', () => {
+  it('has the clock in programme.ts and nowhere else in src', () => {
     // The other side of the exception: if loadProgramme() ever stops reading
     // the clock, the list above is guarding a rule nobody is bound by.
     expect(checkAmbientTime(read(CLOCK_HOLDER), CLOCK_HOLDER).length).toBeGreaterThan(0);
@@ -248,6 +251,18 @@ describe('src/content', () => {
       ).length,
     ).toBeGreaterThan(0);
   });
+
+  it.each(events.map((event) => [event.path, event] as const))(
+    '%s says which zone its date is in',
+    (_path, event) => {
+      // The one defect of this family that lives in the content and not in the
+      // code: `z.coerce.date()` reads a date with no offset in the zone of the
+      // machine parsing it, and that machine is Cloudflare, in UTC. Nine in the
+      // evening becomes «ore 22» in production and stays right on the laptop
+      // where it was typed.
+      expect(checkDateHasOffset(event.data, event.path)).toEqual([]);
+    },
+  );
 
   it.each(events.map((event) => [event.path, event] as const))(
     '%s lists nobody twice among its speakers',

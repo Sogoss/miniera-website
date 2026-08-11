@@ -142,8 +142,9 @@ export function findNumberDateConflicts(
   events: readonly { number: number; title: string; date: Date }[],
 ): string[] {
   const problems: string[] = [];
-  const byNumber = new Map<number, { number: number; title: string; date: Date }>();
-  const comparable: { number: number; title: string; date: Date }[] = [];
+  const readable: { number: number; title: string; date: Date }[] = [];
+  const seen = new Map<number, { number: number; title: string; date: Date }>();
+  const duplicated = new Set<number>();
 
   for (const event of sortByNumber(events)) {
     if (Number.isNaN(event.date.getTime())) {
@@ -153,23 +154,41 @@ export function findNumberDateConflicts(
       continue;
     }
 
-    const twin = byNumber.get(event.number);
+    const twin = seen.get(event.number);
     if (twin) {
       problems.push(
         `${name(twin)} and ${name(event)} carry the same number: the number is the URL of an evening and identifies it, so one of the two has to change`,
       );
+      duplicated.add(event.number);
       continue;
     }
 
-    byNumber.set(event.number, event);
-    comparable.push(event);
+    seen.set(event.number, event);
+    readable.push(event);
   }
+
+  /* Both twins step out of the order check, not just the second one.
+     Keeping the first meant keeping whichever the collection happened to hand
+     over first — the files are read in the order of their names, so a stray
+     `080b.md` claiming number 81 was kept and the real evening dropped, and the
+     stray's date from 2020 then made the *correct* evening before it look out
+     of order. Two messages, the second one false, sending the editor to check a
+     date that is fine. While a number belongs to two evenings there is no fact
+     of the matter about where it sits: the duplicate is the thing to fix, and
+     it has already been said once. */
+  const comparable = readable.filter((event) => !duplicated.has(event.number));
 
   for (let i = 1; i < comparable.length; i++) {
     const earlier = comparable[i - 1];
     const later = comparable[i];
     if (!earlier || !later) continue;
-    if (earlier.date.getTime() <= later.date.getTime()) continue;
+    /* Civil days, like everything else here, and not instants. Two evenings can
+       share a day — a screening in the afternoon and a talk at nine — and which
+       of the two is numbered first is the association's business, not a
+       contradiction. Comparing instants failed the build on that pair with a
+       sentence naming the same date on both sides, which reads as nonsense to
+       whoever has to fix it. */
+    if (romeDay(earlier.date) <= romeDay(later.date)) continue;
     problems.push(
       `${name(earlier)} is numbered before ${name(later)} but happens after it: the number is the order of the site, so the date is what to check first`,
     );
@@ -252,6 +271,30 @@ export function speakerRole(
 }
 
 /* --- The note under the title -------------------------------------------- */
+
+/**
+ * The three states an evening can be published in.
+ *
+ * Cancelled comes first, and that is the whole content of this function: an
+ * evening called off is neither upcoming nor simply past, and a page that asks
+ * `past ? … : …` publishes it as one of the two with the note underneath saying
+ * it was called off. It lives here, in the domain, rather than in whatever page
+ * happens to need it: the temporary page publishes it as `data-state`, PR 7
+ * will key the struck-through styling off the same attribute and PR 9 the
+ * evening's own page, and the pairing with `noteOf` below only holds if all
+ * three ask the same question. No sample evening is cancelled, so the branch
+ * cannot be seen in dist/ — which is exactly why it is a pure function with its
+ * own test rather than a ternary in the markup.
+ */
+export type EventState = 'cancelled' | 'past' | 'upcoming';
+
+export function stateOf(
+  event: { cancelled?: boolean | undefined },
+  past: boolean,
+): EventState {
+  if (event.cancelled) return 'cancelled';
+  return past ? 'past' : 'upcoming';
+}
 
 export const NOTE_CANCELLED = 'Serata annullata';
 export const NOTE_PAST = 'Puntata registrata in sala';

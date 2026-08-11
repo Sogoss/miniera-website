@@ -42,6 +42,34 @@ export function readPublishedCss(): string {
   return pieces.join('\n');
 }
 
+const NAMED_ENTITIES: Record<string, string> = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  nbsp: ' ',
+};
+
+/**
+ * The published markup with its character references turned back into
+ * characters.
+ *
+ * Anything compared against the content has to go through here first. Astro
+ * escapes what it renders — `quarant'anni` reaches dist/ as `quarant&#39;anni`
+ * — so a test that read the frontmatter and looked for it in the page would go
+ * red on any Italian string carrying an apostrophe, which is most of them: a
+ * role like `coordinatrice dell'archivio`, a venue named `Circolo L'Isola`, a
+ * note written by hand. The failure would name a test and not the file, over a
+ * page that is perfectly correct.
+ */
+export function decodeEntities(html: string): string {
+  return html
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex: string) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, code: string) => String.fromCodePoint(Number(code)))
+    .replace(/&([a-z]+);/gi, (whole, name: string) => NAMED_ENTITIES[name.toLowerCase()] ?? whole);
+}
+
 /** Every published text file, with its contents. */
 export function readPublishedFiles(): { path: string; text: string }[] {
   return walk(distDir)

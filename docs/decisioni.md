@@ -167,6 +167,37 @@ quella prova non si potrebbe più fare.
 `undefined` dentro il markup. Lì diventerebbe un nome di ciclo mancante e un
 accento fermo sul predefinito, senza un errore da nessuna parte.
 
+**Il controllo d'ordine confronta giorni civili, non istanti.** Due serate
+possono cadere lo stesso giorno — una proiezione il pomeriggio e un incontro
+alle nove — e quale delle due porti il numero più basso è una scelta
+dell'associazione, non una contraddizione. Confrontando istanti la build
+falliva su quella coppia con una frase che nominava la stessa data da tutte e
+due le parti, cioè illeggibile per chi doveva ripararla, e non c'era niente da
+riparare: il sito ordina per numero, e tutto il resto del dominio ragiona in
+giorni. Una vera inversione a cavallo di due giorni resta segnalata.
+*(PR 3, in revisione)*
+
+**Un numero doppio toglie dal controllo d'ordine entrambe le serate, non solo
+la seconda.** Tenere la prima voleva dire tenere quella che il loader aveva
+consegnato per prima — i file si leggono in ordine di nome — così un `080b.md`
+che reclamava il numero 81 restava dentro con la sua data del 2020 e faceva
+sembrare fuori posto la serata *giusta* che lo precedeva: due messaggi, il
+secondo falso, e l'editor mandato a controllare una data che stava bene.
+Finché un numero appartiene a due serate non c'è niente di vero da dire su
+dove sta: il doppione è la cosa da correggere, ed è già stata detta una volta.
+*(PR 3, in revisione)*
+
+**Lo stato di una serata è una funzione pura del dominio, non un ternario nel
+markup.** `stateOf` sta in `events.ts` accanto a `noteOf`, e mette
+`cancelled` prima di `past`: una serata annullata non è né passata né futura, e
+la pagina che chiedeva `past ? … : …` la pubblicava come una delle due con
+sotto la nota che diceva che era stata annullata. Nessuna serata d'esempio è
+annullata, quindi quel ramo in `dist/` non si vede: è proprio per questo che è
+una funzione con il suo test invece che una riga dentro una pagina. La
+pubblicano l'attributo `data-state`, lo scroller della PR 7 per la scena
+barrata e la PR 9 per la pagina della serata — tutti e tre devono fare la
+stessa domanda. *(PR 3, in revisione)*
+
 **L'orologio si legge una volta per build, non una per chiamata.** Stava nel
 valore predefinito del parametro — `loadProgramme(now = new Date())` — che si
 valuta a ogni chiamata: `loadProgramme()` lo si chiama una volta per pagina, e
@@ -373,6 +404,41 @@ del progetto passerebbe senza controllo. Un'*espressione* resta invece lasciata
 stare, come prima: `zoneFor(event)` non è un nome che qualcuno ha scelto, e una
 guardia che scatta sul lavoro giusto la si spegne. *(PR 3, in revisione)*
 
+**Le guardie leggono il sorgente con le stringhe cancellate.** Il motivo ha un
+nome solo: il glob con cui si carica una collection. Porta un chiudi-commento
+al secondo carattere e un apri-commento al terzo, così il controllo «questo
+indice sta dentro un commento?» trovava un commento aperto e mai chiuso e
+dichiarava commentato tutto quello che veniva dopo. `content.config.ts` scrive
+quel glob quattro volte, la prima alla riga 31: da lì in giù **tutte e tre le
+guardie sul codice restituivano `[]`** su un file che nessuno aveva esentato.
+Cancellare il contenuto delle stringhe non è lo spogliatore di commenti che
+`decisioni.md` continua a rifiutare, e non deve esserlo: togliere una stringa
+può solo togliere marcatori di commento, e ogni marcatore che toglie non era un
+commento. *(PR 3, in revisione)*
+
+**Lo strato `build` confronta contenuti decodificati.** Astro fa l'escape di
+quello che stampa, quindi `quarant'anni` arriva in `dist/` come
+`quarant&#39;anni`: un test che legge il frontmatter e lo cerca nella pagina
+diventa rosso su qualunque stringa italiana con un apostrofo — un ruolo come
+*coordinatrice dell'archivio*, una sede che si chiama *Circolo L'Isola* — su
+una pagina perfettamente corretta, e nominando un test invece del file.
+*(PR 3, in revisione)*
+
+**La guardia sull'orologio guarda tutto `src/`, non solo `src/lib`.**
+L'eccezione dichiarata resta una sola, `programme.ts`, ma puntata sulla sola
+cartella dei moduli puri lasciava libero ogni componente e ogni pagina di
+calcolarsi il proprio «adesso» — che è esattamente il sito che si contraddice
+da una pagina all'altra per cui esiste la lettura unica. *(PR 3, in revisione)*
+
+**Lo scostamento del fuso è un vincolo sui contenuti, e ha la sua guardia.**
+`z.coerce.date()` è `new Date(string)`: una data senza scostamento la legge
+**nel fuso della macchina che la legge**, che alla build è UTC. Una serata
+scritta alle 21 si pubblica *ore 22*, e sul portatile di chi l'ha scritta si
+legge giusta — nessuna delle guardie sul fuso può vederlo, perché non c'è
+nessuna chiamata da guardare: il difetto sta nel file di contenuto. È l'unica
+regola sul tempo che non riguarda il codice, ed è scritta in
+[contenuti.md](contenuti.md) dove la legge chi redige. *(PR 3, in revisione)*
+
 **La quarta guardia legge il testo pubblicato, non il codice.** C'è una via che
 supera le altre tre: dare una `Date` a qualcosa che si aspetta una stringa —
 `{scene.date}`, `<time datetime={scene.date}>` — che è un `toString()`, non è un
@@ -394,8 +460,8 @@ pagina la nota se la fa dare dal dominio invece di scriverla. Quale serata
 cada da che parte lo decide `events.test.ts`, dove `now` è un argomento.
 *(PR 3, in revisione)*
 
-**Le asserzioni su `dist/` si ancorano a `data-number` e a `data-state`**, non
-alla decorazione della pagina provvisoria. Ancorate al `#78 · ` che quella
+**Le asserzioni su `dist/` si ancorano a `data-number`, `data-state` e
+`data-open`**, non alla decorazione della pagina provvisoria. Ancorate al `#78 · ` che quella
 pagina scrive, si sarebbero rotte tutte insieme il giorno in cui la PR 7 fa
 quello che il `CLAUDE.md` prescrive — sostituirla — e la prova sul fuso sarebbe
 stata da riscrivere da capo. Lo scroller porterà gli stessi attributi.
@@ -408,7 +474,11 @@ faceva risultare la serata in due stati insieme, e il messaggio d'errore diceva
 «la serata 82 non è né passata né futura» indicando qualcosa che non era
 sbagliato. Lo stato lo dichiara ora la pagina in un attributo, e ne ha tre:
 `cancelled` viene prima di `past`, perché una serata annullata non è né l'uno né
-l'altro. *(PR 3, in revisione)*
+l'altro. `data-open` è arrivato con lo stesso ragionamento: la scena di apertura
+si contava cercando le parole *apertura dello scroller*, che è decorazione di
+una pagina da buttare, e il `CLAUDE.md` intanto prometteva alla PR 7 che
+portarsi dietro gli attributi bastasse. O la promessa o la prova: si è spostata
+la prova. *(PR 3, in revisione)*
 
 **E le attese le ricava dai contenuti, non dalle tre serate d'esempio.**
 Scritte come letterali — l'elenco `[78, 81, 82]`, il nome dell'unica sede, le

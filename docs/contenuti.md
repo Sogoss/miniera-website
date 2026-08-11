@@ -63,6 +63,25 @@ Se due eventi finissero con lo stesso numero la build fallisce da sola, perché
 due rotte reclamerebbero lo stesso percorso. È una rete di sicurezza, non un
 controllo da aggiungere.
 
+### Come si scrive la data
+
+Sempre **con lo scostamento dal fuso**, che d'estate è `+02:00` e d'inverno
+`+01:00`:
+
+```yaml
+date: 2026-10-08T21:00:00+02:00   # ottobre, ora legale
+date: 2026-11-05T21:00:00+01:00   # novembre, ora solare
+```
+
+Senza, il fuso lo decide la macchina che costruisce il sito — che è quella di
+Cloudflare, in UTC — e una serata delle 21 si pubblica *ore 22*. Sul portatile
+di chi l'ha scritta si legge giusta, quindi il difetto si vede solo online. Il
+CMS scrive lo scostamento da sé; scrivendo il file a mano va messo, e una
+guardia della suite lo pretende.
+
+Le due date non sono intercambiabili: conta lo scostamento che l'Italia aveva
+**quella sera**, non quello di oggi.
+
 ### Quando una serata diventa "già svolta"
 
 Alla **mezzanotte del giorno successivo**, non all'ora di inizio: una serata

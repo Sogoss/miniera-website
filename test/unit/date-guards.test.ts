@@ -176,6 +176,20 @@ describe('checkMissingTimeZone', () => {
     expect(checkMissingTimeZone(source, 'src/lib/events.ts')).toEqual([]);
   });
 
+  it('is not switched off by a glob that looks like an open comment', () => {
+    // The glob below carries a comment closer at its second character and an
+    // opener at its third, so the open-comment test read everything after it
+    // as commented out. src/content.config.ts writes that glob on line 31, and
+    // from there down all three guards were returning nothing at all.
+    const source = [
+      `const events = { loader: glob({ pattern: '**/*.md', base: 'src/content/eventi' }) };`,
+      `const f = new Intl.DateTimeFormat('it-IT', { day: 'numeric' });`,
+    ].join('\n');
+    const violations = checkMissingTimeZone(source, 'src/content.config.ts');
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain('src/content.config.ts:2');
+  });
+
   it('still reads a line that merely carries a URL', () => {
     // The `//` of a protocol must not be mistaken for a comment, or a whole
     // line goes unguarded.
@@ -202,6 +216,11 @@ describe('checkLocalDateMethods', () => {
   it('ignores a mention in a comment', () => {
     const source = `/* a note about getDay()\n   and getHours(), neither of which we call. */`;
     expect(checkLocalDateMethods(source, 'src/lib/events.ts')).toEqual([]);
+  });
+
+  it('is not switched off by a glob that looks like an open comment', () => {
+    const source = [`const pattern = '**/*.md';`, `const hour = scene.date.getHours();`].join('\n');
+    expect(checkLocalDateMethods(source, 'src/content.config.ts')).toHaveLength(1);
   });
 });
 
@@ -235,6 +254,11 @@ describe('checkAmbientTime', () => {
     const source = [`/* a note about how we do not call`, `   new Date() in here. */`].join('\n');
     expect(checkAmbientTime(source, 'src/lib/events.ts')).toEqual([]);
   });
+
+  it('is not switched off by a glob that looks like an open comment', () => {
+    const source = [`const pattern = '**/*.md';`, `const now = new Date();`].join('\n');
+    expect(checkAmbientTime(source, 'src/content.config.ts')).toHaveLength(1);
+  });
 });
 
 describe('checkMachineDateText', () => {
@@ -249,13 +273,23 @@ describe('checkMachineDateText', () => {
     expect(violations[0]!.detail).toContain('dist/index.html:1');
   });
 
-  it('sees the two halves separately, because either can arrive alone', () => {
+  it('sees the halves separately, because each of them arrives alone', () => {
     // `toDateString()` publishes no offset and `toTimeString()` no weekday:
     // a check that wanted the whole string would miss both.
     expect(checkMachineDateText('<p>Thu Sep 24 2026</p>', 'dist/index.html')).toHaveLength(1);
     expect(
       checkMachineDateText('<p>21:00:00 GMT+0000</p>', 'dist/78/index.html'),
     ).toHaveLength(1);
+  });
+
+  it('reports toUTCString(), which shares no character with the others', () => {
+    // `Thu, 24 Sep 2026 19:00:00 GMT`: a comma, the day before the month, and
+    // a bare `GMT`. It is the shape a `datetime` attribute gets written in by
+    // hand, it is neither a formatter nor a local method, and it is the same
+    // two hours early — 19:00 for an evening that starts at 21.
+    const published = new Date('2026-09-24T21:00:00+02:00').toUTCString();
+    expect(checkMachineDateText(`<time datetime="${published}">`, 'dist/index.html').length)
+      .toBeGreaterThan(0);
   });
 
   it('leaves the Italian strings the domain writes alone', () => {
