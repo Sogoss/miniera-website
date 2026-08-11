@@ -76,6 +76,14 @@ non una preferenza.
 
 10. **Il numero della serata è il suo URL e non si riassegna mai.**
     Passato e futuro non sono campi: si calcolano da `date` alla build.
+    L'ordine del sito è il numero, non la data; se i due ordini divergono la
+    build si ferma.
+
+11. **Ogni data si formatta dichiarando `timeZone: 'Europe/Rome'`**, e
+    `src/lib/events.ts` non legge l'orologio: `now` arriva sempre come
+    argomento. Cloudflare builda in UTC e le serate si svolgono a Torino: una
+    formattazione senza fuso è giusta sul portatile di chi la scrive e
+    pubblica *ore 19* al posto di *ore 21*. Due guardie in `test/guards/dates.ts`.
 
 ## Lingua
 
@@ -115,6 +123,7 @@ scripts/           utilità (sincronizzazione dei caratteri)
 src/assets/fonts/  woff2 self-hostati e licenze OFL
 src/content/       eventi, cicli, sedi, relatori
 src/content.config.ts   schema Zod delle quattro collection
+src/lib/           il dominio: events.ts puro, programme.ts legge le collection
 src/styles/tokens/ i token del design
 src/styles/global.css   strato base del documento
 test/guards/       le guardie ai vincoli, come funzioni pure

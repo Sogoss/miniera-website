@@ -33,8 +33,8 @@ almeno una volta.
 | Non c'è | Perché |
 |---|---|
 | passato / futuro | si calcolano da `date` alla build |
-| una data breve ("20 mar") | è una formattazione di `date` |
-| la data distesa ("giovedì 20 marzo, ore 21") | idem |
+| una data breve ("24 set 2026") | è una formattazione di `date` |
+| la data distesa ("giovedì 24 settembre 2026, ore 21") | idem |
 | il nome del ciclo | viene dal riferimento al ciclo |
 | `soloAudio` | **eliminato**: nel design era un bottone senza URL, quell'audio non esiste |
 
@@ -68,8 +68,30 @@ controllo da aggiungere.
 Alla **mezzanotte del giorno successivo**, non all'ora di inizio: una serata
 che comincia alle 21 di giovedì resta "in programma" mentre è in corso.
 
+Mezzanotte **a Torino**, non sulla macchina che costruisce il sito: Cloudflare
+builda in UTC, e fra i due ci sono due ore d'estate e una d'inverno. Il calcolo
+sta in `src/lib/events.ts` e confronta date civili invece di sommare offset,
+così le due notti del cambio d'ora non sono un caso particolare.
+
 Il calcolo avviene alla build, quindi dipende dal rebuild notturno — vedi
 [architettura.md](architettura.md).
+
+### L'ordine è il numero
+
+Il sito elenca le serate per `number`, non per `date`. I due ordini coincidono
+— la numerazione segue il calendario — e un controllo alla build ferma tutto se
+smettono di coincidere, o se due serate finiscono con lo stesso numero.
+
+### La nota sotto il titolo
+
+Non si scrive: si calcola. *Ingresso libero, posti limitati* per una serata in
+programma, *Puntata registrata in sala* per una già svolta — anche quando i
+materiali non ci sono ancora, perché la registrazione esiste e i link arrivano
+dopo: quello che manca senza link è il bottone, non la frase — e *Serata
+annullata* per una annullata.
+
+Il campo `note` sovrascrive tutte e tre, e serve al caso che non rientra:
+«Prenotazione obbligatoria», «Rinviata a data da destinarsi».
 
 ### I cicli sono etichette, non periodi
 

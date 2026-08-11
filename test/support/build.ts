@@ -21,6 +21,11 @@ export default function setup(): void {
   execFileSync('npm', ['run', 'build'], {
     cwd: repoRoot,
     stdio: 'inherit',
-    env: process.env,
+    // TZ=UTC on purpose, everywhere, including a laptop in Turin: it is the
+    // zone Cloudflare builds in, and the dates published from a machine in
+    // Italy would agree with Europe/Rome for the wrong reason. The assertions
+    // in test/build/published-dates.test.ts expect Italian time out of a
+    // build that has no idea Italy exists.
+    env: { ...process.env, TZ: 'UTC' },
   });
 }

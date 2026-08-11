@@ -16,6 +16,8 @@ import {
   checkDuplicateSpeakers,
   checkKickerRepeatsCycle,
 } from '../guards/content.ts';
+import { checkAmbientTime, checkMissingTimeZone } from '../guards/dates.ts';
+import { findNumberDateConflicts } from '../../src/lib/events.ts';
 import { checkDisplayFontWeightRange } from '../guards/fonts.ts';
 import {
   checkItalianCustomProperties,
@@ -28,6 +30,9 @@ import { componentCss } from '../support/styles.ts';
 
 const styleFiles = filesWithExtension(join(repoRoot, 'src/styles'), ['.css']);
 const astroFiles = filesWithExtension(join(repoRoot, 'src'), ['.astro']);
+/* Everything in src/ that can format a date: the modules and the frontmatter
+   of the components. */
+const codeFiles = filesWithExtension(join(repoRoot, 'src'), ['.ts', '.astro']);
 
 /* All the CSS the source has to offer, in one string: the stylesheets, the
    <style> blocks of the components, and the inline `style` attributes — which
@@ -119,6 +124,34 @@ describe('src/**/*.astro component styles', () => {
   });
 });
 
+/* The two halves of the time zone.
+ *
+ * Cloudflare builds in UTC and the evenings happen in Turin. A formatter with
+ * no `timeZone` is right on a laptop in Italy and two hours wrong in
+ * production — nothing fails, the page just says «ore 19». The second guard
+ * keeps the pure module unable to ask what time it is, which is what makes the
+ * boundary testable at all: with `now` in the arguments the two clock changes
+ * are four assertions in events.test.ts instead of two nights a year.
+ */
+describe('the code that handles dates', () => {
+  it('has code to check in the first place', () => {
+    expect(codeFiles.length).toBeGreaterThan(0);
+  });
+
+  it.each(codeFiles)('%s names the time zone wherever it formats a date', (path) => {
+    expect(checkMissingTimeZone(read(path), path).map((violation) => violation.detail)).toEqual(
+      [],
+    );
+  });
+
+  it('keeps src/lib/events.ts from reading the clock', () => {
+    // Pointed at the pure module alone: somewhere the clock has to be read,
+    // and that somewhere is loadProgramme(), once.
+    const path = 'src/lib/events.ts';
+    expect(checkAmbientTime(read(path), path).map((violation) => violation.detail)).toEqual([]);
+  });
+});
+
 /* The content, which is the other side of the language boundary.
  *
  * Nothing here reads the Italian itself: whether it is written well is read by
@@ -145,6 +178,35 @@ describe('src/content', () => {
       expect(entry.error).toBeUndefined();
     },
   );
+
+  /* The date as the frontmatter has it. YAML 1.2 has no timestamp type, so
+     what comes out of the parser is a string; Astro coerces it with Zod. Both
+     shapes are accepted here rather than depending on which. */
+  const dateOf = (entry: (typeof events)[number]): Date =>
+    entry.data.date instanceof Date ? entry.data.date : new Date(String(entry.data.date));
+
+  it.each(events.map((event) => [event.path, event] as const))(
+    '%s has a date that parses',
+    (_path, event) => {
+      // Without this the check below would pass silently on an unreadable
+      // date: every comparison against an Invalid Date is false, so a
+      // programme with one would look perfectly ordered.
+      expect(Number.isNaN(dateOf(event).getTime())).toBe(false);
+    },
+  );
+
+  it('numbers the evenings in the order they happen', () => {
+    // The site is ordered by number and everything else is worked out from
+    // the date: if the two disagree the programme reads in one order and
+    // reasons in another. The build fails on this too — programme.ts throws —
+    // but this says which pair and does not need a build to say it.
+    const programme = events.map((event) => ({
+      number: Number(event.data.number),
+      title: String(event.data.title ?? event.path),
+      date: dateOf(event),
+    }));
+    expect(findNumberDateConflicts(programme)).toEqual([]);
+  });
 
   it('keeps a sample of a role overridden on the event', () => {
     // The `speakers[].role ?? person.role` branch has no other coverage: no

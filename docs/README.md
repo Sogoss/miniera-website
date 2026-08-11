@@ -52,6 +52,8 @@ Fatto:
 - Impianto di verifica: guardie ai vincoli, due strati di test, CI su ogni PR
 - Codice portato all'inglese — token, campi, commenti — con i nomi delle
   collection lasciati in italiano di proposito, e favicon dal marchio
+- Utilità di dominio: ordine, confine fra passato e futuro in `Europe/Rome`,
+  date in italiano, ruoli, note, scena di apertura
 
 Da fare: l'elenco completo dei passi, in ordine e uno per PR, sta in
 [piano.md](piano.md). In sintesi — impianto di verifica, utilità di dominio,

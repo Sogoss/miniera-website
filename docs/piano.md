@@ -58,7 +58,7 @@ sostituisce un telefono vero.
 |---|---|---|---|
 | 1 | Impianto di verifica | `impianto-verifiche` | fatta |
 | 2 | Igiene: lingua, README, favicon, contenuti | `igiene-lingua-e-contenuti` | fatta |
-| 3 | Utilità di dominio | `lib-eventi` | da fare |
+| 3 | Utilità di dominio | `lib-eventi` | fatta |
 | 4 | Accento dai cicli della collection | `accento-dai-cicli` | da fare |
 | 5 | Layout di base e forme di ritaglio | `layout-base` | da fare |
 | 6 | Gli otto componenti del design system | `design-system-astro` | da fare |
@@ -252,42 +252,92 @@ usati da tutto il resto.
 
 ## PR 3 — Utilità di dominio
 
-**Branch:** `lib-eventi` · **Dipende da:** 1
+**Branch:** `lib-eventi` · **Dipende da:** 1, 2
 
 `src/lib/events.ts`: il cuore logico del sito, puro e testabile, che tutte le
-pagine useranno.
+pagine useranno. Nasce qui e non dentro le pagine che lo consumeranno perché
+dentro un componente `.astro` non si può passare un "adesso" finto, e senza un
+adesso finto il confine fra passato e futuro non si prova: si aspetta.
+
+Il vincolo che decide la forma è che **Cloudflare builda in UTC e le serate si
+svolgono a Torino**. Una formattazione senza fuso funziona sulla macchina di
+chi la scrive e sbaglia in produzione di due ore d'estate e di una d'inverno,
+senza un errore da nessuna parte: è lo stesso guasto muto del ripiego
+collassato e del `var()` senza dichiarazione.
+
+### Decisioni prese scrivendo la PR
+
+Le otto per esteso stanno in [decisioni.md](decisioni.md), sotto *Logica di
+dominio*. In breve:
+
+- **La verità cronologica è `number`**, non `date`: il numero è l'identità
+  della serata. Un controllo alla build ferma tutto se i due ordini divergono
+  o se due serate hanno lo stesso numero
+- **La nota di una serata passata è sempre *Puntata registrata in sala***,
+  anche senza materiali: a mancare senza link è il bottone, non la frase
+- **Una serata annullata ha come nota *Serata annullata***, e lo scroller si
+  apre sulla prima serata non ancora passata **e non annullata**
+- **Le date portano l'anno**, che il design non aveva: su ottantuno serate
+  *18 giugno* non identifica niente
+- **Il dominio è in due file e il puro non importa niente**, `now` compreso: è
+  ciò che permette di eseguirlo con `node` sotto due fusi diversi
+- **Due serate d'esempio in più** — la 78, passata, con presenze e materiali, e
+  la 82 — perché con la sola serata 81 metà del dominio non si vedrebbe girare
+  su contenuti veri e il controllo d'ordine sarebbe vacuo
 
 ### Obiettivi
 
-- [ ] Ordinamento cronologico degli eventi
-- [ ] Passato e futuro calcolati **in `Europe/Rome`**: una serata diventa
-      già svolta alla mezzanotte del giorno successivo, non all'ora di inizio
-- [ ] Formattazione italiana delle date: `24 set` per la Timeline,
-      `giovedì 24 settembre, ore 21` per la scena
-- [ ] Risoluzione dei riferimenti a ciclo, sede e relatori, con il ruolo
-      dell'evento che sovrascrive quello della persona
-- [ ] Nota predefinita calcolata — *Ingresso libero, posti limitati* /
-      *Puntata registrata in sala* — sovrascrivibile dal campo `note`
-- [ ] Indice della prima serata futura, su cui si aprirà lo scroller
-- [ ] Un controllo alla build fallisce se l'ordine per `number` e l'ordine per
-      `date` divergono
+- [x] Ordinamento degli eventi per `number`, che è l'ordine del sito
+- [x] Passato e futuro calcolati **in `Europe/Rome`**, per confronto fra date
+      civili e non per aritmetica sugli offset: una serata diventa già svolta
+      alla mezzanotte del giorno successivo, non all'ora di inizio
+- [x] Formattazione italiana delle date: `24 set 2026` per la Timeline,
+      `giovedì 24 settembre 2026, ore 21` per la scena — minuti solo quando
+      ci sono
+- [x] Risoluzione dei riferimenti a ciclo, sede e relatori, con il ruolo
+      dell'evento che sovrascrive quello della persona. Un riferimento che non
+      risolve ferma la build invece di viaggiare come `undefined`
+- [x] Nota predefinita calcolata — *Ingresso libero, posti limitati* /
+      *Puntata registrata in sala* / *Serata annullata* — sovrascrivibile dal
+      campo `note`
+- [x] Indice della prossima serata che si svolgerà, su cui si aprirà lo
+      scroller
+- [x] Un controllo alla build fallisce se l'ordine per `number` e l'ordine per
+      `date` divergono, e nomina le due serate
+- [x] `src/lib/events.ts` non ha import e non legge l'orologio
+- [x] La pagina provvisoria mostra le stringhe calcolate: è ciò che dà allo
+      strato `build` qualcosa su cui asserire
 
 ### Test automatici
 
 - Una serata alle 21 di giovedì è ancora *in programma* alle 23:59 di giovedì
-- La stessa serata è *già svolta* alle 00:00 di venerdì, ora italiana
-- Il passaggio all'ora legale e a quella solare non sposta il confine
-- Una build eseguita con `TZ=UTC` dà lo stesso risultato di una eseguita con
-  `TZ=Europe/Rome` — è il caso reale, perché Cloudflare builda in UTC
+- La stessa serata è *già svolta* alle 00:00 di venerdì, ora italiana — cioè
+  alle 22:00Z d'estate e alle 23:00Z d'inverno, che è il caso che la CI vive
+- Il passaggio all'ora legale e a quella solare non sposta il confine: quattro
+  asserzioni a cavallo delle due notti del 2026
+- La build gira con `TZ=UTC`, come Cloudflare, e le stringhe italiane si
+  leggono in `dist/`; due processi figli girano lo stesso modulo sotto `TZ=UTC`
+  e `TZ=Europe/Rome` e danno lo stesso risultato — che è anche quello atteso,
+  perché l'uguaglianza da sola passerebbe su due risposte sbagliate uguali
+- **Guardia**: nessun `Intl.DateTimeFormat` e nessun `toLocale…` senza
+  `timeZone` in `src/`; nessuna lettura dell'orologio in `src/lib/events.ts`.
+  Entrambe con i loro casi negativi (regola 11)
 - Il ruolo dichiarato sull'evento vince su quello della persona; se manca, vale
   quello della persona
-- Una serata annullata resta nell'elenco e conserva il suo numero
-- Ordine per `number` e ordine per `date` coincidono
+- Una serata annullata resta nell'elenco, conserva il suo numero e prende la
+  sua nota; lo scroller la salta
+- Ordine per `number` e ordine per `date` coincidono, sui contenuti veri e su
+  una coppia invertita scritta a mano
+- Ogni data del frontmatter si legge: una data illeggibile farebbe passare in
+  silenzio il controllo d'ordine, perché ogni confronto con una *Invalid Date*
+  è falso
 
 ### Test manuali
 
 - Lettura a campione delle stringhe di data generate: maiuscole, preposizioni,
-  nessun anno dove il design non lo prevede
+  l'anno al posto giusto in entrambe le forme
+- `npm run dev`, spostare a ieri la data di una serata d'esempio e vedere nota,
+  ordine e scena di apertura cambiare
 
 ---
 

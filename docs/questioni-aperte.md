@@ -46,7 +46,7 @@ Non è ancora stato deciso dove.
 
 ### Link a mappa per le sedi
 
-Lo schema di `sedi` ha un campo `mappa` facoltativo. Non è stato deciso se
+Lo schema di `sedi` ha un campo `map` facoltativo. Non è stato deciso se
 usarlo, né se una mappa serva davvero nella pagina contatti.
 
 ### Numero WhatsApp reale
