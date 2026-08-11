@@ -14,6 +14,7 @@ macchina, o da un altro collaboratore.
 
 | Documento | Cosa contiene |
 |---|---|
+| [piano.md](piano.md) | Come si lavora, e i passi da fare in ordine: una PR ciascuno |
 | [architettura.md](architettura.md) | Stack, flusso di pubblicazione, hosting, build e rebuild |
 | [design.md](design.md) | I due file di design, la convergenza, il design system e i token |
 | [contenuti.md](contenuti.md) | Modello dati, le quattro collection, regole editoriali |
@@ -49,16 +50,11 @@ Fatto:
 - Caratteri self-hostati (Archivo, Archivo Black, IBM Plex Mono)
 - Schema tipizzato delle quattro collection, con un esempio ciascuna
 
-Da fare, nell'ordine in cui conviene affrontarlo:
-
-1. Gli otto componenti del design system portati da React a `.astro`
-2. Lo scroller del programma con la `Timeline`
-3. Le pagine dei singoli eventi
-4. Le pagine `chi-siamo` e `contatti`, e la `rassegna` disabilitata
-5. Sveltia CMS: configurazione e autenticazione
-6. Collegamento a Cloudflare Pages e rebuild notturno
-7. Migrazione delle 81 serate storiche — *fuori dalla beta, vedi
-   [questioni-aperte.md](questioni-aperte.md)*
+Da fare: l'elenco completo dei passi, in ordine e uno per PR, sta in
+[piano.md](piano.md). In sintesi — impianto di verifica, utilità di dominio,
+i componenti del design system, lo scroller con la `Timeline`, le pagine delle
+serate, il CMS, la pubblicazione. La migrazione delle 81 serate storiche resta
+fuori dalla beta, vedi [questioni-aperte.md](questioni-aperte.md).
 
 `src/pages/index.astro` è una pagina di verifica provvisoria: serve solo a
 dimostrare che token, caratteri e collection funzionano insieme. Va sostituita

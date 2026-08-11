@@ -10,6 +10,29 @@ documento specifico dell'area che stai toccando. Le decisioni prese e il
 perché di ciascuna stanno in [`docs/decisioni.md`](docs/decisioni.md): se
 qualcosa nel codice sembra una scelta strana, il motivo è quasi sempre lì.
 
+## Come si lavora
+
+Il sito si costruisce per passi numerati, uno per PR, nell'ordine fissato in
+[`docs/piano.md`](docs/piano.md). Per ciascuna PR, in quest'ordine:
+
+1. **Il piano si scrive per primo**, prima del branch e prima della PR, e va
+   approvato. Il testo approvato diventa il corpo della PR.
+2. Solo dopo si crea il branch e si scrive il codice.
+
+Ogni PR dichiara tre cose: **nome del branch**, **obiettivi da verificare prima
+della chiusura**, **test richiesti — automatici e manuali**.
+
+Tre regole senza eccezioni, applicate dal repository e non lasciate alla buona
+volontà:
+
+- **Su `main` non si spinge mai direttamente.** Ogni modifica passa da una PR,
+  compresa quella di una riga e compresa la documentazione.
+- **Una PR si chiude solo con tutti i test verdi.** Un test rosso non si
+  aggira, non si disattiva e non si rimanda alla PR dopo: o si sistema il
+  codice, o si sistema il test perché era sbagliato — dicendo perché.
+- **Il merge è sempre squash and merge.** Merge commit e rebase sono
+  disabilitati.
+
 ## Regole che è facile violare senza accorgersene
 
 Sono tutte già state discusse e decise. Rivederle richiede una ragione nuova,
