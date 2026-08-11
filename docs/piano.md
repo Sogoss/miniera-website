@@ -216,18 +216,6 @@ usati da tutto il resto.
 - Le guardie della PR 1 continuano a passare **dopo** la rinomina dei token:
   è il vero collaudo della loro indipendenza dai nomi
 
-> **Corretto in corsa.** Questo elenco cominciava con «nessun commento in
-> italiano resta in `src/`». Il test è stato sostituito, non abbandonato, e
-> vale la pena dire perché. Costava un estrattore di commenti che salta
-> stringhe e letterali regex — la parte più fragile della PR, scritta per
-> sorvegliare della prosa — più una lista di parole né completa né precisa. E
-> proteggeva da un difetto che si vede nel diff e non fa danno: un commento
-> nella lingua sbagliata. Il rischio vero della PR era un altro: che la
-> rinomina mancasse un punto. Un `var(--accento)` rimasto indietro non è un
-> errore per nessuno — Astro compila, `astro check` tace, il CSS si pubblica e
-> la proprietà non ha valore. È lo stesso guasto invisibile del ripiego
-> collassato, ed è quello che ora ha la sua guardia.
-
 > **Aggiunto in corsa.** La guardia sui `var()` non vedeva gli attributi
 > `style` in linea: rompendo un token di proposito nella pagina provvisoria,
 > passava. Un `var()` scritto in un attributo non sta in nessun foglio di
