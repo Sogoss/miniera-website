@@ -35,7 +35,7 @@ npm install
 npm run dev
 ```
 
-Serve Node 22.12 o superiore. Non serve nient'altro: niente database, niente
+Serve Node 24, fissata in `.nvmrc`. Non serve nient'altro: niente database, niente
 servizi da avviare, niente variabili d'ambiente. Il repository *è* il
 progetto — contenuti, immagini, storico delle modifiche e specifica di
 design inclusi.

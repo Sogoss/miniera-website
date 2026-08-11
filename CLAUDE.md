@@ -79,13 +79,28 @@ non una preferenza.
 
 ## Lingua
 
-Tutto in italiano: contenuti, commenti, nomi dei componenti e dei campi. Il
-design system usa nomi italiani — `Bottone`, `Etichetta`, `Scheda`, `Marchio`,
-`FasciaFirma`, `BadgePuntata`, `RigaOspite`, `SchedaEvento`. L'unica eccezione
-concordata è `Timeline`, il componente di navigazione laterale (nei file di
-design è chiamato "binario").
+Due lingue, separate da un confine netto: **il codice è in inglese, quello che
+si legge è in italiano.**
 
-Accenti e caratteri speciali vanno scritti per intero: *perché*, non *perche*.
+**In inglese** tutto ciò che sta nel codice: nomi di file, cartelle, variabili,
+funzioni, componenti, proprietà personalizzate CSS, campi dello schema — **e i
+commenti**. Il design system usa quindi `Button`, `Label`, `Card`, `Brand`,
+`SignatureBand`, `EpisodeBadge`, `GuestRow`, `EventCard`, `Timeline`.
+
+**In italiano** tutto ciò che arriva a un lettore: i contenuti in
+`src/content/`, le stringhe visibili nelle pagine, le etichette del CMS, questa
+documentazione e i messaggi di commit.
+
+Nei testi italiani accenti e caratteri speciali vanno scritti per intero:
+*perché*, non *perche*.
+
+> **Migrazione in corso.** La regola è stata cambiata quando il progetto era
+> già cominciato. `test/` e la CI nascono in inglese; i token CSS
+> (`--h-scena`, `--accento`, `--blu-700`, `--sp-*`), i campi dello schema in
+> `src/content.config.ts` (`numero`, `titolo`, `data`, `ciclo`…) e i commenti
+> in `src/` e `scripts/` sono ancora in italiano e vanno tradotti. Finché non
+> succede, **il codice esistente non è il modello da imitare**: il codice nuovo
+> si scrive in inglese comunque.
 
 ## Dove sta cosa
 
@@ -98,6 +113,9 @@ src/content/       eventi, cicli, sedi, relatori
 src/content.config.ts   schema Zod delle quattro collection
 src/styles/tokens/ i token del design
 src/styles/global.css   strato base del documento
+test/guards/       le guardie ai vincoli, come funzioni pure
+test/unit/         i loro test, positivi e negativi
+test/build/        le asserzioni su ciò che finisce in dist/
 ```
 
 `src/pages/index.astro` è una **pagina di verifica provvisoria**: dimostra che
@@ -106,18 +124,31 @@ vero, non estesa.
 
 ## Comandi
 
+Serve **Node 24** — la versione è fissata in `.nvmrc`, e `engine-strict` fa
+fallire l'installazione con una versione diversa invece di riscrivere di
+nascosto il `package-lock.json`.
+
 ```bash
 npm run dev          # sviluppo
 npm run build        # build statica in dist/
 npm run preview      # anteprima della build
+npm test             # guardie e test, con una build dentro
+npm run check        # astro check, typecheck
 npm run fonts:sync   # ricopia i caratteri dai pacchetti @fontsource
 ```
+
+`REUSE_DIST=1 npm test` salta la build quando `dist/` è già fresco.
 
 Per il server di sviluppo in background e i riferimenti alla documentazione di
 Astro, vedi [`AGENTS.md`](AGENTS.md).
 
 ## Come verificare il lavoro
 
-`npm run build` deve passare. Ma per lo stile **non basta guardare il
-sorgente**: il minificatore può togliere cose. Controlla il CSS in `dist/`
-quando tocchi ripieghi, `@supports` o dichiarazioni condizionali.
+`npm test` e `npm run check` devono passare. Per lo stile **non basta guardare
+il sorgente**: il minificatore può togliere cose, ed è già successo. Le
+asserzioni in `test/build/` leggono il CSS in `dist/`, che è l'unico posto dove
+la perdita si vede.
+
+Quando aggiungi una regola ai vincoli, aggiungi la sua guardia in
+`test/guards/` **e il test che la fa fallire**: una guardia che non è mai stata
+vista scattare non si distingue da una che non sta guardando.

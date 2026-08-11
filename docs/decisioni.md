@@ -110,6 +110,62 @@ URL: quell'audio non esiste.
 dimentica: una foto da 4 MB committata una volta resta nella storia per
 sempre. Originali non compressi fuori dal repository.
 
+## Verifiche
+
+*(11 agosto 2026, PR 1)*
+
+**Le guardie sono funzioni pure, non asserzioni scritte dentro i test.**
+Prendono una stringa e restituiscono l'elenco delle violazioni. È l'unica
+forma che permette di provarle **anche in negativo** senza far girare in CI
+una build deliberatamente rotta: il test passa un CSS finto scritto a mano.
+Una guardia che non è mai stata vista scattare non si distingue da una che non
+sta guardando.
+
+**Restituiscono un elenco, mai un booleano.** Quando una guardia scatta fra
+sei mesi deve dire *quale* colore è incoerente e a che riga.
+
+**Due strati di test.** `unit` sulle fixture e sui sorgenti, `build` su ciò
+che finisce in `dist/`. Il secondo esiste perché per lo stile il sorgente non
+è una prova: il minificatore può togliere cose, e una volta l'ha fatto.
+
+**Ma per la regola 4 vale il contrario, e il sorgente è l'unico strato
+possibile.** Una doppia dichiarazione in `dist/` non c'è più per definizione:
+il minificatore l'ha collassata, ed è proprio quello il guasto. Le guardie
+sullo stile leggono quindi anche i blocchi `<style>` dei componenti `.astro`,
+non solo `src/styles/**/*.css`. Simmetricamente, per la regola 3 lo strato
+`build` basta e avanza: `oklch()` e ogni `color-mix()` su un `var()` arrivano
+in `dist/` intatti — viene abbassato solo il `color-mix()` a operandi
+costanti, che è innocuo perché al browser arriva già un esadecimale.
+
+**Una terna `--*-rgb` si confronta col colore dichiarato nel suo stesso
+blocco.** Lo stesso nome è legittimamente ridichiarato più volte —
+`[data-tema="carta"]` lo fa già, e la PR 4 emetterà un `--accento` per ciclo.
+Un indice sull'intero foglio confronterebbe ogni terna con l'ultima
+dichiarazione incontrata e segnalerebbe derive inesistenti.
+
+**La regola 6 ha la sua guardia.** `font-weight: 400 900` su una famiglia a
+peso unico legge come un errore, e infatti è l'unica regola del `CLAUDE.md`
+che qualcuno viola credendo di fare pulizia. Il guasto è muto: nessun errore,
+solo tutti i titoli un po' più grassi del disegno.
+
+**La build gira una volta per suite**, in `globalSetup`, non una volta per
+file. `REUSE_DIST=1` la salta in locale.
+
+**Node 24, fissata in `.nvmrc`, con `engine-strict`.** npm 10 e npm 11
+scrivono il lockfile in formati diversi — i campi `libc` — e la differenza
+emerge come duecento righe di diff sulla macchina di qualcun altro. Meglio un
+errore all'installazione che una riscrittura silenziosa.
+
+**Il controllo di deriva del lockfile rigenera e confronta.** `npm ci` non
+riscrive mai il lockfile, quindi da solo non può accorgersi di nulla: era un
+malinteso nel piano iniziale.
+
+**Il codice è in inglese, ciò che si legge è in italiano.** Cambia la regola
+precedente, che imponeva l'italiano ovunque. Confine: identificatori,
+commenti, nomi di file e campi in inglese; contenuti, stringhe visibili,
+documentazione e messaggi di commit in italiano. Il codice già scritto va
+migrato — vedi PR 2 in [piano.md](piano.md).
+
 ## Rimandate
 
 **Il dominio.** Se ne riparla a sito finito. Il design presuppone
