@@ -16,7 +16,11 @@ import {
   checkDuplicateSpeakers,
   checkKickerRepeatsCycle,
 } from '../guards/content.ts';
-import { checkAmbientTime, checkMissingTimeZone } from '../guards/dates.ts';
+import {
+  checkAmbientTime,
+  checkLocalDateMethods,
+  checkMissingTimeZone,
+} from '../guards/dates.ts';
 import { findNumberDateConflicts } from '../../src/lib/events.ts';
 import { checkDisplayFontWeightRange } from '../guards/fonts.ts';
 import {
@@ -33,6 +37,14 @@ const astroFiles = filesWithExtension(join(repoRoot, 'src'), ['.astro']);
 /* Everything in src/ that can format a date: the modules and the frontmatter
    of the components. */
 const codeFiles = filesWithExtension(join(repoRoot, 'src'), ['.ts', '.astro']);
+
+/* The one file allowed to read the clock, and the pure modules that are not.
+   A list built from the folder, not a path written by hand: the second pure
+   module under src/lib/ has to arrive guarded. */
+const CLOCK_HOLDER = 'src/lib/programme.ts';
+const pureModules = filesWithExtension(join(repoRoot, 'src/lib'), ['.ts']).filter(
+  (path) => path !== CLOCK_HOLDER,
+);
 
 /* All the CSS the source has to offer, in one string: the stylesheets, the
    <style> blocks of the components, and the inline `style` attributes — which
@@ -124,18 +136,22 @@ describe('src/**/*.astro component styles', () => {
   });
 });
 
-/* The two halves of the time zone.
+/* The three halves of the time zone.
  *
  * Cloudflare builds in UTC and the evenings happen in Turin. A formatter with
  * no `timeZone` is right on a laptop in Italy and two hours wrong in
- * production — nothing fails, the page just says «ore 19». The second guard
- * keeps the pure module unable to ask what time it is, which is what makes the
- * boundary testable at all: with `now` in the arguments the two clock changes
- * are four assertions in events.test.ts instead of two nights a year.
+ * production — nothing fails, the page just says «ore 19». The methods that
+ * read a date component in the machine's own zone are the same defect with no
+ * option to fix it, so they are forbidden rather than checked. And the last
+ * guard keeps the pure modules unable to ask what time it is, which is what
+ * makes the boundary testable at all: with `now` in the arguments the two
+ * clock changes are four assertions in events.test.ts instead of two nights a
+ * year.
  */
 describe('the code that handles dates', () => {
   it('has code to check in the first place', () => {
     expect(codeFiles.length).toBeGreaterThan(0);
+    expect(pureModules.length).toBeGreaterThan(0);
   });
 
   it.each(codeFiles)('%s names the time zone wherever it formats a date', (path) => {
@@ -144,11 +160,25 @@ describe('the code that handles dates', () => {
     );
   });
 
-  it('keeps src/lib/events.ts from reading the clock', () => {
-    // Pointed at the pure module alone: somewhere the clock has to be read,
-    // and that somewhere is loadProgramme(), once.
-    const path = 'src/lib/events.ts';
+  it.each(codeFiles)('%s reads no date component in the machine zone', (path) => {
+    expect(checkLocalDateMethods(read(path), path).map((violation) => violation.detail)).toEqual(
+      [],
+    );
+  });
+
+  it.each(pureModules)('%s does not read the clock', (path) => {
+    // Every module of src/lib/ except the one place the clock is allowed:
+    // loadProgramme(), once, with the value passed down from there. Named as
+    // an exception rather than as the only file checked — the guard used to
+    // be pointed at a single hard-coded path, so the second pure module
+    // would have arrived unguarded.
     expect(checkAmbientTime(read(path), path).map((violation) => violation.detail)).toEqual([]);
+  });
+
+  it('has the clock in programme.ts and nowhere else in src/lib', () => {
+    // The other side of the exception: if loadProgramme() ever stops reading
+    // the clock, the list above is guarding a rule nobody is bound by.
+    expect(checkAmbientTime(read(CLOCK_HOLDER), CLOCK_HOLDER).length).toBeGreaterThan(0);
   });
 });
 
@@ -188,9 +218,9 @@ describe('src/content', () => {
   it.each(events.map((event) => [event.path, event] as const))(
     '%s has a date that parses',
     (_path, event) => {
-      // Without this the check below would pass silently on an unreadable
-      // date: every comparison against an Invalid Date is false, so a
-      // programme with one would look perfectly ordered.
+      // The check below reports an unreadable date as well, but in a sentence
+      // about the programme. This one fails with the file name in the title
+      // of the test, which is what the editor who typed it needs.
       expect(Number.isNaN(dateOf(event).getTime())).toBe(false);
     },
   );

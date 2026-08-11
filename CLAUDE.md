@@ -79,11 +79,14 @@ non una preferenza.
     L'ordine del sito è il numero, non la data; se i due ordini divergono la
     build si ferma.
 
-11. **Ogni data si formatta dichiarando `timeZone: 'Europe/Rome'`**, e
-    `src/lib/events.ts` non legge l'orologio: `now` arriva sempre come
-    argomento. Cloudflare builda in UTC e le serate si svolgono a Torino: una
-    formattazione senza fuso è giusta sul portatile di chi la scrive e
-    pubblica *ore 19* al posto di *ore 21*. Due guardie in `test/guards/dates.ts`.
+11. **Ogni data si formatta dichiarando `timeZone: 'Europe/Rome'`**, i moduli
+    puri di `src/lib/` non leggono l'orologio — `now` arriva sempre come
+    argomento, e l'unico a crearlo è `programme.ts` — e non si usano i metodi
+    locali di `Date` (`getHours`, `getDay`, `getMonth`, `toDateString`): non
+    hanno un'opzione per dichiarare il fuso. Cloudflare builda in UTC e le
+    serate si svolgono a Torino: una formattazione senza fuso è giusta sul
+    portatile di chi la scrive e pubblica *ore 19* al posto di *ore 21*. Tre
+    guardie in `test/guards/dates.ts`.
 
 ## Lingua
 

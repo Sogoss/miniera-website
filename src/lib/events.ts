@@ -92,9 +92,12 @@ export function sortByNumber<T extends { number: number }>(events: readonly T[])
  * appointment, and opening on a struck-through scene would be the first thing
  * a visitor sees.
  *
- * With every evening behind us it returns the last one, which is the most
- * recent: -1 would become an empty opening scene. On an empty programme there
- * is no honest answer and it returns -1.
+ * With every evening behind us it opens on the most recent one that actually
+ * took place — a cancellation is no more an appointment behind us than ahead,
+ * and the fallback used to land on exactly the struck-through scene the line
+ * above steps over. Only if every evening was cancelled does it give the last
+ * one, having nothing better to offer. On an empty programme there is no
+ * honest answer and it returns -1.
  *
  * Expects the events already in the order of the site — sortByNumber.
  */
@@ -103,14 +106,29 @@ export function nextEventIndex(
   now: Date,
 ): number {
   const next = events.findIndex((event) => !event.cancelled && !isPast(event.date, now));
-  return next === -1 ? events.length - 1 : next;
+  if (next !== -1) return next;
+
+  for (let i = events.length - 1; i >= 0; i--) {
+    if (!events[i]?.cancelled) return i;
+  }
+
+  return events.length - 1;
 }
 
 /**
- * The evenings whose numbers and dates contradict each other, and the numbers
- * used twice. Returns the problems as sentences: programme.ts turns them into
- * a failed build, because a programme in the wrong order is not something to
- * discover in production.
+ * Everything the evenings say about themselves that cannot all be true at
+ * once: a date that will not read, a number used twice, an order by number
+ * that disagrees with the order by date. Returns the problems as sentences —
+ * programme.ts turns them into a failed build, because a programme in the
+ * wrong order is not something to discover in production.
+ *
+ * Each defect is reported once and then taken out of the way of the next
+ * check. A file with an unreadable date compared no better than a file with a
+ * good one — every comparison against an Invalid Date is false, so the pair
+ * looked out of order — and the sentence meant to explain it died formatting
+ * the date it could not read. A number used twice, left in, was then also
+ * reported as «#81 is numbered before #81 but happens after it», which is
+ * false on its face and sends the editor to check a date that is fine.
  *
  * The duplicate half will be caught by the routes of PR 9 too — two pages
  * claiming /81 — but nothing sees it before those routes exist.
@@ -124,10 +142,17 @@ export function findNumberDateConflicts(
   events: readonly { number: number; title: string; date: Date }[],
 ): string[] {
   const problems: string[] = [];
-  const ordered = sortByNumber(events);
-  const byNumber = new Map<number, (typeof ordered)[number]>();
+  const byNumber = new Map<number, { number: number; title: string; date: Date }>();
+  const comparable: { number: number; title: string; date: Date }[] = [];
 
-  for (const event of ordered) {
+  for (const event of sortByNumber(events)) {
+    if (Number.isNaN(event.date.getTime())) {
+      problems.push(
+        `${name(event)} has a date that cannot be read: an evening with no date has no place in the programme, and every comparison with it is false — which would leave the order below looking fine`,
+      );
+      continue;
+    }
+
     const twin = byNumber.get(event.number);
     if (twin) {
       problems.push(
@@ -135,12 +160,14 @@ export function findNumberDateConflicts(
       );
       continue;
     }
+
     byNumber.set(event.number, event);
+    comparable.push(event);
   }
 
-  for (let i = 1; i < ordered.length; i++) {
-    const earlier = ordered[i - 1];
-    const later = ordered[i];
+  for (let i = 1; i < comparable.length; i++) {
+    const earlier = comparable[i - 1];
+    const later = comparable[i];
     if (!earlier || !later) continue;
     if (earlier.date.getTime() <= later.date.getTime()) continue;
     problems.push(
@@ -151,8 +178,12 @@ export function findNumberDateConflicts(
   return problems;
 }
 
+/** An evening named the way an editor will recognise it. Tolerant of the
+ *  unreadable date, because naming the file is exactly what is needed then:
+ *  `romeDay` would throw a bare RangeError with nothing in it. */
 function name(event: { number: number; title: string; date: Date }): string {
-  return `#${event.number} «${event.title}» (${romeDay(event.date)})`;
+  const when = Number.isNaN(event.date.getTime()) ? 'unreadable date' : romeDay(event.date);
+  return `#${event.number} «${event.title}» (${when})`;
 }
 
 /* --- The Italian strings ------------------------------------------------- */

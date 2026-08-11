@@ -332,6 +332,30 @@ dominio*. In breve:
   silenzio il controllo d'ordine, perché ogni confronto con una *Invalid Date*
   è falso
 
+> **Trovato in revisione.** Dieci difetti, e la metà erano guardie che non
+> guardavano — la forma di guasto che questo repository si è dato l'impianto
+> per intercettare, ripetuta dentro l'impianto stesso. Un apostrofo negli
+> argomenti di un formattatore (`l'ora`) sfasava il conteggio delle virgolette,
+> e il controllo finiva per leggere il `timeZone` di *un'altra* chiamata più
+> in basso: nessuna violazione, mai. Il fuso veniva controllato per chiave e
+> non per valore, quindi `timeZone: 'UTC'` passava — ed `'UTC'` è già scritto
+> mezza dozzina di volte qui dentro, pronto da copiare. I metodi locali di
+> `Date` — `getHours`, `getDay` — non li vedeva nessuno strato: un componente
+> che ne usasse uno pubblicherebbe una serata di giovedì come mercoledì con la
+> suite verde. La guardia sull'orologio era puntata su un percorso scritto a
+> mano, così il secondo modulo puro sarebbe nato scoperto. E le righe di
+> continuazione di un commento `/* … */` venivano lette come codice, cioè una
+> guardia che diventa rossa sulla prosa — e quella la si spegne.
+>
+> Gli altri cinque: `nextEventIndex` contraddiceva il proprio contratto quando
+> l'ultima serata è annullata, `findNumberDateConflicts` moriva con un
+> `RangeError` proprio sulla data illeggibile che doveva raccontare — e prima
+> di morire accusava del disordine anche il numero doppio, con una frase falsa
+> in faccia («#81 viene prima di #81 ma si svolge dopo») — le asserzioni dello
+> strato `build` sarebbero diventate rosse da sole il 9 ottobre 2026, quando la
+> serata 82 passa, e si appoggiavano al `#78 · ` della pagina provvisoria
+> invece che a un `data-number` che lo scroller porterà comunque.
+
 ### Test manuali
 
 - Lettura a campione delle stringhe di data generate: maiuscole, preposizioni,

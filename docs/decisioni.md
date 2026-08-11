@@ -332,6 +332,38 @@ stringhe e letterali regex — resta la cosa più fragile che si potrebbe
 scrivere, ed era già stato scartato per la guardia sulla lingua dei commenti.
 *(PR 3)*
 
+**Lo strato `build` non asserisce mai quale serata è passata.** La pagina si
+costruisce con l'orologio vero, quindi *«la serata 82 è in programma»* sarebbe
+stato vero fino all'8 ottobre 2026 e poi avrebbe fatto diventare rossa la suite
+su `main` senza che nessuno avesse toccato niente. Da lì si asserisce solo ciò
+che non dipende da oggi: le stringhe di data, l'ordine, e la **coppia** fra lo
+stato di una serata e la sua nota — che è quello che prova davvero che la
+pagina la nota se la fa dare dal dominio invece di scriverla. Quale serata
+cada da che parte lo decide `events.test.ts`, dove `now` è un argomento.
+*(PR 3, in revisione)*
+
+**Le asserzioni su `dist/` si ancorano a `data-number`**, non alla decorazione
+della pagina provvisoria. Ancorate al `#78 · ` che quella pagina scrive, si
+sarebbero rotte tutte insieme il giorno in cui la PR 7 fa quello che il
+`CLAUDE.md` prescrive — sostituirla — e la prova sul fuso sarebbe stata da
+riscrivere da capo. Lo scroller porterà lo stesso attributo. *(PR 3, in
+revisione)*
+
+**Una guardia che non trova violazioni non è una guardia che passa.** La
+revisione della PR ne ha trovate cinque rotte in questo modo, dentro
+l'impianto che esiste apposta per questa forma di guasto: un apostrofo negli
+argomenti apriva una stringa che non si chiudeva più e faceva leggere il
+`timeZone` di un'altra chiamata; il fuso era controllato per chiave e non per
+valore, e `timeZone: 'UTC'` passava; i metodi locali di `Date` non li guardava
+nessuno; la guardia sull'orologio era puntata su un percorso scritto a mano
+invece che sulla cartella; e le righe di continuazione di un commento venivano
+lette come codice. Da qui due criteri: **quando lo scanner non capisce, deve
+parlare, non tacere** — un elenco di argomenti sbilanciato ora restituisce la
+stringa vuota, che fa scattare la guardia — e **l'elenco dei file guardati si
+ricava dalla cartella**, con l'eccezione dichiarata e a sua volta verificata:
+un test pretende che `programme.ts` l'orologio lo legga davvero. *(PR 3, in
+revisione)*
+
 **L'indipendenza dal fuso si prova eseguendo, non dichiarando.** `TZ` si legge
 una volta all'avvio del processo, quindi una suite sola prova solo la macchina
 su cui gira: in CI è UTC, su una scrivania a Torino no, ed è esattamente quella

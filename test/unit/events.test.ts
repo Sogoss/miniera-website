@@ -158,6 +158,20 @@ describe('nextEventIndex', () => {
     expect(nextEventIndex(programme, new Date('2027-01-01T12:00:00Z'))).toBe(2);
   });
 
+  it('steps over a cancelled evening on the way back, too', () => {
+    // The fallback used to return the last index whatever it held, which
+    // landed on exactly the struck-through scene the line above steps over —
+    // and it is the likeliest shape of all: the season ends, the last evening
+    // was called off.
+    const lastCancelled = [programme[0]!, programme[1]!, { ...programme[2]!, cancelled: true }];
+    expect(nextEventIndex(lastCancelled, new Date('2027-01-01T12:00:00Z'))).toBe(1);
+  });
+
+  it('gives the last evening when every one of them was cancelled', () => {
+    const allCancelled = programme.map((event) => ({ ...event, cancelled: true }));
+    expect(nextEventIndex(allCancelled, new Date('2027-01-01T12:00:00Z'))).toBe(2);
+  });
+
   it('has no answer for an empty programme, and says so', () => {
     expect(nextEventIndex([], now)).toBe(-1);
   });
@@ -235,7 +249,47 @@ describe('findNumberDateConflicts', () => {
   it('finds a number used twice, which no route exists yet to notice', () => {
     const broken = [...programme, { ...programme[2]!, title: 'Un doppione', number: 81 }];
     const problems = findNumberDateConflicts(broken);
-    expect(problems.some((problem) => problem.includes('same number'))).toBe(true);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('same number');
+  });
+
+  it('does not also accuse the duplicate of being out of order', () => {
+    // Left in the ordering pass, a second #81 dated in June produced «#81 is
+    // numbered before #81 but happens after it» — false on its face, and it
+    // sends the editor to check a date that is fine.
+    const broken = [
+      ...programme,
+      { number: 81, title: 'Un doppione', date: new Date('2026-06-01T21:00:00+02:00') },
+    ];
+    const problems = findNumberDateConflicts(broken);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('same number');
+  });
+
+  it('reports a date that cannot be read, and does not die formatting it', () => {
+    // The failure this replaces: every comparison with an Invalid Date is
+    // false, so the pair looked out of order, and the sentence meant to
+    // explain it threw a bare RangeError with no file name in it.
+    const broken = [
+      programme[0]!,
+      { number: 79, title: 'Data sbagliata', date: new Date('2026-13-45') },
+      programme[1]!,
+    ];
+    const problems = findNumberDateConflicts(broken);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('#79');
+    expect(problems[0]).toContain('cannot be read');
+  });
+
+  it('goes on checking the evenings around an unreadable one', () => {
+    const broken = [
+      { number: 78, title: 'Prima', date: new Date('nope') },
+      { number: 81, title: 'Seconda', date: new Date('2026-09-24T21:00:00+02:00') },
+      { number: 82, title: 'Terza', date: new Date('2025-10-08T21:00:00+02:00') },
+    ];
+    const problems = findNumberDateConflicts(broken);
+    expect(problems).toHaveLength(2);
+    expect(problems[1]).toContain('numbered before');
   });
 
   it('allows two evenings on the same day', () => {
