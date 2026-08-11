@@ -56,7 +56,7 @@ sostituisce un telefono vero.
 
 | # | PR | Branch | Stato |
 |---|---|---|---|
-| 1 | Impianto di verifica | `impianto-verifiche` | in revisione |
+| 1 | Impianto di verifica | `impianto-verifiche` | fatta |
 | 2 | Igiene: lingua, README, favicon, contenuti | `igiene-lingua-e-contenuti` | da fare |
 | 3 | Utilità di dominio | `lib-eventi` | da fare |
 | 4 | Accento dai cicli della collection | `accento-dai-cicli` | da fare |
