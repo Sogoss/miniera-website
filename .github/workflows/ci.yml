@@ -1,0 +1,43 @@
+name: ci
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# A new push supersedes the run still going for the same ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          # .nvmrc is the single source of truth for the Node version: this
+          # job, Cloudflare Pages and the development machines all read it.
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      # `npm ci` never rewrites package-lock.json, so on its own it cannot
+      # notice drift. Regenerating the lock and diffing it can: this is the
+      # step that would have caught the @fontsource packages sitting in the
+      # lockfile's production dependencies while package.json called them
+      # development-only.
+      - name: package-lock.json is in step with package.json
+        run: |
+          npm install --package-lock-only --ignore-scripts
+          git diff --exit-code package-lock.json
+
+      - run: npm run check
+
+      # Runs the guards over both the source and dist/, building once as part
+      # of the run — so a broken build fails here too.
+      - run: npm test
