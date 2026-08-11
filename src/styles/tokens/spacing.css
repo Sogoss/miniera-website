@@ -35,8 +35,3 @@
   --radius-pill: 999px;
 }
 
-@supports (height: 100svh) {
-  :root {
-    --h-scena: 100svh;
-  }
-}
