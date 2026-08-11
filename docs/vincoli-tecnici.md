@@ -35,22 +35,22 @@ Il minificatore CSS **collassa le doppie dichiarazioni**. Questo:
 
 ```css
 :root {
-  --h-scena: 100vh;    /* ripiego */
-  --h-scena: 100svh;
+  --scene-height: 100vh;    /* ripiego */
+  --scene-height: 100svh;
 }
 ```
 
-nel CSS pubblicato diventa solo `--h-scena:100svh`. Il ripiego sparisce
+nel CSS pubblicato diventa solo `--scene-height:100svh`. Il ripiego sparisce
 silenziosamente e non te ne accorgi guardando il sorgente: bisogna guardare il
 file in `dist/`.
 
 Va scritto così:
 
 ```css
-:root { --h-scena: 100vh; }
+:root { --scene-height: 100vh; }
 
 @supports (height: 100svh) {
-  :root { --h-scena: 100svh; }
+  :root { --scene-height: 100svh; }
 }
 ```
 
@@ -68,7 +68,7 @@ mandatory` — la posizione salta. È visibile e fastidioso.
 Con `svh` l'altezza resta stabile, al prezzo di una striscia scoperta quando
 la barra è ritratta. È il compromesso giusto per uno scroller a snap.
 
-Il token è `--h-scena` in `src/styles/tokens/spacing.css`.
+Il token è `--scene-height` in `src/styles/tokens/spacing.css`.
 
 ## Prestazioni dello scroller
 

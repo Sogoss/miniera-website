@@ -1,45 +1,45 @@
 /**
- * Ricopia i file dei caratteri dai pacchetti @fontsource a src/assets/fonts.
+ * Copies the font files from the @fontsource packages into src/assets/fonts.
  *
- * I woff2 stanno nel repo (non in node_modules) perche cosi Vite li versiona
- * con un hash e li serve con cache immutabile, e perche il sito non deve
- * dipendere da un CDN esterno. I pacchetti restano fra le dipendenze di
- * sviluppo solo come provenienza: quando esce una revisione di un carattere,
- * si aggiorna il pacchetto e si rilancia `npm run fonts:sync`.
+ * The woff2 files live in the repository (not in node_modules) because that
+ * way Vite fingerprints them with a hash and serves them with an immutable
+ * cache, and because the site must not depend on an external CDN. The packages
+ * stay among the development dependencies purely as provenance: when a font
+ * gets a new revision, update the package and run `npm run fonts:sync` again.
  *
- * Si copiano solo i sottoinsiemi latin e latin-ext: niente cirillico,
- * niente vietnamita.
+ * Only the latin and latin-ext subsets are copied: no Cyrillic, no Vietnamese.
  */
 import { copyFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const radice = join(dirname(fileURLToPath(import.meta.url)), '..');
-const destinazione = join(radice, 'src', 'assets', 'fonts');
+const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const destination = join(root, 'src', 'assets', 'fonts');
 
-const caratteri = [
+const fonts = [
   ['@fontsource-variable/archivo', ['archivo-latin-wght-normal.woff2', 'archivo-latin-ext-wght-normal.woff2', 'archivo-latin-wght-italic.woff2', 'archivo-latin-ext-wght-italic.woff2']],
   ['@fontsource/archivo-black', ['archivo-black-latin-400-normal.woff2', 'archivo-black-latin-ext-400-normal.woff2']],
   ['@fontsource/ibm-plex-mono', ['ibm-plex-mono-latin-400-normal.woff2', 'ibm-plex-mono-latin-ext-400-normal.woff2', 'ibm-plex-mono-latin-600-normal.woff2', 'ibm-plex-mono-latin-ext-600-normal.woff2']],
 ];
 
-const licenze = {
+const licences = {
   '@fontsource-variable/archivo': 'LICENSE-archivo.txt',
   '@fontsource/archivo-black': 'LICENSE-archivo-black.txt',
   '@fontsource/ibm-plex-mono': 'LICENSE-ibm-plex-mono.txt',
 };
 
-mkdirSync(destinazione, { recursive: true });
+mkdirSync(destination, { recursive: true });
 
-let copiati = 0;
-for (const [pacchetto, file] of caratteri) {
-  const base = join(radice, 'node_modules', ...pacchetto.split('/'));
-  for (const nome of file) {
-    copyFileSync(join(base, 'files', nome), join(destinazione, nome));
-    copiati++;
+let copied = 0;
+for (const [pkg, files] of fonts) {
+  const base = join(root, 'node_modules', ...pkg.split('/'));
+  for (const name of files) {
+    copyFileSync(join(base, 'files', name), join(destination, name));
+    copied++;
   }
-  // La OFL richiede che la licenza accompagni i file: va tenuta accanto a loro.
-  copyFileSync(join(base, 'LICENSE'), join(destinazione, licenze[pacchetto]));
+  // The OFL requires the licence to travel with the files: it belongs next to
+  // them.
+  copyFileSync(join(base, 'LICENSE'), join(destination, licences[pkg]));
 }
 
-console.log(`${copiati} file di caratteri e 3 licenze copiati in src/assets/fonts`);
+console.log(`${copied} font files and 3 licences copied into src/assets/fonts`);

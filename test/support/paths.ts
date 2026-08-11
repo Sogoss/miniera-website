@@ -27,6 +27,11 @@ export function read(relativePath: string): string {
   return readFileSync(join(repoRoot, relativePath), 'utf8');
 }
 
+/** The bytes of a file, for the published artifacts that are not text. */
+export function readBytes(relativePath: string): Buffer {
+  return readFileSync(join(repoRoot, relativePath));
+}
+
 export function readJson(relativePath: string): unknown {
   return JSON.parse(read(relativePath));
 }

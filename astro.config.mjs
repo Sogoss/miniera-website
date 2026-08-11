@@ -3,13 +3,13 @@ import { defineConfig } from 'astro/config';
 
 // https://astro.build/config
 export default defineConfig({
-  // Il dominio non e ancora stato acquistato (deciso: se ne riparla a sito
-  // finito). Quando c'e, va messo qui: serve a canonical, sitemap e ai meta
-  // Open Graph delle pagine evento, che sono il motivo per cui esistono gli
-  // URL /81.
+  // The domain has not been bought yet (decided: we come back to it once the
+  // site is finished). When it exists it goes here: it feeds the canonical
+  // URLs, the sitemap and the Open Graph meta of the event pages, which are
+  // the whole reason the /81 URLs exist.
   // site: 'https://www.laminieraculturale.it',
 
-  // Niente Tailwind: il design system e gia un sistema di token in CSS puro
-  // (src/styles/tokens). Aggiungere Tailwind significherebbe mantenere per
-  // sempre una traduzione fra due vocabolari che dicono la stessa cosa.
+  // No Tailwind: the design system is already a token system in plain CSS
+  // (src/styles/tokens). Adding Tailwind would mean maintaining a translation
+  // between two vocabularies that say the same thing, for ever.
 });

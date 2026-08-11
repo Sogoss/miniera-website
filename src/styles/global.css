@@ -4,11 +4,11 @@
 @import "./tokens/spacing.css";
 @import "./tokens/typography.css";
 
-/* Strato base del sistema.
-   I componenti si vestono da soli con i token; questo foglio veste il
-   DOCUMENTO — ed e la regola piu citata del readme del design: fondo blu
-   ovunque, testo crema, Archivo. Senza di esso ogni pagina parte bianca
-   con Times. */
+/* The base layer of the system.
+   Components dress themselves with the tokens; this stylesheet dresses the
+   DOCUMENT — and it is the most quoted rule of the design readme: blue ground
+   everywhere, cream text, Archivo. Without it every page starts out white and
+   set in Times. */
 
 *,
 *::before,
@@ -29,7 +29,7 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Titoli: Archivo Black, interlinea strettissima, crenatura negativa. */
+/* Titles: Archivo Black, very tight leading, negative tracking. */
 h1,
 h2,
 h3,
@@ -47,7 +47,7 @@ h3 { font-size: var(--text-2xl); }
 h4 { font-size: var(--text-xl); }
 
 p {
-  margin: 0 0 var(--sp-4);
+  margin: 0 0 var(--space-4);
   max-width: var(--max-content);
 }
 
@@ -57,7 +57,7 @@ a {
   text-underline-offset: 3px;
 }
 
-/* Nessuna trasparenza vetrosa: la messa a fuoco e una riga netta d'accento. */
+/* No glassy transparency: focus is a clean line of accent. */
 :focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
@@ -72,21 +72,21 @@ pre {
 hr {
   border: 0;
   border-top: 1px solid var(--border-hairline);
-  margin: var(--sp-6) 0;
+  margin: var(--space-6) 0;
 }
 
-/* Le immagini non sfondano mai il contenitore. */
+/* Images never break out of their container. */
 img,
 picture,
 svg {
   max-width: 100%;
 }
 
-/* Sobrio e breve: chi preferisce non muoversi, non si muove.
-   Rispetto all'export del design qui azzeriamo anche scorrimento morbido e
-   scroll-snap: erano proprio le due cose che l'export lasciava attive, e
-   sono quelle che danno fastidio a chi soffre di motion sickness. Per quegli
-   utenti lo scroller diventa una lista che si scorre normalmente. */
+/* Sober and short: those who would rather not move, do not move.
+   Compared with the design export this also switches off smooth scrolling and
+   scroll-snap: those were exactly the two things the export left on, and they
+   are the ones that trouble anyone prone to motion sickness. For those users
+   the scroller becomes a list that scrolls normally. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -1,9 +1,9 @@
 :root {
-  /* Scala tipografica — rapporto 1.25, ancorata a 16px */
+  /* Type scale — 1.25 ratio, anchored to 16px */
   --text-2xs: 0.6875rem;  /* 11 */
   --text-xs: 0.8125rem;   /* 13 */
   --text-sm: 0.9375rem;   /* 15 */
-  --text-md: 1.0625rem;   /* 17 — corpo di default */
+  --text-md: 1.0625rem;   /* 17 — default body */
   --text-lg: 1.3125rem;   /* 21 */
   --text-xl: 1.625rem;    /* 26 */
   --text-2xl: 2.0625rem;  /* 33 */
@@ -12,15 +12,15 @@
   --text-5xl: 4rem;       /* 64 */
   --text-6xl: 5rem;       /* 80 */
 
-  --leading-tight: 0.92;   /* titoli display, righe impilate */
+  --leading-tight: 0.92;   /* display titles, stacked lines */
   --leading-snug: 1.12;
   --leading-normal: 1.5;
   --leading-loose: 1.65;
 
   --tracking-display: -0.02em;
   --tracking-normal: 0;
-  --tracking-caps: 0.06em;   /* maiuscoletto, etichette */
-  --tracking-banner: 0.01em; /* fascia MINIERA CULTURALE */
+  --tracking-caps: 0.06em;   /* small caps, labels */
+  --tracking-banner: 0.01em; /* the MINIERA CULTURALE band */
 
   --weight-regular: 400;
   --weight-medium: 500;
@@ -28,7 +28,7 @@
   --weight-bold: 700;
   --weight-black: 900;
 
-  /* Ruoli */
+  /* Roles */
   --type-display: var(--weight-black) var(--text-5xl) / var(--leading-tight) var(--font-display);
   --type-title: var(--weight-black) var(--text-3xl) / var(--leading-snug) var(--font-display);
   --type-heading: var(--weight-bold) var(--text-xl) / var(--leading-snug) var(--font-sans);

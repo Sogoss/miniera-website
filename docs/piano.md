@@ -57,7 +57,7 @@ sostituisce un telefono vero.
 | # | PR | Branch | Stato |
 |---|---|---|---|
 | 1 | Impianto di verifica | `impianto-verifiche` | fatta |
-| 2 | Igiene: lingua, README, favicon, contenuti | `igiene-lingua-e-contenuti` | da fare |
+| 2 | Igiene: lingua, README, favicon, contenuti | `igiene-lingua-e-contenuti` | fatta |
 | 3 | Utilità di dominio | `lib-eventi` | da fare |
 | 4 | Accento dai cicli della collection | `accento-dai-cicli` | da fare |
 | 5 | Layout di base e forme di ritaglio | `layout-base` | da fare |
@@ -114,7 +114,7 @@ facili da violare senza accorgersene.
 
 ### Test automatici
 
-- Il ripiego `--h-scena: 100vh` **e** il blocco `@supports (height: 100svh)`
+- Il ripiego `--scene-height: 100vh` **e** il blocco `@supports (height: 100svh)`
   sono entrambi presenti nel CSS di `dist/` (regola 4)
 - Nessun artefatto del runtime di Claude Design in `dist/`: `x-dc`, `sc-for`,
   `sc-if`, `x-import`, `image-slot`, `DCLogic`, `support.js` (regola 8)
@@ -123,8 +123,8 @@ facili da violare senza accorgersene.
   `colors.css`, si converte l'esadecimale, si confronta (regola 3, seconda
   metà — è la parte che nessuno si accorge di aver rotto). Il colore si
   risolve **dentro il blocco** in cui sta la terna, perché lo stesso nome è
-  legittimamente ridichiarato più volte — da `[data-tema="carta"]` oggi, da un
-  `--accento` per ciclo alla PR 4
+  legittimamente ridichiarato più volte — da `[data-theme="paper"]` oggi, da un
+  `--accent` per ciclo alla PR 4
 - Nessuna doppia dichiarazione e nessun `color-mix()` nei blocchi `<style>` dei
   componenti `.astro`. Per la regola 4 il sorgente è **l'unico** strato
   possibile: in `dist/` il minificatore ha già collassato le due righe e non
@@ -161,36 +161,86 @@ cominciato, e finché non si chiude il codice già scritto contraddice il
 `CLAUDE.md` che lo governa. Va fatta qui, prima che i token e i campi vengano
 usati da tutto il resto.
 
+### Decisioni prese scrivendo la PR
+
+- **I nomi delle quattro collection restano in italiano** — `eventi`, `cicli`,
+  `sedi`, `relatori`, cartelle e chiavi: sono l'unico pezzo di codice che si
+  trova davanti chi redige i contenuti. I campi dentro quei file no, perché
+  nessuno li incontra: nel CMS ogni campo porta la sua etichetta italiana. È
+  un'eccezione dichiarata alla regola sulla lingua, scritta anche nel
+  `CLAUDE.md` perché fra sei mesi non sembri una svista da correggere
+- **I valori di `format` restano italiani** (`incontro`, `proiezione`,
+  `presentazione`): arrivano al lettore così come sono, e tradurli imporrebbe
+  una tabella di conversione in ogni componente che li mostra
+- **`interventi` diventa `materials`**, non `recordings`: il campo tiene
+  registrazioni *e* materiali collegati, e domani può essere un articolo
+
 ### Obiettivi
 
-- [ ] I commenti di `src/`, `scripts/` e `astro.config.mjs` sono in inglese.
-      Cadono con essi gli accenti mancanti — *perche*, *gia*, *cosi* — che
-      erano l'obiettivo originario di questo punto
-- [ ] I token CSS sono in inglese: `--h-scena` → `--scene-height`, `--accento`
-      → `--accent`, i colori di base, gli `--sp-*`, i `--veil-*`. Il ripiego
-      `@supports` va spostato insieme al token, e
-      `checkSceneHeightFallback` prende il nome nuovo — è già parametrizzata
+- [x] I commenti di `src/`, `scripts/` e `astro.config.mjs` sono in inglese, e
+      con essi le variabili di `sync-fonts.mjs`. Cadono così gli accenti
+      mancanti — *perche*, *gia*, *cosi* — che erano l'obiettivo originario di
+      questo punto
+- [x] I token CSS sono in inglese: `--h-scena` → `--scene-height`, `--accento`
+      → `--accent`, `--sp-*` → `--space-*`, i colori di base, i `--veil-*`, e
+      i selettori `[data-cycle]` e `[data-theme="paper"]`. Il ripiego
+      `@supports` si è spostato insieme al token, e `checkSceneHeightFallback`
+      ha preso il nome nuovo come valore predefinito — era parametrizzata
       apposta
-- [ ] I campi dello schema in `src/content.config.ts` sono in inglese, con le
-      etichette del CMS che restano in italiano. I file in `src/content/` si
-      adeguano
-- [ ] `README.md` alla radice non è più il template «Astro Starter Kit» e
+- [x] I campi dello schema in `src/content.config.ts` sono in inglese, con le
+      etichette del CMS che resteranno in italiano. I file in `src/content/`
+      si sono adeguati
+- [x] `README.md` alla radice non è più il template «Astro Starter Kit» e
       rimanda a `docs/`
-- [ ] La favicon viene dal marchio e non da Astro, in `.svg` e `.ico`
-- [ ] Esiste `src/content/relatori/piergiorgio-rosso.md` e la serata 81 non
-      elenca più due volte la stessa persona
-- [ ] La serata 81 non ha più un `occhiello` che ripete il nome del ciclo
-- [ ] `npm run build` continua a passare
+- [x] La favicon viene dal marchio e non da Astro, in `.svg` e `.ico`. Il
+      marchio esteso a 16px è illeggibile e la variante breve non esiste
+      (regola 7): la riduzione è la tessera blu con la barra arancio e
+      l'iniziale. Il `.ico` lo rigenera `npm run build`, non una mano che se ne
+      ricorda
+- [x] Esiste `src/content/relatori/piergiorgio-rosso.md` e la serata 81 non
+      elenca più due volte la stessa persona — ma sovrascrive il ruolo di uno
+      dei due, che è l'unico modo di tenere esercitato quel ramo
+- [x] La serata 81 non ha più un `occhiello` che ripete il nome del ciclo
+- [x] `npm run build` continua a passare
 
 ### Test automatici
 
-- Nessun commento in italiano resta in `src/`, `scripts/` e nei file di
-  configurazione
-- Nessuna proprietà personalizzata CSS con un nome italiano
+- Nessuna proprietà personalizzata CSS, e nessun attributo `data-*`, con un
+  nome italiano — nel sorgente e in `dist/`. Il confronto è per segmento fra
+  trattini, non per sottostringa: un futuro `--shadow-blur` non contiene *blu*.
+  Due guardie, non una: il selettore `[data-cycle="3"]` è CSS, l'attributo
+  `data-cycle={n}` è markup, e la rinomina può fermarsi a metà
+- Le regole 3 e 4 valgono anche per gli attributi `style` in linea, non solo
+  per i blocchi `<style>`
+- Il frontmatter di ogni file di contenuto si legge: uno che non si legge fa
+  fallire un test che lo nomina, non l'intero file di test mentre si raccoglie
+- Almeno un evento sovrascrive il ruolo di un relatore
+- **Ogni `var(--x)` trova la sua dichiarazione**, in `dist/` e nel sorgente
+  concatenato. Comprese le letture scritte negli attributi `style` in linea,
+  che non stanno in nessun foglio di stile
+- Nessun evento elenca due volte la stessa persona fra i relatori
+- L'occhiello di un evento non contiene il nome del ciclo a cui appartiene
 - Le guardie della PR 1 continuano a passare **dopo** la rinomina dei token:
   è il vero collaudo della loro indipendenza dai nomi
-- Nessun evento elenca due volte la stessa persona fra i relatori
-- L'`occhiello` di un evento non contiene il nome del ciclo a cui appartiene
+
+> **Aggiunto in corsa.** La guardia sui `var()` non vedeva gli attributi
+> `style` in linea: rompendo un token di proposito nella pagina provvisoria,
+> passava. Un `var()` scritto in un attributo non sta in nessun foglio di
+> stile, né nel sorgente né in `dist/`. Ora `readPublishedCss()` legge anche
+> quelli, e con essa tutte le guardie sullo stile. È la forma che userà lo
+> scroller della PR 7 per l'accento di ogni scena.
+
+> **Trovato rileggendo.** Quell'allargamento agli attributi in linea era
+> arrivato a metà: `readPublishedCss()` li leggeva, ma nel sorgente le regole 3
+> e 4 continuavano a guardare i soli blocchi `<style>` — e un `color-mix()`
+> scritto in un attributo, che è la forma dell'export di Claude Design, non lo
+> vedeva nessuno strato. Insieme sono venuti fuori altri tre buchi dello stesso
+> tipo, tutti «la suite è verde e non sta guardando»: il `data-*` italiano nel
+> markup, gli id delle entry ricavati col nome del file invece che come li
+> ricava Astro — con la guardia sull'occhiello che smetteva di controllare in
+> silenzio — e un `yaml.parse` senza rete che, capitando mentre vitest
+> raccoglie i test, portava giù `sources.test.ts` intero senza dire quale file
+> di contenuto lo avesse rotto.
 
 ### Test manuali
 
@@ -204,23 +254,23 @@ usati da tutto il resto.
 
 **Branch:** `lib-eventi` · **Dipende da:** 1
 
-`src/lib/eventi.ts`: il cuore logico del sito, puro e testabile, che tutte le
+`src/lib/events.ts`: il cuore logico del sito, puro e testabile, che tutte le
 pagine useranno.
 
 ### Obiettivi
 
 - [ ] Ordinamento cronologico degli eventi
-- [ ] `passato` / `futuro` calcolati **in `Europe/Rome`**: una serata diventa
+- [ ] Passato e futuro calcolati **in `Europe/Rome`**: una serata diventa
       già svolta alla mezzanotte del giorno successivo, non all'ora di inizio
 - [ ] Formattazione italiana delle date: `24 set` per la Timeline,
       `giovedì 24 settembre, ore 21` per la scena
 - [ ] Risoluzione dei riferimenti a ciclo, sede e relatori, con il ruolo
       dell'evento che sovrascrive quello della persona
 - [ ] Nota predefinita calcolata — *Ingresso libero, posti limitati* /
-      *Puntata registrata in sala* — sovrascrivibile dal campo `nota`
+      *Puntata registrata in sala* — sovrascrivibile dal campo `note`
 - [ ] Indice della prima serata futura, su cui si aprirà lo scroller
-- [ ] Un controllo alla build fallisce se l'ordine per `numero` e l'ordine per
-      `data` divergono
+- [ ] Un controllo alla build fallisce se l'ordine per `number` e l'ordine per
+      `date` divergono
 
 ### Test automatici
 
@@ -232,7 +282,7 @@ pagine useranno.
 - Il ruolo dichiarato sull'evento vince su quello della persona; se manca, vale
   quello della persona
 - Una serata annullata resta nell'elenco e conserva il suo numero
-- Ordine per `numero` e ordine per `data` coincidono
+- Ordine per `number` e ordine per `date` coincidono
 
 ### Test manuali
 
@@ -245,12 +295,12 @@ pagine useranno.
 
 **Branch:** `accento-dai-cicli` · **Dipende da:** 3
 
-Il ponte che oggi manca fra `src/content/cicli/` e `--accento`. Serve prima
+Il ponte che oggi manca fra `src/content/cicli/` e `--accent`. Serve prima
 dello scroller, che cambia accento a ogni serata.
 
 ### Obiettivi
 
-- [ ] Le regole `[data-ciclo="N"] { --accento; --accento-rgb }` sono emesse
+- [ ] Le regole `[data-cycle="N"] { --accent; --accent-rgb }` sono emesse
       alla build da ogni ciclo presente nella collection
 - [ ] I cinque colori di `colors.css` restano come valori predefiniti
       dichiarati, non come unica fonte
@@ -281,7 +331,7 @@ dello scroller, che cambia accento a ogni serata.
 - [ ] `src/layouts/Base.astro`: `lang="it"`, meta, Open Graph e Twitter,
       `global.css`, slot
 - [ ] Link «salta al programma», visibile quando riceve la messa a fuoco
-- [ ] `src/components/FormeRitaglio.astro` con i `<clipPath>` del design, da
+- [ ] `src/components/ClipShapes.astro` con i `<clipPath>` del design, da
       includere una volta in ogni pagina che li usa
 - [ ] La pagina provvisoria continua a funzionare sopra il nuovo layout
 
@@ -303,14 +353,17 @@ dello scroller, che cambia accento a ogni serata.
 
 **Branch:** `design-system-astro` · **Dipende da:** 5
 
-`Bottone` · `Etichetta` · `Scheda` · `Marchio` · `FasciaFirma` ·
-`BadgePuntata` · `RigaOspite` · `SchedaEvento`, portati da React a `.astro`.
+`Button` · `Label` · `Card` · `Brand` · `SignatureBand` · `EpisodeBadge` ·
+`GuestRow` · `EventCard`, portati da React a `.astro`. Nell'export del design
+si chiamano `Bottone`, `Etichetta`, `Scheda`, `Marchio`, `FasciaFirma`,
+`BadgePuntata`, `RigaOspite`, `SchedaEvento`: i nomi qui sono quelli del
+`CLAUDE.md`, perché un componente è codice.
 
 ### Obiettivi
 
 - [ ] Gli otto componenti esistono in `src/components/`, nessuna isola React
-- [ ] `Bottone` replica l'effetto premuto con `:active`, senza JavaScript
-- [ ] `Marchio` **non ha la prop `forma`**: la variante breve non esiste, così
+- [ ] `Button` replica l'effetto premuto con `:active`, senza JavaScript
+- [ ] `Brand` **non ha la prop `forma`**: la variante breve non esiste, così
       non può essere usata per sbaglio. Nell'export era comunque muta —
       restituiva lo stesso testo dell'estesa
 - [ ] Gli stili stanno nei `<style>` dei componenti e usano i token, non valori
@@ -321,7 +374,7 @@ dello scroller, che cambia accento a ogni serata.
 ### Test automatici
 
 - Dovunque compaia il marchio compare la scritta «in Periferia»
-- Le varianti di `Bottone` e `Etichetta` rendono i token attesi
+- Le varianti di `Button` e `Label` rendono i token attesi
 - Nessun valore colore grezzo nei componenti: solo `var(--…)`
 - Nessuna dipendenza React entra nel bundle prodotto
 
@@ -341,7 +394,7 @@ Sostituisce la pagina provvisoria. Solo le scene: la Timeline è la PR dopo.
 
 ### Obiettivi
 
-- [ ] `/` è lo scroller a scroll-snap, con una sezione alta `--h-scena` per
+- [ ] `/` è lo scroller a scroll-snap, con una sezione alta `--scene-height` per
       serata
 - [ ] Si apre sulla prima serata futura
 - [ ] `content-visibility: auto` e `contain-intrinsic-size` sulle sezioni,
@@ -413,7 +466,7 @@ scroller ha comunque accesso completo ai contenuti.
 
 ### Obiettivi
 
-- [ ] Rotta `/[numero]`, una pagina per serata, con il titolo in `<h1>`
+- [ ] Rotta `/[number]`, una pagina per serata, con il titolo in `<h1>`
 - [ ] Meta Open Graph con la foto tema — è il motivo per cui queste pagine
       esistono
 - [ ] Una serata annullata conserva pagina e numero, e mostra il suo stato

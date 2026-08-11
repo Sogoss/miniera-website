@@ -109,6 +109,19 @@ presentazionali e uno solo ha stato — `Bottone`, per l'effetto premuto,
 replicabile con `:active`. Spedire React per otto componenti senza logica su
 un sito vetrina statico non si giustifica.
 
+Nel portarli cambiano nome: un componente è codice, e il codice è in inglese.
+
+| Nell'export | Da noi |
+|---|---|
+| `Bottone` | `Button` |
+| `Etichetta` | `Label` |
+| `Scheda` | `Card` |
+| `Marchio` | `Brand` |
+| `FasciaFirma` | `SignatureBand` |
+| `BadgePuntata` | `EpisodeBadge` |
+| `RigaOspite` | `GuestRow` |
+| `SchedaEvento` | `EventCard` |
+
 ### Regola del marchio
 
 Dal `CLAUDE.md` dell'export del design, e vale sempre:
@@ -137,20 +150,20 @@ Nell'export serviva quasi ovunque solo ad applicare un canale alpha a un
 colore di base:
 
 ```css
-/* prima */  --text-secondary: color-mix(in srgb, var(--crema-100) 68%, transparent);
-/* dopo  */  --text-secondary: rgba(var(--crema-100-rgb), 0.68);
+/* prima */  --text-secondary: color-mix(in srgb, var(--cream-100) 68%, transparent);
+/* dopo  */  --text-secondary: rgba(var(--cream-100-rgb), 0.68);
 ```
 
 `rgba()` fa la stessa identica cosa ed è supportato ovunque. Il legame con il
-colore di base non si perde: passa dalle terne `--crema-100-rgb`,
-`--blu-700-rgb`, `--blu-900-rgb`, `--accento-rgb`.
+colore di base non si perde: passa dalle terne `--cream-100-rgb`,
+`--blue-700-rgb`, `--blue-900-rgb`, `--accent-rgb`.
 
 **Se cambi un colore di base, cambia anche la sua terna.** Sono la stessa
 informazione scritta due volte, e nessuno se ne accorge finché non stona
 qualcosa.
 
 L'unico caso in cui `color-mix()` guadagnava davvero qualcosa era sopra
-`--accento`, che cambia col ciclo e quindi non si può precalcolare. Anche
+`--accent`, che cambia col ciclo e quindi non si può precalcolare. Anche
 quello è coperto: ogni ciclo porta la propria terna.
 
 ### Via `oklch()`
@@ -179,8 +192,8 @@ illeggibile sotto Safari 16.2"* — i colori del testo erano costruiti con
 
 ### Aggiunte
 
-- `--h-scena`, l'altezza di una sezione dello scroller
-- `--veil-barra`, `--veil-barra-forte`, `--veil-modale` per le superfici
+- `--scene-height`, l'altezza di una sezione dello scroller
+- `--veil-bar`, `--veil-bar-strong`, `--veil-modal` per le superfici
   translucide, che nel design erano `color-mix` scritti nel markup
 
 ## Caratteri

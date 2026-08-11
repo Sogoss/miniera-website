@@ -2,45 +2,52 @@ import { defineCollection, reference, z } from 'astro:content';
 import { glob } from 'astro/loaders';
 
 /**
- * Quattro collection. Le tre di supporto — cicli, sedi, relatori — esistono
- * perche i loro valori si ripetono fra un evento e l'altro: tenerle come campi
- * di testo dentro l'evento significherebbe ricaricare la stessa foto a ogni
- * partecipazione e riscrivere lo stesso indirizzo ottanta volte, sbagliandolo
- * prima o poi.
+ * Four collections. The three supporting ones — cicli, sedi, relatori — exist
+ * because their values repeat from one event to the next: keeping them as text
+ * fields inside the event would mean re-uploading the same photo at every
+ * appearance and rewriting the same address eighty times, getting it wrong
+ * sooner or later.
  *
- * Quello che NON sta qui, ed e voluto:
- * - `passato` / `futuro`: si calcolano da `data` al momento della build, non
- *   si scrivono a mano. Un rebuild notturno tiene il sito allineato.
- * - `dataBreve` ("20 mar") e la data distesa ("giovedi 20 marzo, ore 21"):
- *   sono formattazioni di `data`, non dati.
- * - `nomeCiclo`: viene dal riferimento al ciclo.
+ * What is NOT here, and deliberately so:
+ * - past / upcoming: they are worked out from `date` at build time, never
+ *   written by hand. A nightly rebuild keeps the site in step.
+ * - a short date ("20 mar") and a long one ("giovedì 20 marzo, ore 21"): those
+ *   are formattings of `date`, not data.
+ * - the cycle name: it comes from the reference to the cycle.
+ *
+ * The collection names stay Italian — `eventi`, `cicli`, `sedi`, `relatori` —
+ * against the rest of the language rule, and on purpose: they are the folders
+ * an editor sees in the repository, and the only piece of the code that
+ * reaches someone who does not write code. The field names below are English
+ * because nobody meets them: in the CMS every field carries an Italian label.
  */
 
-const esadecimale = /^#[0-9a-fA-F]{6}$/;
+const hexColour = /^#[0-9a-fA-F]{6}$/;
 
-/** I cicli sono etichette editoriali, non periodi: piu cicli possono essere
- *  aperti in contemporanea, e due eventi consecutivi possono appartenere a
- *  cicli diversi. Ognuno porta il proprio colore, che diventa `--accento`. */
+/** Cycles are editorial labels, not periods: several can be open at the same
+ *  time, and two consecutive events can belong to different cycles. Each
+ *  carries its own colour, which becomes --accent. */
 const cicli = defineCollection({
   loader: glob({ base: './src/content/cicli', pattern: '**/*.md' }),
   schema: z.object({
-    numero: z.number().int().positive(),
-    nome: z.string().min(1),
-    // Esadecimale a sei cifre. I cinque colori predefiniti del design sono in
-    // src/styles/tokens/colors.css: sono tarati a luminosita e saturazione
-    // uguali apposta, perche nessun ciclo prevalga sugli altri e il contrasto
-    // sul fondo blu resti garantito. Discostarsene molto rompe quella taratura.
-    colore: z.string().regex(esadecimale, 'Serve un esadecimale a 6 cifre, es. #f26419'),
+    number: z.number().int().positive(),
+    name: z.string().min(1),
+    // Six-digit hex. The five defaults of the design are in
+    // src/styles/tokens/colors.css: they are tuned to equal lightness and
+    // saturation on purpose, so that no cycle prevails over the others and the
+    // contrast against the blue ground stays guaranteed. Straying far from
+    // that breaks the tuning.
+    color: z.string().regex(hexColour, 'Serve un esadecimale a 6 cifre, es. #f26419'),
   }),
 });
 
 const sedi = defineCollection({
   loader: glob({ base: './src/content/sedi', pattern: '**/*.md' }),
   schema: z.object({
-    nome: z.string().min(1),
-    indirizzo: z.string().min(1),
-    citta: z.string().min(1),
-    mappa: z.string().url().optional(),
+    name: z.string().min(1),
+    address: z.string().min(1),
+    city: z.string().min(1),
+    map: z.string().url().optional(),
   }),
 });
 
@@ -48,12 +55,12 @@ const relatori = defineCollection({
   loader: glob({ base: './src/content/relatori', pattern: '**/*.md' }),
   schema: ({ image }) =>
     z.object({
-      nome: z.string().min(1),
-      // Ruolo predefinito della persona. Il singolo evento puo sovrascriverlo,
-      // perche un ruolo cambia nel tempo e in una serata del 2025 va mostrato
-      // quello di allora.
-      ruolo: z.string().min(1),
-      foto: image().optional(),
+      name: z.string().min(1),
+      // The person's default role. A single event may override it, because a
+      // role changes over time and an evening from 2025 has to show the one
+      // held back then.
+      role: z.string().min(1),
+      photo: image().optional(),
     }),
 });
 
@@ -61,60 +68,63 @@ const eventi = defineCollection({
   loader: glob({ base: './src/content/eventi', pattern: '**/*.md' }),
   schema: ({ image }) =>
     z.object({
-      // Il numero editoriale della serata: e l'URL pubblico (/81) e
-      // l'associazione lo assegna alla programmazione, non a serata avvenuta.
-      // Non va MAI riassegnato: un link gia condiviso punterebbe a un evento
-      // diverso. Se due eventi finissero con lo stesso numero la build fallisce
-      // da sola, perche due rotte reclamerebbero lo stesso percorso.
-      numero: z.number().int().positive(),
+      // The editorial number of the evening: it is the public URL (/81) and
+      // the association assigns it when scheduling, not once the evening has
+      // happened. It must NEVER be reassigned: a link already shared would
+      // point at a different event. If two events ended up with the same
+      // number the build fails by itself, because two routes would claim the
+      // same path.
+      number: z.number().int().positive(),
 
-      titolo: z.string().min(1),
-      occhiello: z.string().optional(),
+      title: z.string().min(1),
+      kicker: z.string().optional(),
 
-      // Data e ora di inizio. L'evento risulta "gia svolto" dalla mezzanotte
-      // del giorno successivo, cosi a serata in corso resta "in programma".
-      data: z.coerce.date(),
+      // Start date and time. The event counts as past from midnight of the
+      // following day, so that while it is under way it still reads as
+      // upcoming.
+      date: z.coerce.date(),
 
-      ciclo: reference('cicli'),
-      formato: z.enum(['incontro', 'proiezione', 'presentazione']),
-      descrizione: z.string().min(1),
-      sede: reference('sedi'),
+      cycle: reference('cicli'),
+      format: z.enum(['incontro', 'proiezione', 'presentazione']),
+      description: z.string().min(1),
+      venue: reference('sedi'),
 
-      relatori: z
+      speakers: z
         .array(
           z.object({
-            persona: reference('relatori'),
-            ruolo: z.string().optional(), // sovrascrive quello della persona
+            person: reference('relatori'),
+            role: z.string().optional(), // overrides the person's own
           }),
         )
         .default([]),
 
-      // Foto tema della serata (locandina per gli eventi futuri, scatto in sala
-      // per quelli passati). Massimo 1600px sul lato lungo: il file sorgente
-      // resta nel repo per sempre, anche se poi lo sostituisci.
-      foto: image().optional(),
+      // Theme photo of the evening (a poster for upcoming events, a shot from
+      // the room for past ones). At most 1600px on the long side: the source
+      // file stays in the repository for ever, even once you replace it.
+      photo: image().optional(),
 
-      // Solo per gli eventi passati.
-      presenze: z.number().int().nonnegative().optional(),
+      // Past events only.
+      attendance: z.number().int().nonnegative().optional(),
 
-      // Registrazioni e interventi. Di solito al massimo tre, ma non mettiamo
-      // un tetto: il campo e generico apposta, non e detto che resti YouTube.
-      interventi: z
+      // Recordings and related material. Usually three at most, but there is
+      // no ceiling: the field is generic on purpose, it will not necessarily
+      // stay YouTube.
+      materials: z
         .array(
           z.object({
-            etichetta: z.string().min(1),
+            label: z.string().min(1),
             url: z.string().url(),
           }),
         )
         .default([]),
 
-      // Una serata annullata conserva il suo numero e la sua pagina: chi aveva
-      // gia condiviso /82 non deve trovarci un 404.
-      annullato: z.boolean().default(false),
+      // A cancelled evening keeps its number and its page: whoever had already
+      // shared /82 must not find a 404 there.
+      cancelled: z.boolean().default(false),
 
-      // Sovrascrive la nota calcolata ("Ingresso libero, posti limitati" /
+      // Overrides the computed note ("Ingresso libero, posti limitati" /
       // "Puntata registrata in sala").
-      nota: z.string().optional(),
+      note: z.string().optional(),
     }),
 });
 

@@ -1,19 +1,19 @@
-/* Font self-hostati. I file arrivano dai pacchetti @fontsource (vedi lo
- * script `fonts:sync` in package.json) e sono copiati in src/assets/fonts,
- * cosi Vite li versiona con un hash e li serve con cache immutabile.
- * Tutti e tre i caratteri sono SIL Open Font License 1.1 — le licenze stanno
- * accanto ai file. Niente CDN di Google: un round-trip in meno nel percorso
- * critico, e nessun dato dei visitatori verso terzi.
+/* Self-hosted fonts. The files come from the @fontsource packages (see the
+ * `fonts:sync` script in package.json) and are copied into src/assets/fonts,
+ * so that Vite fingerprints them with a hash and serves them with an immutable
+ * cache. All three families are SIL Open Font License 1.1 — the licences sit
+ * next to the files. No Google CDN: one round-trip less on the critical path,
+ * and no visitor data going to a third party.
  *
- * Nota su Archivo Black: e una famiglia a peso unico, che @fontsource
- * dichiara a 400. I token pero chiedono il peso 900 (--weight-black), e in
- * quel caso il browser non trova corrispondenza e applica il grassetto
- * sintetico, ingrossando i titoli rispetto al disegno. Qui la dichiariamo
- * con intervallo `font-weight: 400 900`: qualunque peso in quell'intervallo
- * usa i glifi veri, senza sintesi.
+ * A note on Archivo Black: it is a single-weight family, which @fontsource
+ * declares at 400. The tokens, however, ask for weight 900 (--weight-black),
+ * and in that case the browser finds no match and applies a synthetic bold,
+ * thickening the titles away from the design. Here it is declared with the
+ * range `font-weight: 400 900`: any weight in that span uses the real glyphs,
+ * with no synthesis.
  */
 
-/* --- Archivo (variabile, testo) -------------------------------------- */
+/* --- Archivo (variable, text) ---------------------------------------- */
 @font-face {
   font-family: 'Archivo';
   font-style: normal;
@@ -52,7 +52,7 @@
   font-family: 'Archivo Black';
   font-style: normal;
   font-display: swap;
-  font-weight: 400 900;   /* vedi la nota in testa al file */
+  font-weight: 400 900;   /* see the note at the head of this file */
   src: url('../../assets/fonts/archivo-black-latin-400-normal.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
@@ -65,7 +65,7 @@
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
-/* --- IBM Plex Mono (etichette, date) --------------------------------- */
+/* --- IBM Plex Mono (labels, dates) ----------------------------------- */
 @font-face {
   font-family: 'IBM Plex Mono';
   font-style: normal;
