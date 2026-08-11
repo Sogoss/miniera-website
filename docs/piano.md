@@ -34,12 +34,19 @@ cose*. I test stanno quindi su due strati.
 
 | Strato | Cosa verifica | Come |
 |---|---|---|
-| Unitario | la logica pura di `src/lib/` — date, fusi, ordinamento | vitest |
-| Sulla build | quello che arriva davvero in `dist/`, HTML e CSS | build + asserzioni sui file prodotti |
+| `unit` | le guardie su fixture rotte, e la logica pura di `src/lib/` — date, fusi, ordinamento | vitest, meno di un secondo |
+| `build` | quello che arriva davvero in `dist/`, HTML e CSS | una build per suite, poi asserzioni sui file prodotti |
 
 Il secondo strato è dove vivono le **guardie ai vincoli**: sono l'unico posto
 in cui le regole del [CLAUDE.md](../CLAUDE.md) sono verificabili sul serio,
 perché parlano del file pubblicato e non del sorgente.
+
+Le guardie sono **funzioni pure** in `test/guards/`: prendono una stringa e
+restituiscono l'elenco delle violazioni. È questa forma che permette di
+provarle anche in negativo nello strato `unit`, passando loro un file rotto
+scritto a mano — senza dover far girare in CI una build deliberatamente
+sbagliata. Una guardia che non è mai stata vista scattare non si distingue da
+una che non sta guardando.
 
 I test manuali non sono un ripiego: snap, scorrimento morbido su iOS e
 anteprime social non sono verificabili in automatico, e l'emulazione non
@@ -49,7 +56,7 @@ sostituisce un telefono vero.
 
 | # | PR | Branch | Stato |
 |---|---|---|---|
-| 1 | Impianto di verifica | `impianto-verifiche` | da fare |
+| 1 | Impianto di verifica | `impianto-verifiche` | in revisione |
 | 2 | Igiene: lingua, README, favicon, contenuti | `igiene-lingua-e-contenuti` | da fare |
 | 3 | Utilità di dominio | `lib-eventi` | da fare |
 | 4 | Accento dai cicli della collection | `accento-dai-cicli` | da fare |
@@ -78,16 +85,23 @@ facili da violare senza accorgersene.
 
 ### Obiettivi
 
-- [ ] `npm test` esiste e gira in locale
-- [ ] `astro check` passa senza errori di tipo
-- [ ] La CI di GitHub Actions gira su ogni PR verso `main` ed esegue build,
+- [x] `npm test` esiste e gira in locale
+- [x] `astro check` passa senza errori di tipo
+- [x] La CI di GitHub Actions gira su ogni PR verso `main` ed esegue build,
       typecheck e test
-- [ ] Ogni guardia è provata anche in negativo, con casi che devono fallire
-- [ ] `.nvmrc` fissa la versione di Node, e la CI usa quella. Il lockfile viene
-      rigenerato una volta con quel npm e `npm ci` smette di modificarlo: com'è
-      committato oggi è disallineato dal `package.json` — tiene i pacchetti
-      `@fontsource` fra le `dependencies` invece che fra le `devDependencies` —
-      ed è stato generato con una versione di npm diversa
+- [x] Ogni guardia è provata anche in negativo, con casi che devono fallire
+- [x] `.nvmrc` fissa la versione di Node — **la 24** — e la CI usa quella. Il
+      lockfile viene rigenerato una volta con quel npm: com'era committato
+      teneva i pacchetti `@fontsource` fra le `dependencies` invece che fra le
+      `devDependencies`, ed era stato generato con una versione di npm diversa
+
+> **Corretto in corsa.** Questo punto diceva anche «e `npm ci` smette di
+> modificarlo». Era un malinteso: `npm ci` **non riscrive mai** il lockfile,
+> quindi da solo non può accorgersi di nulla e l'obiettivo era già vero per
+> costruzione. Il difetto reale era un altro e si è verificato: `npm ci
+> --omit=dev` installava i `@fontsource` come dipendenze di produzione. Il
+> controllo che intercetta davvero la deriva è rigenerare il lockfile e
+> confrontarlo, ed è quello che fa la CI.
 
 ### Test automatici
 
@@ -100,7 +114,9 @@ facili da violare senza accorgersene.
   `colors.css`, si converte l'esadecimale, si confronta (regola 3, seconda
   metà — è la parte che nessuno si accorge di aver rotto)
 - Nessuna dipendenza da Tailwind in `package.json` (regola 2)
-- In CI, dopo `npm ci` il `package-lock.json` non risulta modificato
+- Il lockfile concorda con `package.json` su cosa è di sviluppo — controllo
+  offline, senza rete e senza git
+- In CI, il lockfile rigenerato non differisce da quello committato
 
 ### Test manuali
 
@@ -121,10 +137,25 @@ facili da violare senza accorgersene.
 Nessun cambiamento di comportamento. Rende il repository coerente con le regole
 che si è dato.
 
+La parte più grossa è la **migrazione all'inglese del codice esistente**: la
+regola sulla lingua è cambiata nella PR 1, quando il progetto era già
+cominciato, e finché non si chiude il codice già scritto contraddice il
+`CLAUDE.md` che lo governa. Va fatta qui, prima che i token e i campi vengano
+usati da tutto il resto.
+
 ### Obiettivi
 
-- [ ] Gli accenti sono ripristinati nei commenti di `src/`, `scripts/` e
-      `astro.config.mjs` — *perché*, *già*, *così*, *più*, *può*, *è*
+- [ ] I commenti di `src/`, `scripts/` e `astro.config.mjs` sono in inglese.
+      Cadono con essi gli accenti mancanti — *perche*, *gia*, *cosi* — che
+      erano l'obiettivo originario di questo punto
+- [ ] I token CSS sono in inglese: `--h-scena` → `--scene-height`, `--accento`
+      → `--accent`, i colori di base, gli `--sp-*`, i `--veil-*`. Il ripiego
+      `@supports` va spostato insieme al token, e
+      `checkSceneHeightFallback` prende il nome nuovo — è già parametrizzata
+      apposta
+- [ ] I campi dello schema in `src/content.config.ts` sono in inglese, con le
+      etichette del CMS che restano in italiano. I file in `src/content/` si
+      adeguano
 - [ ] `README.md` alla radice non è più il template «Astro Starter Kit» e
       rimanda a `docs/`
 - [ ] La favicon viene dal marchio e non da Astro, in `.svg` e `.ico`
@@ -135,7 +166,11 @@ che si è dato.
 
 ### Test automatici
 
-- Una lista di parole senza accento è vietata in `src/` e `scripts/`
+- Nessun commento in italiano resta in `src/`, `scripts/` e nei file di
+  configurazione
+- Nessuna proprietà personalizzata CSS con un nome italiano
+- Le guardie della PR 1 continuano a passare **dopo** la rinomina dei token:
+  è il vero collaudo della loro indipendenza dai nomi
 - Nessun evento elenca due volte la stessa persona fra i relatori
 - L'`occhiello` di un evento non contiene il nome del ciclo a cui appartiene
 

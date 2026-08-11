@@ -110,6 +110,42 @@ URL: quell'audio non esiste.
 dimentica: una foto da 4 MB committata una volta resta nella storia per
 sempre. Originali non compressi fuori dal repository.
 
+## Verifiche
+
+*(11 agosto 2026, PR 1)*
+
+**Le guardie sono funzioni pure, non asserzioni scritte dentro i test.**
+Prendono una stringa e restituiscono l'elenco delle violazioni. È l'unica
+forma che permette di provarle **anche in negativo** senza far girare in CI
+una build deliberatamente rotta: il test passa un CSS finto scritto a mano.
+Una guardia che non è mai stata vista scattare non si distingue da una che non
+sta guardando.
+
+**Restituiscono un elenco, mai un booleano.** Quando una guardia scatta fra
+sei mesi deve dire *quale* colore è incoerente e a che riga.
+
+**Due strati di test.** `unit` sulle fixture e sui sorgenti, `build` su ciò
+che finisce in `dist/`. Il secondo esiste perché per lo stile il sorgente non
+è una prova: il minificatore può togliere cose, e una volta l'ha fatto.
+
+**La build gira una volta per suite**, in `globalSetup`, non una volta per
+file. `REUSE_DIST=1` la salta in locale.
+
+**Node 24, fissata in `.nvmrc`, con `engine-strict`.** npm 10 e npm 11
+scrivono il lockfile in formati diversi — i campi `libc` — e la differenza
+emerge come duecento righe di diff sulla macchina di qualcun altro. Meglio un
+errore all'installazione che una riscrittura silenziosa.
+
+**Il controllo di deriva del lockfile rigenera e confronta.** `npm ci` non
+riscrive mai il lockfile, quindi da solo non può accorgersi di nulla: era un
+malinteso nel piano iniziale.
+
+**Il codice è in inglese, ciò che si legge è in italiano.** Cambia la regola
+precedente, che imponeva l'italiano ovunque. Confine: identificatori,
+commenti, nomi di file e campi in inglese; contenuti, stringhe visibili,
+documentazione e messaggi di commit in italiano. Il codice già scritto va
+migrato — vedi PR 2 in [piano.md](piano.md).
+
 ## Rimandate
 
 **Il dominio.** Se ne riparla a sito finito. Il design presuppone
