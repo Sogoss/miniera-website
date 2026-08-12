@@ -13,8 +13,15 @@
  * `og:url` and `og:image` appear only once `site` is set in astro.config.mjs.
  * The domain has not been bought yet — PR 13 — and a relative URL in an Open
  * Graph tag is not resolved by WhatsApp or Facebook: it would look right in the
- * markup and produce a preview with no picture. A test asks for them as soon as
- * `site` is there, so PR 13 does not have to remember either.
+ * markup and produce a preview with no picture. A test asks for `og:url` as
+ * soon as `site` is there, so PR 13 does not have to remember it.
+ *
+ * `og:image` is not asked for in the same breath, and that is deliberate: it
+ * needs a picture rather than a domain, and this repository has none yet. A
+ * test demanding it the day the domain arrives would open PR 13 on a red suite
+ * fixable only by inventing an asset nobody has chosen — docs/questioni-aperte.md
+ * carries that decision instead. What is checked is that a page which does
+ * publish one publishes it absolute.
  */
 import '../styles/global.css';
 import ClipShapes from '../components/ClipShapes.astro';

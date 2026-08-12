@@ -13,21 +13,41 @@
 import { stripMarkupComments } from './language.ts';
 import { type Violation, lineNumber } from './types.ts';
 
-/** Every shape a page defines, with where it was defined. */
-function definedShapes(markup: string): { id: string; index: number }[] {
+/** Every shape a chunk of markup defines, with where it was defined.
+ *
+ *  Attributes are read by name, not by position: `<clipPath clipPathUnits="…"
+ *  id="…">` is the same definition as the other way round, and a guard that
+ *  saw only one of the two orders would stop watching a shape the day somebody
+ *  reformatted the file. */
+export function definedShapes(markup: string): { id: string; index: number }[] {
   const found: { id: string; index: number }[] = [];
-  const pattern = /<clipPath\b[^>]*\bid\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/gi;
+  const pattern = /<clipPath\b([^>]*)>/gi;
   let match: RegExpExecArray | null;
   while ((match = pattern.exec(markup)) !== null) {
-    found.push({ id: (match[1] ?? match[2] ?? match[3] ?? '').trim(), index: match.index });
+    const id = /(?<![-:\w])id\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i.exec(match[1] ?? '');
+    if (!id) continue;
+    found.push({ id: (id[1] ?? id[2] ?? id[3] ?? '').trim(), index: match.index });
   }
   return found;
 }
 
-/** Every shape a page asks for, in a style attribute or in a stylesheet. */
+/** The names of the shapes defined in a chunk of markup. */
+export function clipShapeIds(markup: string): string[] {
+  return definedShapes(stripMarkupComments(markup)).map((shape) => shape.id);
+}
+
+/**
+ * Every shape a page asks for, in a style attribute or in a stylesheet.
+ *
+ * Both the direct form and the one held in a custom property. Rule 2 says style
+ * is written with the tokens, so `--clip-portrait: url(#clip-clover-8)` and then
+ * `clip-path: var(--clip-portrait)` is the natural shape for PR 6 to give the
+ * guest portraits — and reading only `clip-path: url(…)` would have made this
+ * guard pass over every page of that PR without looking at anything.
+ */
 function referencedShapes(css: string): Map<string, number> {
   const found = new Map<string, number>();
-  const pattern = /clip-path\s*[:=]\s*["']?\s*url\(\s*["']?#([^)"'\s]+)/gi;
+  const pattern = /(?:clip-path|--[a-z0-9-]+)\s*[:=]\s*["']?[^;}"']*?url\(\s*["']?#([^)"'\s]+)/gi;
   let match: RegExpExecArray | null;
   while ((match = pattern.exec(css)) !== null) {
     const id = (match[1] ?? '').trim();
@@ -51,12 +71,17 @@ export function checkClipShapeReferences(
   css: string,
   path = 'the page',
 ): Violation[] {
-  /* Comments blanked on both sides: a draft left in a comment neither asks for
-     a shape nor provides one, and reading it as either would fail a page that
-     renders perfectly — the mistake the cycle guard made first. */
+  /* Comments blanked on both sides, and «both» means the CSS too — which it did
+     not, while this comment already said it did. A `<style is:inline>` reaches
+     dist/ verbatim, CycleAccents emits one, and a rule left commented out in it
+     would have failed every page over markup that renders perfectly: the
+     mistake the cycle guard made first, repeated one argument away. */
   const clean = stripMarkupComments(markup);
 
-  const asked = new Map([...referencedShapes(css), ...referencedShapes(clean)]);
+  const asked = new Map([
+    ...referencedShapes(stripMarkupComments(css)),
+    ...referencedShapes(clean),
+  ]);
   if (asked.size === 0) return [];
 
   const defined = new Set(definedShapes(clean).map((shape) => shape.id));

@@ -10,26 +10,30 @@ import {
   checkDocumentBasics,
   checkOpenGraph,
   checkSkipLink,
+  checkSkipLinkStyle,
 } from '../guards/document.ts';
 import {
   checkClipShapeReferences,
   checkDuplicateClipShapeIds,
+  clipShapeIds,
 } from '../guards/shapes.ts';
-import { publishedPages } from '../support/dist.ts';
+import { publishedPages, readPublishedCss } from '../support/dist.ts';
 import { read } from '../support/paths.ts';
+import astroConfig from '../../astro.config.mjs';
 
 const pages = publishedPages();
 
-/* Whether the site knows its own address yet. Not a constant written here: the
-   day PR 13 sets `site`, the two Open Graph tags that need a domain stop being
-   optional, and this test starts asking for them without anyone editing it. */
-const withDomain = /^\s*site\s*:/m.test(read('astro.config.mjs'));
+/* Whether the site knows its own address yet — asked of the configuration
+   itself, not of its text. Grepping for `site:` missed it on a single line and
+   found it inside a block comment, so the tripwire could have been armed or
+   disarmed by the formatting of a file rather than by its meaning. */
+const withDomain = Boolean((astroConfig as { site?: string }).site);
 
-/** The shapes ClipShapes declares, read from the component. Derived, so that
- *  adding or removing a shape is a content decision and not a red suite. */
-const declaredShapes = [
-  ...read('src/components/ClipShapes.astro').matchAll(/<clipPath\s+id="([^"]+)"/g),
-].map((match) => match[1]!);
+/** The shapes ClipShapes declares, read from the component with the same
+ *  scanner the guard uses — a second regular expression written here would
+ *  quietly stop finding a shape the day one is written with its attributes in
+ *  another order. */
+const declaredShapes = clipShapeIds(read('src/components/ClipShapes.astro'));
 
 describe('every published page', () => {
   it('exists in the first place', () => {
@@ -74,6 +78,14 @@ describe('every published page', () => {
       expect(checkDuplicateClipShapeIds(page.html, page.path)).toEqual([]);
     },
   );
+
+  it('publishes a skip link that is hidden until it is focused', () => {
+    // The half of the skip link that lives in the CSS, and that no markup guard
+    // can see: hidden with nothing to bring it back is worse than not having
+    // one — a keyboard lands on something invisible. Read out of dist/, because
+    // that is where a lost rule becomes visible.
+    expect(checkSkipLinkStyle(readPublishedCss(), 'dist/')).toEqual([]);
+  });
 
   it('carries every shape the component declares, on every page', () => {
     // The other half of the reference guard, and the half that can be checked

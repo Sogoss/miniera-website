@@ -347,12 +347,23 @@ ritratto da 56×56. E in questa PR non le usa nessuno: la differenza si giudica
 davanti a un ritratto vero. Cambiarle in seguito tocca solo il contenuto del
 componente — gli `id` restano.
 
-**`og:url` e `og:image` aspettano il dominio, e la guardia se ne accorge da
-sola.** Sono gli unici due meta che devono essere assoluti, e finché `site` non è
-impostato in `astro.config.mjs` sarebbero URL relativi: nel markup sembrano
-giusti, e l'anteprima esce senza immagine. La guardia li pretende **quando `site`
-c'è**, leggendolo dal file di configurazione — così alla PR 13 non serve
-ricordarsene, diventa rossa da sé.
+**`og:url` aspetta il dominio, e la guardia se ne accorge da sola.** Deve essere
+assoluto, e finché `site` non è impostato sarebbe un URL relativo: nel markup
+sembra giusto, e l'anteprima esce senza figura. La guardia lo pretende **quando
+`site` c'è** — letto dalla configurazione importata, non cercato nel suo testo:
+una regex avrebbe mancato un `site:` scritto su una riga sola e ne avrebbe
+trovato uno dentro un commento, cioè il tripwire si sarebbe armato o disarmato
+per come è formattato un file invece che per quello che dice.
+
+**`og:image`, invece, non lo pretende, e non è una svista.** Ha bisogno di
+un'immagine, non di un dominio, e il repository non ne ha una: chiederlo insieme
+a `og:url` avrebbe aperto la PR 13 su una suite rossa che si poteva chiudere
+solo inventando un asset che nessuno ha scelto — cioè un test che detta una
+decisione di contenuto. La decisione sta in
+[questioni-aperte.md](questioni-aperte.md); quello che la suite controlla è che
+una pagina che pubblichi un'immagine la pubblichi assoluta, perché un
+`og:image` relativo è la versione silenziosa del non averlo.
+*(PR 5, in revisione)*
 
 **Il salta-a punta al `<main>`, che prende `tabindex="-1"`.** Senza, diversi
 browser scorrono la pagina e lasciano il fuoco dov'era, che è esattamente ciò

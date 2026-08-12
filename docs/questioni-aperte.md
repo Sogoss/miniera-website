@@ -42,6 +42,22 @@ reversibile e prima o poi qualcuno vorrà stampare la foto di una serata.
 
 Non è ancora stato deciso dove.
 
+## Da decidere prima della PR 13
+
+### L'immagine delle anteprime social
+
+Il layout emette `og:image` solo se la pagina gliene passa una, e nessuna lo fa:
+oggi un link condiviso su WhatsApp mostra titolo e descrizione, senza figura.
+Le pagine serata della PR 9 avranno la foto tema, ma **il sito ha bisogno anche
+di un'immagine predefinita** per la home e per le pagine istituzionali.
+
+Va scelta, non generata a caso: il marchio su fondo blu è la strada ovvia, nel
+formato 1200×630 che le anteprime si aspettano. È una decisione di contenuto e
+di design, quindi non la prende una guardia — e per questo la suite **non**
+pretende `og:image` quando arriva il dominio: pretenderlo avrebbe aperto la
+PR 13 su un test rosso che si poteva chiudere solo inventando l'immagine.
+Quello che la suite pretende è che, se una pagina ne pubblica una, sia assoluta.
+
 ## Da decidere alla PR 6
 
 ### Le geometrie delle forme: quelle del design o quelle di Material 3

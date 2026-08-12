@@ -657,6 +657,33 @@ In breve:
   scritta
 - Le guardie della PR 1 continuano a passare, e `npm run test:mutate` con loro
 
+> **Trovato in revisione.** Quindici difetti, e quattordici stavano nelle tre
+> guardie nuove: approssimazioni su stringhe che rispondevano *va bene* proprio
+> al guasto descritto dal loro messaggio, o *è rotto* a markup corretto — che è
+> la metà peggiore, perché una guardia che scatta sul lavoro giusto la si
+> spegne. `data-id` soddisfaceva il bersaglio del salta-a; il viewport veniva
+> cercato e mai letto, quindi `content="width=1024"` passava; `xml:lang` valeva
+> come `lang`; gli `<h1>` dentro uno script venivano contati, e uno script in
+> linea è ciò che la PR 7 porterà; un `<meta content="…" property="og:title">`
+> risultava mancante per il solo ordine degli attributi; i commenti venivano
+> annullati nel markup ma non nel CSS, mentre il commento della funzione
+> dichiarava il contrario; e «il salta-a viene per primo» guardava i soli `<a>`,
+> cioè era cieco alla navigazione del design, che è fatta di `<button>`.
+>
+> Tre erano scoperture più che errori: niente verificava che il bersaglio del
+> salta-a fosse focusabile — `tabindex="-1"`, l'unica cosa che secondo
+> `decisioni.md` lo fa funzionare, si poteva cancellare con la suite verde —
+> niente leggeva il CSS pubblicato del link, che è dove la regola può sparire, e
+> `declaredShapes` pretendeva `id` come primo attributo mentre la guardia
+> gemella accettava qualunque ordine.
+>
+> Due guardavano al futuro e l'avrebbero rotto: `publishedPages()` consegnava
+> alle guardie del documento anche le pagine copiate da `public/`, cioè la
+> PR 12 non avrebbe potuto chiudere verde con la shell di Sveltia in
+> `public/admin/`; e pretendere `og:image` all'arrivo del dominio avrebbe aperto
+> la PR 13 su una suite rossa chiudibile solo inventando un'immagine che nessuno
+> ha scelto. L'immagine è una questione aperta, non un test.
+
 ### Test manuali
 
 - Il link «Salta al programma» si raggiunge col primo Tab, è visibile e porta al
