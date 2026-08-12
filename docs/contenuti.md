@@ -117,10 +117,20 @@ Il campo `note` sovrascrive tutte e tre, e serve al caso che non rientra:
 Più cicli possono essere aperti in contemporanea, e due serate consecutive
 possono appartenere a cicli diversi. Non hanno date di inizio e fine.
 
-Ogni ciclo porta il proprio colore, che diventa `--accent`. I cinque colori
-predefiniti del design sono tarati a luminosità e saturazione uguali apposta,
-perché nessun ciclo prevalga sugli altri e il contrasto sul fondo blu resti
-garantito: **discostarsene molto rompe quella taratura.**
+Ogni ciclo porta il proprio colore, che diventa l'`--accent` di tutte le sue
+serate: quello che si scrive nel file arriva al sito così com'è, come regola CSS
+generata alla build. I cinque colori predefiniti del design sono tarati a
+luminosità e saturazione uguali apposta, perché nessun ciclo prevalga sugli
+altri e il contrasto sul fondo blu resti garantito: **discostarsene molto rompe
+quella taratura.** Si scrive come esadecimale a sei cifre — `#00a9b0` — e in
+nessun altro modo: è testo che finisce dentro un foglio di stile, quindi ciò che
+non è riconosciuto ferma la build invece di essere pubblicato.
+
+**Il numero di un ciclo non si ripete.** Non è solo l'ordine in cui i cicli si
+sono succeduti: è il nome con cui il ciclo si chiama nel CSS, quindi due cicli
+con lo stesso numero finirebbero per condividere un colore — vince l'ultimo
+letto — e metà delle serate uscirebbe della tinta sbagliata senza un errore da
+nessuna parte. La build si ferma e nomina i due file.
 
 ### Il ruolo di un relatore
 

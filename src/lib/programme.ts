@@ -9,6 +9,7 @@
  */
 import { getCollection, getEntry } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
+import { type CycleLike, cycleAccentCss, findCycleNumberConflicts } from './cycles.ts';
 import {
   findNumberDateConflicts,
   isPast,
@@ -101,6 +102,33 @@ export async function loadProgramme(now: Date = BUILD_TIME): Promise<Programme> 
 
   const scenes = await Promise.all(events.map((event) => toScene(event, now)));
   return { scenes, nextIndex: nextEventIndex(scenes, now) };
+}
+
+/**
+ * The accent rules of the cycles, as CSS ready to be written into a <style>.
+ *
+ * Every cycle in the collection is emitted, not only the ones an evening points
+ * at: a cycle with no evenings yet is one about to start, and the first evening
+ * filed under it would otherwise arrive on the default orange.
+ *
+ * Twin numbers stop the build here rather than in the CSS, where they would not
+ * stop anything: two `[data-cycle="3"]` rules are valid CSS, the last one wins,
+ * and half the evenings quietly take the other cycle's colour.
+ */
+export async function loadCycleAccents(): Promise<string> {
+  const cycles: CycleLike[] = (await getCollection('cicli')).map((entry) => ({
+    id: entry.id,
+    ...entry.data,
+  }));
+
+  const conflicts = findCycleNumberConflicts(cycles);
+  if (conflicts.length > 0) {
+    throw new Error(
+      `The cycles in src/content/cicli/ contradict themselves:\n- ${conflicts.join('\n- ')}`,
+    );
+  }
+
+  return cycleAccentCss(cycles);
 }
 
 async function toScene(event: EventData, now: Date): Promise<Scene> {

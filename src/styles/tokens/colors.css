@@ -46,8 +46,19 @@
   /* One colour per cycle of events, not per kind of event: a screening inside
      cycle 2 is gold like the whole of cycle 2.
      Same lightness and saturation, hue rotated: none of them prevails.
-     These are the defaults: in the finished site every cycle's colour comes
-     from the `cicli` collection and is emitted at build time. */
+
+     These five are the palette the design was tuned on, and they are declared
+     and no longer read — except the first, which is the accent outside any
+     cycle. They are not dead: they are the reference for whoever picks a colour
+     for a new cycle in the CMS, and straying far from this tuning is what
+     breaks the guarantee that no cycle prevails and that the contrast against
+     the blue ground holds. The colour a cycle actually paints with comes from
+     its file in src/content/cicli/ and reaches the browser as a
+     `[data-cycle="N"]` rule emitted at build time — src/lib/cycles.ts. Those
+     rules are not written by hand here, and a guard says so: two declarations
+     of the same property at the same specificity are decided by the order of
+     the stylesheets, so a hand-written copy would put the old colour back the
+     day that order changes, with nothing failing. */
   --cycle-1: #f26419;  /* orange — the inaugural cycle */
   --cycle-2: #cb9e00;  /* gold */
   --cycle-3: #3baa73;  /* green */
@@ -59,6 +70,11 @@
   --cycle-3-rgb: 59, 170, 115;
   --cycle-4-rgb: 224, 90, 129;
   --cycle-5-rgb: 172, 112, 198;
+
+  /* Outside a declared cycle the accent is the brand orange. Inside one it is
+     that cycle's own colour, from a rule emitted at build time. */
+  --accent: var(--cycle-1);
+  --accent-rgb: var(--cycle-1-rgb);
 
   /* --- Semantic --------------------------------------------------------- */
   --surface-page: var(--blue-700);
@@ -90,15 +106,6 @@
   --status-warning: #e0a32e;
   --status-error: #d64545;
 }
-
-/* The cycle is declared on the container: data-cycle="2".
-   Everything inside that uses --accent follows.
-   Outside a declared cycle the accent is the brand orange. */
-:root, [data-cycle="1"] { --accent: var(--cycle-1); --accent-rgb: var(--cycle-1-rgb); }
-[data-cycle="2"] { --accent: var(--cycle-2); --accent-rgb: var(--cycle-2-rgb); }
-[data-cycle="3"] { --accent: var(--cycle-3); --accent-rgb: var(--cycle-3-rgb); }
-[data-cycle="4"] { --accent: var(--cycle-4); --accent-rgb: var(--cycle-4-rgb); }
-[data-cycle="5"] { --accent: var(--cycle-5); --accent-rgb: var(--cycle-5-rgb); }
 
 /* Light surface: print, documents, email. Same brand, cream ground. */
 [data-theme="paper"] {

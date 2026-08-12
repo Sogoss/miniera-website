@@ -42,6 +42,25 @@ export function readPublishedCss(): string {
   return pieces.join('\n');
 }
 
+/**
+ * Every published page with the CSS that page actually receives: the
+ * stylesheets of dist/ plus its own `<style>` blocks.
+ *
+ * readPublishedCss() concatenates everything, which is what the guards over the
+ * tokens want — a name declared anywhere is declared. The cycle accents are the
+ * opposite question: a rule emitted by a component only reaches the pages that
+ * carry the component, so «the rules exist somewhere in dist/» would pass on a
+ * page that has none of them.
+ */
+export function publishedPages(): { path: string; html: string; css: string }[] {
+  const stylesheets = filesWithExtension(distDir, ['.css']).map(read).join('\n');
+
+  return filesWithExtension(distDir, ['.html']).map((path) => {
+    const html = read(path);
+    return { path, html, css: [stylesheets, ...extractStyleBlocks(html)].join('\n') };
+  });
+}
+
 const NAMED_ENTITIES: Record<string, string> = {
   amp: '&',
   lt: '<',

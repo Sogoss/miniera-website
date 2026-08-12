@@ -216,6 +216,79 @@ giorno è quello dell'avvio del server: un server lasciato acceso oltre la
 mezzanotte mostra un'etichetta vecchia finché non riparte, e non pubblica
 niente. *(PR 3, in revisione)*
 
+## Accento dai cicli
+
+*(12 agosto 2026, PR 4)*
+
+**La collection è l'unica sorgente delle regole `[data-cycle]`.** Erano cinque
+blocchi scritti a mano in `colors.css` che puntavano a cinque token, e il campo
+`color` dei cicli non lo leggeva nessuno: due metà che non si toccavano, così
+un colore cambiato in un file arrivava da nessuna parte e non falliva niente.
+Ora le regole le emette `src/lib/cycles.ts` alla build, da ogni ciclo presente
+nella collection. Tenere anche quelle scritte a mano come ripiego voleva dire
+due dichiarazioni della stessa proprietà alla stessa specificità, decise
+dall'ordine dei fogli: giusto oggi, sbagliato il giorno che un import si
+sposta o che l'inlining di Astro scatta — e sbagliato in silenzio, che è la
+forma di guasto che questo repository si è dato l'impianto per intercettare. La
+regola 12 del `CLAUDE.md` e una guardia sul sorgente lo tengono così.
+
+**I cinque colori restano dichiarati, e non li legge più nessuno.** Sono la
+palette su cui il design è stato tarato — stessa luminosità e saturazione, tinta
+ruotata — e restano in `colors.css` come riferimento per chi sceglie il colore
+di un ciclo nuovo nel CMS: discostarsene molto rompe la garanzia che nessun
+ciclo prevalga e che il contrasto sul fondo blu regga. Il commento accanto dice
+perché ci sono, così fra sei mesi non sembrino codice morto da togliere.
+L'unico ancora letto è `--cycle-1`: fuori da un ciclo dichiarato l'accento è
+l'arancio del marchio.
+
+**Il numero di un ciclo è unico, e la build lo pretende.** Il numero è il nome
+del ciclo nel CSS, quindi due file che reclamano il 3 emettono due
+`[data-cycle="3"]` e vince l'ultima: metà delle serate prende il colore
+dell'altro ciclo, senza un errore da nessuna parte. Zod non può vederlo — ogni
+file è valido per conto suo — e nemmeno il riferimento dell'evento, che risolve
+per nome di file ed è contento comunque. `findCycleNumberConflicts` nomina
+entrambi i cicli, come `findNumberDateConflicts` fa per le serate gemelle, e
+per lo stesso motivo: quale dei due sia sbagliato lo sa l'associazione.
+
+**Il CSS lo emette un componente, non un endpoint e non un file generato.**
+`CycleAccents.astro` scrive le regole in un `<style is:inline set:html>`:
+nessuna richiesta bloccante in più nel percorso critico per poche centinaia di
+byte, e nessun artefatto da rigenerare e tenere allineato a mano — che
+riaprirebbe la stessa distanza fra la collection e il CSS che questa PR chiude.
+`is:inline` perché il contenuto si conosce solo alla build, e perché queste
+regole non devono essere scopate al componente: vestono il documento. Dalla PR 5
+il componente sta in `Base.astro` e nessuna pagina deve ricordarsene.
+
+**Una pagina che porta `data-cycle` deve portarsi anche le regole, e c'è una
+guardia.** È la promessa che le PR 5, 7 e 9 devono mantenere: dimenticare il
+componente non rompe niente, pubblica ogni serata sull'arancio di `:root` — una
+pagina che rende perfettamente, del colore sbagliato. La guardia legge le pagine
+di `dist/` e non il sorgente, perché nel sorgente `data-cycle={n}` è
+un'espressione; la sua gemella sul sorgente fa il contrario, perché in `dist/`
+le regole emesse ci sono per costruzione e le segnalerebbe tutte.
+
+**La terna dell'accento diventa letterale, e accende una guardia che dormiva.**
+`--accent-rgb: var(--cycle-N-rgb)` è un puntatore, e `checkRgbTriples` lo salta
+apposta per non leggere `NaN`: finché gli accenti erano scritti così, quella
+guardia passava sull'accento senza guardare niente. Con `--accent: #hex` e
+`--accent-rgb: r, g, b` nello stesso blocco confronta davvero, e una conversione
+sbagliata diventa rossa in `dist/` senza che sia servito scrivere una guardia
+nuova. Un test pretende che l'accento resti un esadecimale letterale: tornare a
+un puntatore la rimetterebbe a dormire in silenzio.
+
+**Un sesto ciclo e la serata che lo usa.** Con i soli cicli 2 e 3, che portano
+esattamente due dei colori predefiniti, i due casi che contano — un colore
+diverso dal predefinito, un ciclo oltre il quinto — non si vedevano girare su
+contenuti veri, ed è lo stesso motivo per cui la PR 3 ha aggiunto due serate. Il
+ciclo 6 è *Turni*, `#00a9b0`, calcolato come i cinque: luminosità e croma medi
+della palette in oklch, tinta nel buco grande della ruota — fra il verde a 158°
+e il viola a 315° — e tenuta lontana dal fondo blu, che sta a 238°. Il contrasto
+sul fondo è 4.81, dentro la banda dei cinque (3.88–5.55). Ha la componente rossa
+a zero, quindi il caso `#00…` della conversione — dove un `|| default` di
+troppo trasforma un turchese in altro — lo esercita un contenuto vero e non solo
+una fixture. La serata 83 porta `+01:00`, lo scostamento invernale che i
+contenuti d'esempio non avevano.
+
 ## Verifiche
 
 *(11 agosto 2026, PR 1)*

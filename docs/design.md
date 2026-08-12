@@ -180,8 +180,11 @@ il browser, non un ritaglio per canale.
 | 4 — rosso rosato | `oklch(0.65 0.17 5)` | `#e05a81` | |
 | 5 — viola | `oklch(0.64 0.14 315)` | `#ac70c6` | |
 
-A regime questi cinque sono solo i valori predefiniti: il colore di ogni ciclo
-arriva dalla collection `cicli`.
+Questi cinque sono la palette di riferimento, non la fonte: dalla PR 4 il
+colore di ogni ciclo arriva dalla collection `cicli` e diventa una regola
+`[data-cycle="N"]` emessa alla build. Nessuna regola li legge più — l'unico
+ancora in uso è il primo, che è l'accento fuori da un ciclo dichiarato — e
+restano scritti perché è la taratura a cui un colore nuovo deve somigliare.
 
 ### Perché conta
 

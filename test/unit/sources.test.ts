@@ -17,6 +17,8 @@ import {
   checkDuplicateSpeakers,
   checkKickerRepeatsCycle,
 } from '../guards/content.ts';
+import { checkHandWrittenCycleRules } from '../guards/cycles.ts';
+import { cycleAccentCss, findCycleNumberConflicts } from '../../src/lib/cycles.ts';
 import {
   checkAmbientTime,
   checkLocalDateMethods,
@@ -78,6 +80,13 @@ describe('src/styles', () => {
     expect(checkItalianCustomProperties(read(path), path)).toEqual([]);
   });
 
+  it.each(styleFiles)('%s leaves the cycle accents to the collection', (path) => {
+    // colors.css held five of these until PR 4, pointing at five tokens, and
+    // the colour an editor wrote in a file reached nobody. Put back as a
+    // fallback they would have the same specificity as the emitted rules, so
+    // the order of the stylesheets would decide the colour of the site.
+    expect(checkHandWrittenCycleRules(read(path), path)).toEqual([]);
+  });
 });
 
 /* The tokens read across the whole source at once.
@@ -129,6 +138,12 @@ describe('src/**/*.astro component styles', () => {
     // the `//` comments of the frontmatter too — which stripComments cannot
     // blank — and report the Italian in a line explaining the rename.
     expect(checkItalianCustomProperties(componentCss(read(path)), path)).toEqual([]);
+  });
+
+  it.each(astroFiles)('%s leaves the cycle accents to the collection', (path) => {
+    // The component that emits them has an empty <style>: what it writes is
+    // built at run time and belongs to no source file, which is the point.
+    expect(checkHandWrittenCycleRules(componentCss(read(path)), path)).toEqual([]);
   });
 
   it.each(astroFiles)('%s names its data-* attributes in English', (path) => {
@@ -197,6 +212,16 @@ describe('src/content', () => {
   const events = collectionEntries('eventi');
   const cycles = collectionEntries('cicli');
 
+  /* The cycles in the shape the domain works on. Read off the frontmatter
+     rather than through astro:content, so the checks below say which file is
+     wrong without a build having to run first. */
+  const cycleEntries = cycles.map((entry) => ({
+    id: entry.id,
+    number: Number(entry.data.number),
+    name: String(entry.data.name ?? entry.path),
+    color: String(entry.data.color ?? ''),
+  }));
+
   it('has content to check in the first place', () => {
     expect(events.length).toBeGreaterThan(0);
     expect(cycles.length).toBeGreaterThan(0);
@@ -233,6 +258,21 @@ describe('src/content', () => {
       date: dateOf(event),
     }));
     expect(findNumberDateConflicts(programme)).toEqual([]);
+  });
+
+  it('numbers each cycle once', () => {
+    // The number of a cycle is how it is named in the CSS, so two files
+    // claiming one number emit two rules and the last one wins: half the
+    // evenings take the other cycle's colour, and nothing fails. The build
+    // stops on this too — loadCycleAccents throws — but this says which pair
+    // and does not need a build to say it.
+    expect(findCycleNumberConflicts(cycleEntries)).toEqual([]);
+  });
+
+  it('gives every cycle a colour that reaches the CSS', () => {
+    // A colour the generator does not recognise stops the build with a message
+    // naming the cycle; here it names the file as well, and before the build.
+    expect(() => cycleAccentCss(cycleEntries)).not.toThrow();
   });
 
   it('keeps a sample of a role overridden on the event', () => {
