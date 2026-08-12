@@ -597,6 +597,17 @@ guardia a turno — le fa restituire «nessuna violazione» qualunque cosa le si
 dia — e pretende che la suite se ne accorga. Ventidue su ventidue, da due a
 undici asserzioni ciascuna.
 
+La sua risposta si appoggia a una riga di output di qualcun altro, e quella riga
+cambia con l'ambiente: `Tests  9 failed` sulla scrivania, la stessa riga dipinta
+di codici di colore su una macchina di build. Al primo giro in CI lo strumento
+ha risposto «0 su 22, la suite non ha risposto» su una suite che stava girando e
+fallendo come doveva — lo stesso comando che dice due cose diverse a seconda di
+dove gira, cioè il fuso orario da un altro lato. Si chiede all'ambiente di non
+colorare **e** si tolgono i colori comunque, perché chi vinca fra `NO_COLOR` e
+`FORCE_COLOR` non lo decide questo repository; la lettura è una funzione
+esportata con i suoi test, e distingue «nessun conteggio» da «zero falliti»,
+che su una guardia accecata sono risposte opposte.
+
 Lo gira la CI e non `npm test`: costa la suite intera una volta per guardia, un
 minuto abbondante, che è il prezzo sbagliato da pagare a ogni salvataggio e
 quello giusto per sapere che l'impianto non è diventato decorazione. Modifica i

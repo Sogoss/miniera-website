@@ -531,6 +531,21 @@ cicli*. In breve:
 > non per quello che tengono: **22 su 22**, ognuna sostenuta da un numero di
 > asserzioni che va da due a undici.
 >
+> **Il primo giro in CI dello strumento nuovo è stato rosso, per il difetto che
+> lo strumento caccia.** Rispondeva «0 su 22, la suite non ha risposto» mentre la
+> suite girava e falliva esattamente come doveva. Il riepilogo di vitest è
+> `Tests  9 failed`, e su una macchina di build fra la parola e il numero ci sono
+> i codici di colore; in locale non ci sono. Lo stesso comando rispondeva una cosa
+> sulla scrivania e un'altra in CI, che è la forma del fuso orario vista da un
+> altro lato — e il primo tentativo di riprodurlo in locale con le variabili
+> d'ambiente della CI *non* l'ha riprodotto, il che l'ha reso più istruttivo, non
+> meno. Adesso la lettura toglie i colori e chiede di non averli, è una funzione
+> esportata con i suoi test — compreso il riepilogo colorato che ha causato il
+> guasto — e distingue «nessun conteggio» da «zero falliti», che su una guardia
+> accecata sono risposte opposte. E quando la suite non arriva a un conteggio, lo
+> strumento stampa la coda del suo output: taceva esattamente dove doveva
+> parlare, che è la cosa che rimprovera alle guardie.
+>
 > Quel conto è diventato un comando, `npm run test:mutate`, e uno step della CI:
 > farlo a mano una volta rispondeva alla domanda di oggi e a nessuna di domani.
 > Non sta in `npm test` perché costa la suite intera una volta per guardia. Ha
