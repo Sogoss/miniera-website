@@ -1,0 +1,115 @@
+---
+/* One evening, as a card: format, title, guests, date, venue.
+ *
+ * Two things it deliberately does not do.
+ *
+ * It has no default venue. The export's had one — a whole postal address as a
+ * fallback value — and the design files carry three inconsistent versions of
+ * it. A component is not the second source of where the association meets: the
+ * address comes from the `sedi` collection, so `venue` is required and there is
+ * nothing to fall back to.
+ *
+ * And it takes its date as a string, already formatted. Rule 11: the strings
+ * are written by src/lib/events.ts, in Europe/Rome, and a `Date` handed to
+ * something expecting text is a `toString()` no guard on the shape of a call
+ * can recognise — the one way the time zone gets out. Typing the prop as
+ * `string` is what makes that impossible rather than merely discouraged.
+ *
+ * The heading level is a prop because a card does not know what it is inside
+ * of: `h3` under a section title, `h2` where the card is the section.
+ */
+import type { HTMLAttributes } from 'astro/types';
+import Label from './Label.astro';
+
+interface Props extends HTMLAttributes<'article'> {
+  /** As written in the content: `incontro`, `proiezione`, `presentazione`.
+   *  Italian on purpose — it reaches the reader as it is (PR 2). */
+  format: string;
+  title: string;
+  kicker?: string;
+  /** Already formatted, in Italian. Never a Date — see above. */
+  date: string;
+  venue: string;
+  guests?: string[];
+  /** The cycle's number, which is what paints the accent. */
+  cycle?: number;
+  level?: 2 | 3 | 4;
+}
+
+const {
+  format,
+  title,
+  kicker,
+  date,
+  venue,
+  guests = [],
+  cycle,
+  level = 3,
+  class: className,
+  ...rest
+} = Astro.props;
+
+const Heading = `h${level}` as 'h2' | 'h3' | 'h4';
+---
+
+<article class:list={['event-card', className]} data-cycle={cycle} {...rest}>
+  <Label>{format}</Label>
+  {kicker && <p class="event-kicker">{kicker}</p>}
+  <Heading class="event-title">{title}</Heading>
+  {guests.length > 0 && <p class="event-guests">con {guests.join(', ')}</p>}
+  <p class="event-date">{date}</p>
+  <p class="event-venue">{venue}</p>
+</article>
+
+<style>
+  .event-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-5);
+    background: var(--surface-raised);
+    border-top: var(--border-width-banner) solid var(--accent);
+    color: var(--text-primary);
+  }
+
+  /* The document stylesheet gives a paragraph a bottom margin and a reading
+     width; inside a card the gap does the spacing and the card does the width. */
+  .event-card p {
+    margin: 0;
+    max-width: none;
+  }
+
+  .event-kicker {
+    font: var(--type-small);
+    color: var(--text-secondary);
+  }
+
+  .event-title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: var(--weight-black);
+    font-size: var(--text-2xl);
+    line-height: 0.98;
+    letter-spacing: var(--tracking-display);
+  }
+
+  .event-guests {
+    font: var(--type-body);
+    color: var(--text-secondary);
+  }
+
+  /* Written with the card in front of it so that it outweighs the `margin: 0`
+     above, which is more specific than a class on its own and would otherwise
+     take this line back out without saying so. */
+  .event-card .event-date {
+    margin-top: var(--space-2);
+    font: var(--type-mono);
+    color: var(--text-primary);
+  }
+
+  .event-venue {
+    font: var(--type-mono);
+    color: var(--text-muted);
+  }
+</style>

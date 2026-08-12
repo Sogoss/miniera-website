@@ -1,0 +1,323 @@
+---
+/* The component gallery: every component of the design system, with every
+ * variant it has.
+ *
+ * It is published, and `noindex`. Published because the build layer reads
+ * `dist/` and nothing else — CLAUDE.md is explicit that looking at the source
+ * is not enough for style, because the minifier can take things out — so a
+ * gallery living only in `npm run dev` would leave the variants of every
+ * component checked nowhere. Out of the index because it is a service page: the
+ * sitemap of PR 13 has to leave it out as well.
+ *
+ * The data is real: the cycles come from the collection and the evening comes
+ * from the programme. A `data-cycle` invented here would fail the guard from
+ * PR 4 — every cycle published has to have a rule — and an evening written by
+ * hand would drift from the shape the domain actually produces.
+ *
+ * Not `/rassegna`: that path belongs to the press review of PR 11.
+ */
+import Base from '../layouts/Base.astro';
+import Brand from '../components/Brand.astro';
+import Button from '../components/Button.astro';
+import Card from '../components/Card.astro';
+import EpisodeBadge from '../components/EpisodeBadge.astro';
+import EventCard from '../components/EventCard.astro';
+import GuestRow from '../components/GuestRow.astro';
+import Label from '../components/Label.astro';
+import SignatureBand from '../components/SignatureBand.astro';
+import { CLIP_SHAPES } from '../lib/shapes.ts';
+import { loadProgramme } from '../lib/programme.ts';
+
+const { scenes } = await loadProgramme();
+
+/* An evening with guests, so that the row has something real to show; the
+   first one otherwise, because a gallery that renders nothing proves nothing.
+   An empty collection is a content condition, so it is said as one: without
+   this the page dereferences `undefined` and the build dies with a TypeError
+   pointing here instead of at src/content/eventi/, which is the opposite of
+   what programme.ts does with a reference it cannot resolve. */
+if (scenes.length === 0) {
+  throw new Error(
+    'La rassegna dei componenti ha bisogno di almeno una serata in src/content/eventi/: mostra EventCard e GuestRow con dati veri, non inventati.',
+  );
+}
+
+const scene = scenes.find((one) => one.speakers.length > 0) ?? scenes[0]!;
+const guest = scene.speakers[0];
+---
+
+<Base
+  title="Rassegna dei componenti — La Miniera Culturale in Periferia"
+  description="Gli otto componenti del design system, con tutte le loro varianti. Pagina di servizio."
+  mainId="componenti"
+  skipLabel="Salta ai componenti"
+  noindex
+>
+  <div class="gallery">
+    <header class="gallery-head">
+      <h1>Rassegna dei componenti</h1>
+      <p>
+        Gli otto componenti del design system, con tutte le loro varianti. È una
+        pagina di servizio: serve a guardarli tutti insieme e a dare allo strato
+        di verifica qualcosa da leggere in <code>dist/</code>.
+      </p>
+    </header>
+
+    <section class="gallery-section">
+      <h2>Button</h2>
+      <div class="row">
+        <Button variant="primary">Prenota il posto</Button>
+        <Button variant="secondary">Vedi il programma</Button>
+        <Button variant="flat">Scrivici</Button>
+      </div>
+      <div class="row">
+        <Button size="sm">Piccolo</Button>
+        <Button size="md">Medio</Button>
+        <Button size="lg">Grande</Button>
+      </div>
+      <div class="row">
+        <Button href="#componenti">Come collegamento</Button>
+        <Button disabled>Non disponibile</Button>
+        <Button href="#componenti" disabled>Collegamento spento</Button>
+      </div>
+    </section>
+
+    <section class="gallery-section">
+      <h2>Label</h2>
+      <div class="row">
+        <Label tone="accent">Ciclo {scene.cycle.name}</Label>
+        <Label tone="outline">{scene.format}</Label>
+        <Label tone="filled">Già svolta</Label>
+      </div>
+    </section>
+
+    <section class="gallery-section">
+      <h2>Card</h2>
+      <div class="row row-wide">
+        <Card>
+          <h3>Senza rilievo</h3>
+          <p>Un filo di bordo e l'accento sul taglio alto, sul fondo della pagina.</p>
+        </Card>
+        <Card raised>
+          <h3>Con rilievo</h3>
+          <p>La stessa scheda, sollevata sulla superficie chiara del blu.</p>
+        </Card>
+      </div>
+    </section>
+
+    <section class="gallery-section">
+      <h2>Brand</h2>
+      <div class="row row-baseline">
+        <Brand />
+        <Brand height={26} />
+        <Brand height={13} />
+      </div>
+      <div class="row on-invert">
+        <Brand tone="blue" height={26} />
+      </div>
+    </section>
+
+    <section class="gallery-section">
+      <h2>SignatureBand</h2>
+      <SignatureBand />
+      <SignatureBand size={20} />
+    </section>
+
+    <section class="gallery-section">
+      <h2>EpisodeBadge</h2>
+      <div class="row row-baseline">
+        <EpisodeBadge>#{scene.number}</EpisodeBadge>
+        <EpisodeBadge size={26}>#{scene.number}</EpisodeBadge>
+      </div>
+    </section>
+
+    <section class="gallery-section">
+      <h2>GuestRow</h2>
+      <div class="column">
+        {
+          guest && (
+            <GuestRow name={guest.name} role={guest.role} size={20}>
+              <span class="sample-portrait" slot="portrait" />
+            </GuestRow>
+          )
+        }
+        {guest && <GuestRow name={guest.name} role={guest.role} />}
+        {/* Con uno `style` passato da fuori, che è il modo in cui lo scroller
+            darà a un componente l'accento della sua serata: quello del
+            chiamante e quello del componente devono convivere in un attributo
+            solo, perché scritti due volte il browser tiene il primo e butta
+            l'altro. */}
+        <GuestRow name="Con uno stile dal chiamante" style="max-width: 22rem" />
+      </div>
+      <p class="note">
+        Il ritratto è un riquadro di prova: nessun relatore d'esempio ha una
+        foto. Il ritaglio è quello vero — <code>clip-clover-8</code>, a 56×56,
+        che è la misura del design.
+      </p>
+    </section>
+
+    <section class="gallery-section">
+      <h2>Forme di ritaglio</h2>
+      <p class="note">
+        Non sono componenti: sono le sei forme che <code>ClipShapes</code>
+        definisce in ogni pagina, e le usa chi ritaglia una foto. Cinque sono
+        generate — ispirate a Material 3, non le forme di Material — e
+        <code>clip-skewed</code> è quella dell'export. Grandi per vedere la
+        geometria, e a 56 pixel perché è la misura in cui il design le applica.
+      </p>
+      <div class="shapes">
+        {
+          CLIP_SHAPES.map((shape) => (
+            <figure class="shape">
+              <span class="shape-big" style={`clip-path: url(#${shape.id})`} />
+              <span class="shape-small" style={`clip-path: url(#${shape.id})`} />
+              <figcaption>
+                <code>{shape.id}</code>
+                <span class="shape-note">{shape.description}</span>
+              </figcaption>
+            </figure>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="gallery-section">
+      <h2>EventCard</h2>
+      <div class="row row-wide">
+        {
+          scenes.slice(0, 2).map((one) => (
+            <EventCard
+              format={one.format}
+              title={one.title}
+              kicker={one.kicker}
+              date={one.longDate}
+              venue={`${one.venue.name}, ${one.venue.address}`}
+              guests={one.speakers.map((speaker) => speaker.name)}
+              cycle={one.cycle.number}
+            />
+          ))
+        }
+      </div>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .gallery {
+    max-width: var(--max-page);
+    margin: 0 auto;
+    padding: var(--space-7) var(--gutter-page) var(--space-9);
+  }
+
+  .gallery-head {
+    margin-bottom: var(--space-8);
+  }
+
+  .gallery-section {
+    padding-top: var(--space-6);
+    margin-top: var(--space-7);
+    border-top: var(--border-width-hairline) solid var(--border-hairline);
+  }
+
+  .gallery-section h2 {
+    margin-bottom: var(--space-5);
+    font-size: var(--text-xl);
+    color: var(--text-accent);
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+  }
+
+  .row-baseline {
+    align-items: flex-end;
+  }
+
+  .row-wide > * {
+    flex: 1 1 320px;
+  }
+
+  .column {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-4);
+  }
+
+  /* The blue mark needs a light ground to be read on, which is the point of
+     having it: it is the mark for print and for documents. */
+  .on-invert {
+    padding: var(--space-4);
+    background: var(--surface-invert);
+  }
+
+  /* A stand-in for a portrait, built out of tokens: no sample speaker has a
+     photo, and a face is not something to invent. It fills the frame the row
+     gives it, which is what a real <Image> will do. */
+  .sample-portrait {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(150deg, var(--surface-invert), var(--accent));
+  }
+
+  .note {
+    font: var(--type-small);
+    color: var(--text-muted);
+  }
+
+  .shapes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-6);
+    margin-top: var(--space-5);
+  }
+
+  .shape {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--space-3);
+    margin: 0;
+  }
+
+  /* Square, both of them: under `objectBoundingBox` the coordinates are
+     fractions of width and height, so a shape shown in a rectangle is a shape
+     stretched — and what is being judged here is the geometry. */
+  .shape-big,
+  .shape-small {
+    display: block;
+    flex: none;
+    background: linear-gradient(150deg, var(--surface-invert), var(--accent));
+  }
+
+  .shape-big {
+    width: 120px;
+    height: 120px;
+  }
+
+  .shape-small {
+    width: 56px;
+    height: 56px;
+  }
+
+  .shape figcaption {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    max-width: 18ch;
+  }
+
+  .shape-note {
+    font: var(--type-small);
+    color: var(--text-muted);
+  }
+
+  code {
+    font-size: var(--text-xs);
+    color: var(--text-secondary);
+  }
+</style>

@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 import {
   checkDuplicateDeclarations,
   checkNoColorMixOrOklch,
+  checkRawColourValues,
   checkRgbTriples,
   checkSceneHeightFallback,
   checkUndefinedCustomProperties,
@@ -17,6 +18,7 @@ import {
   checkDuplicateSpeakers,
   checkKickerRepeatsCycle,
 } from '../guards/content.ts';
+import { checkNoShortBrandVariant } from '../guards/brand.ts';
 import { checkAccentContrast, checkHandWrittenCycleRules } from '../guards/cycles.ts';
 import { cycleAccentCss, findCycleNumberConflicts } from '../../src/lib/cycles.ts';
 import {
@@ -31,6 +33,8 @@ import {
   checkItalianDataAttributes,
 } from '../guards/language.ts';
 import { checkDevDepsInLockfile, checkNoTailwind } from '../guards/packages.ts';
+import { checkNoClientDirectives, checkNoUiFramework } from '../guards/react.ts';
+import { checkHandWrittenShapes } from '../guards/shapes.ts';
 import { collectionEntries, dateOf } from '../support/frontmatter.ts';
 import { exists, filesWithExtension, read, readJson, repoRoot } from '../support/paths.ts';
 import { componentCss } from '../support/styles.ts';
@@ -162,6 +166,21 @@ describe('src/**/*.astro component styles', () => {
     expect(checkHandWrittenCycleRules(componentCss(read(path)), path)).toEqual([]);
   });
 
+  it.each(astroFiles)('%s takes its colours from the tokens', (path) => {
+    // Rule 2, in the one place it can go wrong quietly. A hex typed into a
+    // component looks right the day it is typed and drifts the day the token
+    // it duplicates is retuned — one border keeps the old blue and nothing
+    // fails. The tokens themselves are not asked this: declaring the palette
+    // is what they are for.
+    expect(checkRawColourValues(componentCss(read(path)), path)).toEqual([]);
+  });
+
+  it.each(astroFiles)('%s renders at build time, not in a browser', (path) => {
+    // Rule 9. An island renders correctly and fails nothing — what it costs is
+    // a framework in the browser for components that have no logic in them.
+    expect(checkNoClientDirectives(read(path), path)).toEqual([]);
+  });
+
   it.each(astroFiles)('%s names its data-* attributes in English', (path) => {
     // This one does want the whole file: the attribute lives in the markup,
     // which is exactly the half no stylesheet can speak for.
@@ -291,23 +310,44 @@ describe('src/content', () => {
     expect(() => cycleAccentCss(cycleEntries)).not.toThrow();
   });
 
-  it.each(cycleEntries.map((cycle) => [cycle.id, cycle] as const))(
-    '%s has an accent that can be read on the ground of the site',
-    (_id, cycle) => {
-      // What the five hand-written rules used to guarantee by construction: an
-      // accent could only be one of the tuned tokens. Now it comes from a
-      // content file, and a valid hex can still be invisible on the blue. The
-      // ground is read from the tokens rather than written here, so retuning
-      // the surface moves this check with it.
-      const ground = /--blue-700\s*:\s*(#[0-9a-fA-F]{6})/.exec(
-        read('src/styles/tokens/colors.css'),
-      )?.[1];
-      expect(ground, 'colors.css no longer declares --blue-700').toBeTruthy();
-      expect(
-        checkAccentContrast(cycle, ground!, `src/content/cicli/${cycle.id}.md`),
-      ).toEqual([]);
-    },
-  );
+  /* Every surface an accent is actually painted on.
+   *
+   * `--blue-700` is the page; `--blue-600` is `--surface-raised`, which is what
+   * an EventCard and a raised Card sit on — and the accent stripe along their
+   * top edge is drawn straight onto it. Asked of the page ground alone, this
+   * check certified a contrast the site does not have where its main listing
+   * unit draws the colour: a cycle at exactly 3.00:1 against the page is at
+   * 2.37:1 against the raised surface, and nothing would have said so.
+   *
+   * Both are read from the tokens rather than written here, so retuning a
+   * surface moves the check with it. */
+  const grounds = ['blue-700', 'blue-600'].map((token) => {
+    const hex = new RegExp(`--${token}\\s*:\\s*(#[0-9a-fA-F]{6})`).exec(
+      read('src/styles/tokens/colors.css'),
+    )?.[1];
+    return [token, hex] as const;
+  });
+
+  it('reads both grounds out of the tokens', () => {
+    // Without this the loop below would pass over `undefined` grounds the day
+    // a token is renamed, which is a check that stops checking in silence.
+    for (const [token, hex] of grounds) {
+      expect(hex, `colors.css no longer declares --${token}`).toBeTruthy();
+    }
+  });
+
+  it.each(
+    cycleEntries.flatMap((cycle) =>
+      grounds.map(([token, hex]) => [cycle.id, token, cycle, hex] as const),
+    ),
+  )('%s has an accent that can be read on --%s', (_id, _token, cycle, hex) => {
+    // What the five hand-written rules used to guarantee by construction: an
+    // accent could only be one of the tuned tokens. Now it comes from a content
+    // file, and a valid hex can still be invisible on the blue.
+    expect(
+      checkAccentContrast(cycle, hex!, `src/content/cicli/${cycle.id}.md`),
+    ).toEqual([]);
+  });
 
   it('keeps a sample of a role overridden on the event', () => {
     // The `speakers[].role ?? person.role` branch has no other coverage: no
@@ -357,6 +397,41 @@ describe('src/content', () => {
   );
 });
 
+describe('the clip shapes', () => {
+  const component = 'src/components/ClipShapes.astro';
+  const module = 'src/lib/shapes.ts';
+
+  it.each([component, module])('%s writes no geometry by hand', (path) => {
+    // Rule 13's headline, which had no guard while its corollary about empty
+    // clip paths did: somebody pastes a path out of a library, the shape
+    // publishes, every other check stays green, and the constraint the whole of
+    // shapes.ts exists for is gone. `clip-skewed` is the declared exception —
+    // Material has no equivalent to generate it from.
+    expect(checkHandWrittenShapes(read(path), path)).toEqual([]);
+  });
+});
+
+describe('src/components/Brand.astro', () => {
+  const path = 'src/components/Brand.astro';
+
+  it('exists, which is what everything below is about', () => {
+    expect(exists(path)).toBe(true);
+  });
+
+  it('offers no way to ask for a short mark', () => {
+    // Rule 7 from the side the published page cannot see: a prop added «just
+    // for the footer» is caught here, before anything is published without its
+    // signature. The export had one, and the rule exists because it got used.
+    expect(checkNoShortBrandVariant(read(path), path)).toEqual([]);
+  });
+
+  it('writes the signature into the markup, not into a prop with a default', () => {
+    // A default is a value somebody can pass something else for. The words are
+    // in the template, where a caller cannot reach them.
+    expect(read(path)).toContain('>in Periferia<');
+  });
+});
+
 describe('src/styles/tokens/colors.css', () => {
   it('keeps every --*-rgb triple in step with its hex colour', () => {
     expect(checkRgbTriples(read('src/styles/tokens/colors.css'))).toEqual([]);
@@ -394,6 +469,21 @@ describe('package.json', () => {
 
   it('depends on nothing Tailwind', () => {
     expect(checkNoTailwind(manifest)).toEqual([]);
+  });
+
+  it('depends on no UI framework', () => {
+    // Rule 9: the eight components are .astro. One of them had state in the
+    // export — the pressed button — and it is three lines of CSS here.
+    expect(checkNoUiFramework(manifest)).toEqual([]);
+  });
+
+  it('has no component written for a framework', () => {
+    // The other way an island arrives: a .jsx or .tsx file under src/. Astro
+    // will not render it without an integration, so this cannot break quietly
+    // — but it is where somebody starts, and the answer is that the file does
+    // not belong here rather than that the integration is missing.
+    const components = filesWithExtension(join(repoRoot, 'src'), ['.jsx', '.tsx']);
+    expect(components).toEqual([]);
   });
 
   it('agrees with the lockfile about what is development-only', () => {

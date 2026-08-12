@@ -333,15 +333,49 @@ export function checkRgbTriples(css: string): Violation[] {
   return violations;
 }
 
+/* --- Reading declarations ------------------------------------------------ */
+
+/**
+ * Every `property: value` pair in a chunk of CSS, with where it starts.
+ *
+ * The one place this file decides what a declaration looks like. It used to be
+ * three: one scanner for the custom properties, one inside the duplicate check,
+ * one for the values — three regular expressions encoding the same notion with
+ * slightly different capture groups. A correction to that notion — `!important`,
+ * a value carrying braces, nesting — had to land in three places, and the guard
+ * whose copy was missed would keep passing while quietly seeing less of the
+ * stylesheet than the others.
+ *
+ * A declaration is recognised after `{`, `;` or the start of the text, which is
+ * what keeps a selector or an at-rule from being read as one.
+ */
+export function declarations(css: string): {
+  property: string;
+  value: string;
+  index: number;
+}[] {
+  const found: { property: string; value: string; index: number }[] = [];
+  const pattern = /(?:^|[;{])\s*(--[a-z0-9-]+|[a-z-]+)\s*:\s*([^;{}]*)/gi;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(css)) !== null) {
+    found.push({
+      property: match[1]!,
+      value: match[2] ?? '',
+      index: match.index,
+    });
+  }
+  return found;
+}
+
 /* --- Every var() finds its declaration ---------------------------------- */
 
 /** Every custom property *declared* in a chunk of CSS. */
 function declaredProperties(css: string): Set<string> {
-  const declared = new Set<string>();
-  const pattern = /(?:^|[;{])\s*(--[a-z0-9-]+)\s*:/gi;
-  let match: RegExpExecArray | null;
-  while ((match = pattern.exec(css)) !== null) declared.add(match[1]!);
-  return declared;
+  return new Set(
+    declarations(css)
+      .map(({ property }) => property)
+      .filter((property) => property.startsWith('--')),
+  );
 }
 
 /**
@@ -400,6 +434,123 @@ export function checkUndefinedCustomProperties(css: string): Violation[] {
   return violations;
 }
 
+/* --- Rule 2, in the components: no raw colour values --------------------- */
+
+/**
+ * A value with the parts that only *look* like colours taken out: the name of
+ * every `var()`, the quoted strings, the `url()`s. Brackets balanced.
+ *
+ * All three have an ordinary reason to look like a colour and none of them is
+ * one: `var(--weight-black)` carries the word black, `'Archivo Black'` carries
+ * it in a font name, `url(#clip-…)` starts with a hash.
+ *
+ * The **fallback** of a `var()` is kept and read, which is the whole difference
+ * between this and throwing the reading away: `var(--accent, #f26419)` is a hex
+ * typed into a component like any other — and it is the form the export writes,
+ * `var(--accento, var(--arancio-500))`, so it is the one most likely to be
+ * copied across. Kept recursively, because a fallback can hold another var().
+ */
+function withoutIndirection(value: string): string {
+  let out = '';
+  let i = 0;
+
+  while (i < value.length) {
+    const quote = value[i];
+    if (quote === '"' || quote === "'") {
+      const end = value.indexOf(quote, i + 1);
+      i = end === -1 ? value.length : end + 1;
+      continue;
+    }
+
+    const opener = /^(var|url)\s*\(/i.exec(value.slice(i));
+    if (opener) {
+      const open = i + opener[0].length;
+      let depth = 1;
+      let comma = -1;
+      let j = open;
+      for (; j < value.length && depth > 0; j++) {
+        if (value[j] === '(') depth++;
+        else if (value[j] === ')') depth--;
+        else if (value[j] === ',' && depth === 1 && comma === -1) comma = j;
+      }
+
+      const end = depth === 0 ? j - 1 : value.length;
+      if (opener[1]!.toLowerCase() === 'var' && comma !== -1) {
+        out += ` ${withoutIndirection(value.slice(comma + 1, end))} `;
+      }
+      i = end + 1;
+      continue;
+    }
+
+    out += value[i];
+    i++;
+  }
+
+  return out;
+}
+
+/* The colour words this design system could plausibly reach for. Not a
+   dictionary of the 148 CSS names: the ones left out are the ones nobody types
+   by accident, and a longer list buys nothing while costing a false positive on
+   every value that happens to contain `tan` or `plum`. */
+const COLOUR_WORDS = new Set([
+  'aqua', 'beige', 'black', 'blue', 'brown', 'coral', 'crimson', 'cyan', 'gold',
+  'gray', 'green', 'grey', 'indigo', 'ivory', 'lime', 'magenta', 'maroon',
+  'navy', 'olive', 'orange', 'orchid', 'pink', 'purple', 'red', 'salmon',
+  'silver', 'teal', 'violet', 'wheat', 'white', 'yellow',
+]);
+
+/**
+ * A colour written into a component instead of taken from the tokens.
+ *
+ * Rule 2: style is written with the tokens in `src/styles/tokens/`. A hex
+ * typed into a component is not wrong on the screen the day it is typed — it is
+ * wrong six months later, when the token it duplicates is retuned and this one
+ * is not. Nothing fails: one border keeps the old blue.
+ *
+ * `rgba(var(--cream-100-rgb), 0.68)` is *the* prescribed form for transparency
+ * — CLAUDE.md rule 3 — so it has to pass, and it does: the `var()` is removed
+ * before anything is read, which leaves no literal channel behind. So do
+ * `transparent`, `currentColor` and the keywords, which name no colour of their
+ * own.
+ *
+ * Meant for the components, not for the tokens: `--blue-700: #003049` is a
+ * declaration of the palette and the one place a hex belongs.
+ */
+export function checkRawColourValues(css: string, path = 'the component'): Violation[] {
+  const clean = stripComments(css);
+  const violations: Violation[] = [];
+  const reported = new Set<string>();
+
+  const report = (found: string, index: number) => {
+    if (reported.has(found)) return;
+    reported.add(found);
+    violations.push({
+      rule: 'rule 2',
+      detail: `\`${found}\` on line ${lineNumber(clean, index)} of ${path} is a colour written by hand: style is written with the tokens of src/styles/tokens/, so that retuning one changes the site instead of changing one place out of two. For transparency use \`rgba(var(--token-rgb), 0.68)\``,
+    });
+  };
+
+  for (const { value, index } of declarations(clean)) {
+    const bare = withoutIndirection(value);
+
+    const hex = /#[0-9a-fA-F]{3,8}\b/g;
+    let match: RegExpExecArray | null;
+    while ((match = hex.exec(bare)) !== null) report(match[0], index);
+
+    const channels = /\b(rgba?|hsla?)\s*\(\s*[\d.]/gi;
+    while ((match = channels.exec(bare)) !== null) report(`${match[1]}(`, index);
+
+    const words = /\b[a-z]+\b/gi;
+    while ((match = words.exec(bare)) !== null) {
+      const word = match[0].toLowerCase();
+      if (COLOUR_WORDS.has(word)) report(word, index);
+    }
+  }
+
+  return violations;
+}
+
 /* --- Rule 4, at the source: no double declarations ---------------------- */
 
 /**
@@ -414,11 +565,9 @@ export function checkDuplicateDeclarations(css: string): Violation[] {
 
   for (const { body, index } of innermostBlocks(clean)) {
     const seen = new Map<string, number>();
-    const pattern = /(^|[;{])\s*(--[a-z0-9-]+|[a-z-]+)\s*:/gi;
-    let match: RegExpExecArray | null;
-    while ((match = pattern.exec(body)) !== null) {
-      const property = match[2]!.toLowerCase();
-      seen.set(property, (seen.get(property) ?? 0) + 1);
+    for (const { property } of declarations(body)) {
+      const name = property.toLowerCase();
+      seen.set(name, (seen.get(name) ?? 0) + 1);
     }
 
     for (const [property, count] of seen) {

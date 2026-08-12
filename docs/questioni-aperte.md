@@ -58,27 +58,17 @@ pretende `og:image` quando arriva il dominio: pretenderlo avrebbe aperto la
 PR 13 su un test rosso che si poteva chiudere solo inventando l'immagine.
 Quello che la suite pretende è che, se una pagina ne pubblica una, sia assoluta.
 
-## Da decidere alla PR 6
-
-### Le geometrie delle forme: quelle del design o quelle di Material 3
-
-I nomi delle cinque forme di ritaglio vengono già da Material 3 — `4-leaf
-clover`, `6-sided cookie`, `8-leaf clover`, `gem`, `slanted` — ma la
-**geometria** è quella dell'export di Claude Design, e le due non coincidono.
-
-Adottare quelle di Google costa più di quanto sembri: non sono distribuite come
-path, le genera a runtime da un poligono arrotondato e i parametri non stanno
-nella documentazione. Chi le pubblica come SVG le ha ricostruite per conto suo,
-quindi si dipenderebbe dalla sua interpretazione e dalla sua licenza. Le
-geometrie dell'export, intanto, sono tre righe di cerchi ciascuna e sono tarate
-sull'unico punto in cui il design le applica: un ritratto da 56×56.
-
-**Si decide alla PR 6**, che è la prima a ritagliare qualcosa davvero: con un
-ritratto a schermo la differenza si vede, adesso no. Qualunque sia la risposta,
-cambia il contenuto di `ClipShapes.astro` e nient'altro — gli `id` restano e
-nessuno che li referenzia se ne accorge.
-
 ## Minori
+
+### Un ritratto vero da mettere davanti alle forme
+
+Chiusa a metà, e la metà che resta è di contenuto. La geometria delle forme è
+decisa — ricostruita, vedi [decisioni.md](decisioni.md) — ma **nessun relatore
+d'esempio ha una foto**, quindi il ritaglio a 56×56 si è giudicato su un
+riquadro di prova e su una foto messa in locale, non su un ritratto del vero
+archivio. Non blocca niente: il campo `photo` è nello schema da sempre, e la
+prima foto che arriva dal CMS passa dal ritaglio senza che si tocchi nulla.
+Vale la pena riguardare le forme quando ci saranno i ritratti veri.
 
 ### Link a mappa per le sedi
 

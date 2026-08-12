@@ -36,6 +36,10 @@ interface Props {
   /** Where the skip link lands, which is also the id of <main>. */
   mainId?: string;
   skipLabel?: string;
+  /** Keeps a service page out of the index — the component gallery is one.
+   *  `follow` and not `nofollow`: the page is not for readers, the pages it
+   *  links to are. */
+  noindex?: boolean;
 }
 
 const SITE_NAME = 'La Miniera Culturale in Periferia';
@@ -51,6 +55,7 @@ const {
   image,
   mainId = 'programma',
   skipLabel = 'Salta al programma',
+  noindex = false,
 } = Astro.props;
 
 /* Absolute, or absent. Astro.site is undefined until PR 13 sets it. */
@@ -65,6 +70,7 @@ const preview = Astro.site && image ? new URL(image, Astro.site).href : undefine
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex, follow" />}
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" sizes="32x32" />

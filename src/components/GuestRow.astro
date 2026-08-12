@@ -1,0 +1,104 @@
+---
+/* A guest: the name set in display type, the role under it in mono.
+ *
+ * The portrait is part of the component, which is the one place this departs
+ * from the export. There the 56×56 frame and its `clip-path` are written into
+ * the markup of the scene, next to a `RigaOspite` that knows nothing about
+ * them: the size and the shape of a guest's portrait live outside the component
+ * that owns the guest, and the scroller of PR 7 would have copied both. Here
+ * the frame is the component's and what goes in it is a slot, so a caller
+ * passes an `<Image>` and gets the shape without having to know there is one.
+ *
+ * That also makes this the first thing on the site that clips anything: the
+ * guard from PR 5 — every `url(#…)` finds its shape in the same page — has been
+ * waiting for a real reference since it was written.
+ */
+import type { HTMLAttributes } from 'astro/types';
+
+/* `role` is the person's role — «regista», «presidente del comitato» — and it
+   is also an HTML attribute, where it means an ARIA role. The domain had the
+   word first, so the attribute is the one that goes: without the Omit the two
+   collide in the types, and somebody writing `role="listitem"` on a GuestRow
+   would silently be setting the caption under a name. */
+interface Props extends Omit<HTMLAttributes<'div'>, 'role' | 'style'> {
+  name: string;
+  role?: string;
+  /** In px, like the export: the size of the name. */
+  size?: number;
+  /* Composed with this component's own, not spread past it — see Brand.astro:
+     written twice, the caller's copy is the one a browser throws away. */
+  style?: string;
+}
+
+const { name, role, size = 34, class: className, style, ...rest } = Astro.props;
+const hasPortrait = Astro.slots.has('portrait');
+
+const inlineStyle = [`--guest-size: ${size}px`, style].filter(Boolean).join('; ');
+---
+
+<div class:list={['guest-row', className]} style={inlineStyle} {...rest}>
+  {
+    hasPortrait && (
+      <span class="guest-portrait">
+        <slot name="portrait" />
+      </span>
+    )
+  }
+  <span class="guest-lines">
+    <span class="guest-name">{name}</span>
+    {role && <span class="guest-role">{role}</span>}
+  </span>
+</div>
+
+<style>
+  .guest-row {
+    --guest-size: 34px;
+    --portrait-size: 56px;
+
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  /* 56×56 and the eight-lobed shape, both from the design. `overflow: hidden`
+     as well as the clip: a photo that overflows its frame would push the row
+     around before the clip ever hid it. */
+  .guest-portrait {
+    flex: none;
+    width: var(--portrait-size);
+    height: var(--portrait-size);
+    overflow: hidden;
+    clip-path: url(#clip-clover-8);
+  }
+
+  /* Whatever is put in the frame fills it. A caller passing an <Image> should
+     not have to know the shape is there, which is the point of the slot. */
+  .guest-portrait :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .guest-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .guest-name {
+    font-family: var(--font-display);
+    font-weight: var(--weight-black);
+    font-size: var(--guest-size);
+    line-height: 0.98;
+    letter-spacing: var(--tracking-display);
+    color: var(--text-primary);
+  }
+
+  .guest-role {
+    font: var(--type-mono);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+</style>

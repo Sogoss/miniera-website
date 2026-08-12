@@ -139,46 +139,87 @@ quindi le definizioni stanno in `src/components/ClipShapes.astro` e le include
 il layout: ogni pagina le ha, nessuno deve ricordarsene, e una guardia pretende
 che ogni `url(#…)` pubblicato trovi la sua forma nella stessa pagina.
 
-Le forme distinte sono **cinque**: l'export definisce quella a otto lobi due
-volte, `f-ottofoglio` e `m-ottofoglio`, perché sono due file — un design
-desktop e uno mobile — e noi facciamo un sito solo.
+Le forme distinte dell'export sono **cinque**: quella a otto lobi è definita
+due volte, `f-ottofoglio` e `m-ottofoglio`, perché sono due file — un design
+desktop e uno mobile — e noi facciamo un sito solo. Da noi sono **sei**: la
+Pill di Material si è aggiunta alla PR 6.
 
 I nomi sono quelli di **Material 3**: un `id` è codice, e invece di tradurre
 l'italiano dell'export a orecchio prendono il nome che Google dà alle stesse
 geometrie nella sua libreria di forme.
 
-| Nell'export | Geometria | Material 3 | Il nostro `id` |
-|---|---|---|---|
-| `f-quadrifoglio` | quattro lobi attorno a una croce | 4-leaf clover | `clip-clover-4` |
-| `f-esafoglio` | centro largo, sei lobi | 6-sided cookie | `clip-cookie-6` |
-| `f-ottofoglio` · `m-ottofoglio` | centro stretto, otto lobi | 8-leaf clover | `clip-clover-8` |
-| `f-gemma` | otto lati arrotondati | gem | `clip-gem` |
-| `f-obliqua` | quadrilatero con due lati inclinati | *nessuna* | `clip-skewed` |
+| Nell'export | Geometria | Material 3 | Il nostro `id` | Da dove viene |
+|---|---|---|---|---|
+| `f-quadrifoglio` | quattro lobi attorno a una croce | 4-leaf clover | `clip-clover-4` | generata |
+| `f-esafoglio` | centro largo, sei lobi | 6-sided cookie | `clip-cookie-6` | generata |
+| `f-ottofoglio` · `m-ottofoglio` | centro stretto, otto lobi | 8-leaf clover | `clip-clover-8` | generata |
+| `f-gemma` | otto lati arrotondati | gem | `clip-gem` | generata |
+| *nessuna* | capsula inclinata | pill | `clip-pill` | generata |
+| `f-obliqua` | quadrilatero con due lati inclinati | *nessuna* | `clip-skewed` | **dall'export** |
 
-L'ultima è l'eccezione, e porta un nome descrittivo di proposito: lo `slanted`
+`clip-pill` non viene dall'export: è la **Pill di Material 3 Expressive**,
+aggiunta alla PR 6 su richiesta. Le forme sono quindi sei, cinque generate e una
+— `clip-skewed` — presa dall'export.
+
+`clip-skewed` è l'eccezione, e porta un nome descrittivo di proposito: lo `slanted`
 di Material è un quadrato arrotondato su un asse inclinato, questa è un
 quadrilatero a spigoli netti. Prendere in prestito quel nome avrebbe promesso
 una forma diversa da quella che si ottiene — che è esattamente l'opposto del
 motivo per cui i nomi vengono da Material.
 
-> **La pill non è qui, e non è una forma di ritaglio.** Il design la usa sette
-> volte ed è sempre `border-radius: var(--radius-pill)`, su bottoni ed
-> etichette. Non potrebbe nemmeno essere un `clipPath`: con
+> **Due cose portano il nome «pill», e sono diverse.** La pillola del design è
+> `border-radius: var(--radius-pill)`, usata sette volte su bottoni ed
+> etichette, e resta un raggio: non potrebbe essere un `clipPath`, perché con
 > `clipPathUnits="objectBoundingBox"` i raggi sono frazioni di larghezza e
-> altezza, quindi si deformano col rapporto d'aspetto e `rx=.5 ry=.5` dà
-> un'ellisse invece di una capsula. Chi cerca la pillola fra le forme la trova
-> fra i raggi, in `spacing.css`.
+> altezza e `rx=.5 ry=.5` dà un'ellisse invece di una capsula. La **Pill di
+> Material 3** è un'altra cosa: un quadrilatero arrotondato e inclinato, che si
+> costruisce come le altre forme e dalla PR 6 sta fra loro, con l'`id`
+> `clip-pill`. Non è un sostituto del raggio, e la sua descrizione nella
+> rassegna lo dice a chi la incontra lì.
+>
+> Fino alla PR 6 questa nota diceva soltanto «la pill non è una forma di
+> ritaglio», che era vero della pillola del design e falso della forma di
+> Material — due geometrie diverse tenute insieme dal nome.
 
 **Una sola è applicata nell'export**: quella a otto lobi, sui ritratti degli
-ospiti da 56×56. `f-gemma` compare come dato (`formaA`) che nessun elemento
-legge; le altre tre sono definite e mai referenziate. Restano tutte e cinque,
-come catalogo dichiarato — è il trattamento dei cinque colori dei cicli.
+ospiti da 56×56 — e da noi è la stessa, dentro `GuestRow`. `f-gemma` compare
+come dato (`formaA`) che nessun elemento legge; le altre tre sono definite e mai
+referenziate.
 
-La **geometria** però resta quella del design, e non quella di Material: Google
-genera le sue forme a runtime da un poligono arrotondato e non ne pubblica né i
-path né i parametri, quindi adottarle vorrebbe dire dipendere dalla
-ricostruzione di terzi. La scelta si decide alla PR 6, davanti al primo ritratto
-vero — vedi [questioni-aperte.md](questioni-aperte.md).
+Da noi restano tutte, ma **non come catalogo cieco**: la rassegna a
+`/componenti` le mostra tutte, grandi e a 56 pixel, e mostrarle vuol dire
+pubblicarle — quindi un'asserzione pretende che ogni forma dichiarata sia
+referenziata da qualche parte, e la guardia della PR 5 la risolve contro le
+definizioni della stessa pagina. Erano state pubblicate per due PR senza che
+nessuno potesse vederle: una geometria sbagliata sarebbe rimasta invisibile fino
+al giorno in cui qualcuno avesse usato quella forma.
+
+### La geometria: ricostruita, non copiata
+
+Deciso alla PR 6. Cinque forme su sei sono **generate**, in
+`src/lib/shapes.ts`, e non copiate da nessuna parte: né dall'export né da una
+libreria. Google non pubblica i path delle sue forme — le costruisce a runtime
+da un poligono arrotondato — e alla PR 5 si era già deciso che nessun pacchetto
+di forme di terzi entra nel repository. Restava una strada sola: costruirle qui,
+con parametri nostri, scritti accanto alla forma.
+
+Sono quindi forme **nella maniera di** Material 3, non le forme di Material 3.
+La differenza non è modestia: senza parametri pubblicati la taratura si fa a
+occhio, e promettere una fedeltà che nessuno può verificare sarebbe la stessa
+mezza verità che questo repository passa il tempo a cacciare.
+
+Come sono fatte, in una riga: **un anello di lobi circolari, ognuno raccordato
+al successivo da un arco concavo**. Non una stella con gli angoli arrotondati —
+quella è la costruzione ovvia e non funziona, perché l'arco a un vertice non può
+essere più largo del vertice, quindi o le rientranze sono profonde o le punte
+sono tonde, mai tutt'e due. L'export lo sapeva e disegnava con i cerchi; qui
+cambia il raccordo, che è quasi tutto quello che distingue una forma di Material
+da un fiore.
+
+I parametri di ciascuna — quanti lobi, quanto grandi, quanto raccordati — stanno
+in `CLIP_SHAPES` e sono tarati sui **56×56** in cui il design le applica, che è
+l'unica misura a cui la differenza fra due di queste forme sia una differenza
+che qualcuno vede.
 
 ## I token
 

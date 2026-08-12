@@ -67,15 +67,20 @@ export function publishedPages(): { path: string; html: string; css: string }[] 
 }
 
 /**
- * A page Astro copied out of public/ rather than rendered.
+ * A file Astro copied out of public/ rather than rendered.
  *
  * Those are not ours and cannot be held to what the layout guarantees: PR 12
  * drops the Sveltia CMS shell at `public/admin/index.html`, which has no
  * `lang`, no Open Graph, no skip link and no clip shapes. Handing it to the
  * document guards would turn five assertions red at once over a page nobody
  * here wrote, and CLAUDE.md does not allow switching a test off to get past it.
+ *
+ * The same holds for anything else that arrives whole: the Sveltia bundle is
+ * compiled Svelte, and asking it to honour «no UI framework in the published
+ * site» would be asking it not to be what it is. What that rule is about is
+ * what *this* design system ships.
  */
-function copiedFromPublic(path: string): boolean {
+export function copiedFromPublic(path: string): boolean {
   return exists(path.replace(/^dist\//, 'public/'));
 }
 

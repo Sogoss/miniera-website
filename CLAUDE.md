@@ -64,7 +64,14 @@ non una preferenza.
 
 7. **Il marchio va sempre nella forma estesa**, con la scritta "in Periferia".
    La variante breve non si usa mai, navigazione mobile inclusa: se lo spazio
-   è poco si riduce l'altezza, non si taglia la firma.
+   è poco si riduce l'altezza, non si taglia la firma. `Brand` non offre una
+   prop di forma — è il modo in cui la regola si viola, quindi non c'è — e la
+   firma sta nel template e non in un valore predefinito, che è qualcosa per cui
+   si può passare altro. Due guardie in `test/guards/brand.ts`: la prima legge
+   il **testo dentro** ogni elemento `data-brand` pubblicato, non i suoi
+   attributi, perché una firma messa in un `aria-label` sopra un marchio
+   troncato è il difetto e non il rimedio; la seconda scatta sul sorgente il
+   giorno che una prop di forma torna «solo per il piè di pagina».
 
 8. **Niente del runtime di Claude Design va in produzione**: `<x-dc>`,
    `<sc-for>`, `<sc-if>`, `<x-import>`, `<image-slot>`, `DCLogic`,
@@ -73,6 +80,16 @@ non una preferenza.
 
 9. **I componenti del design system si scrivono in `.astro`, non come isole
    React.** Sono presentazionali; l'unico con stato si replica con `:active`.
+   La decisione si perde in tre modi diversi e ha tre guardie in
+   `test/guards/react.ts`: una dipendenza (Preact compreso — «sono solo 3KB» è
+   la forma in cui torna), una direttiva `client:` che trasforma un componente
+   in un'isola, e il runtime che compare in `dist/`. Solo la terza dice cosa
+   scarica davvero un visitatore, ed è quella a cui nessuno penserebbe di
+   guardare. **E i colori dei componenti vengono dai token**: un esadecimale
+   scritto in un `.astro` è giusto il giorno che lo si scrive e sbagliato il
+   giorno che il token che duplica viene ritarato — `checkRawColourValues`, che
+   lascia passare `rgba(var(--token-rgb), 0.68)` perché è la forma prescritta
+   dalla regola 3.
 
 10. **Il numero della serata è il suo URL e non si riassegna mai.**
     Passato e futuro non sono campi: si calcolano da `date` alla build.
@@ -124,6 +141,23 @@ non una preferenza.
     vincerebbe per ordine dei fogli il giorno che `data-cycle` finisce su
     `<html>`.
 
+13. **Le forme di ritaglio non si scrivono a mano e non si copiano.** Le genera
+    `src/lib/shapes.ts`, modulo puro come `events.ts` e `cycles.ts`, e le emette
+    `ClipShapes.astro`. Cinque sono **ispirate a Material 3**, non le forme di
+    Material: Google non pubblica né i path né i parametri, quindi la
+    ricostruzione è nostra, con i parametri scritti accanto alla forma — e la
+    documentazione dice *ispirate*, perché promettere una fedeltà che nessuno
+    può verificare è la mezza verità che questo repository passa il tempo a
+    cacciare. La quinta, `clip-skewed`, tiene la geometria dell'export: Material
+    non ha un corrispondente. **Gli `id` sono l'interfaccia** e non cambiano: la
+    geometria si ritara senza che se ne accorga nessuno di chi la referenzia.
+    Una forma a lobi si costruisce con **cerchi raccordati**, non arrotondando i
+    vertici di una stella: l'arco a un vertice non può essere più largo del
+    vertice, quindi o le rientranze sono profonde o le punte sono tonde, mai
+    tutt'e due. **E un `<clipPath>` senza geometria ha la sua guardia**: non
+    viene ignorato, ritaglia *tutto* — pubblica un buco al posto della foto, con
+    l'`id` che risolve e la suite verde.
+
 ## Lingua
 
 Due lingue, separate da un confine netto: **il codice è in inglese, quello che
@@ -164,8 +198,8 @@ src/components/    i componenti .astro
 src/layouts/       Base.astro: il documento che ogni pagina abita
 src/content/       eventi, cicli, sedi, relatori
 src/content.config.ts   schema Zod delle quattro collection
-src/lib/           il dominio: events.ts e cycles.ts puri, programme.ts legge
-                   le collection
+src/lib/           il dominio: events.ts, cycles.ts e shapes.ts puri,
+                   programme.ts legge le collection
 src/styles/tokens/ i token del design
 src/styles/global.css   strato base del documento
 test/guards/       le guardie ai vincoli, come funzioni pure
@@ -193,6 +227,14 @@ PR 5 include `CycleAccents` e `ClipShapes` per ogni pagina. **Una pagina non si
 scrive più `<html>` e `<head>` da sé**: le scrive il layout, e ciò che il layout
 porta — lingua, meta, salta-a, accenti, forme — è guardato pagina per pagina in
 `test/build/published-pages.test.ts`.
+
+`src/pages/componenti.astro` è invece **una pagina che resta**: la rassegna
+degli otto componenti, con tutte le loro varianti. È pubblicata e `noindex`, e
+la ragione per cui è pubblicata è la stessa per cui esiste lo strato `build` —
+per lo stile il sorgente non basta, quindi una rassegna viva solo in `npm run
+dev` lascerebbe le varianti di ogni componente verificate da nessuna parte.
+Prende i dati veri dal dominio: un `data-cycle` inventato lì farebbe scattare la
+guardia della PR 4. **Alla PR 13 va tenuta fuori dalla sitemap.**
 
 ## Comandi
 

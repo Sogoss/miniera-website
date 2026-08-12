@@ -6,6 +6,7 @@
 
   --border-width-hairline: 1px;
   --border-width-strong: 2px;
+  --border-width-accent: 4px;   /* the accent edge along the top of a panel */
   --border-width-banner: 6px;   /* vertical bar of the brand */
 
   --ease-out: cubic-bezier(0.2, 0, 0, 1);

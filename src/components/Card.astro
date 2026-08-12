@@ -1,0 +1,36 @@
+---
+/* A panel with the accent along its top edge.
+ *
+ * Square on purpose — `--radius-0`, written rather than left out, because the
+ * one curve in this brand is the bottom-right corner of the badge and every
+ * other corner is a decision to keep it sharp.
+ *
+ * `raised` lifts it off the page onto `--surface-raised`; without it the card is
+ * a rule and a hairline over whatever it sits on.
+ */
+import type { HTMLAttributes } from 'astro/types';
+
+interface Props extends HTMLAttributes<'div'> {
+  raised?: boolean;
+}
+
+const { raised = false, class: className, ...rest } = Astro.props;
+---
+
+<div class:list={['card', className]} data-raised={raised ? '' : undefined} {...rest}>
+  <slot />
+</div>
+
+<style>
+  .card {
+    padding: var(--space-5);
+    border: var(--border-width-hairline) solid var(--border-hairline);
+    border-top: var(--border-width-accent) solid var(--accent);
+    border-radius: var(--radius-0);
+    color: var(--text-primary);
+  }
+
+  .card[data-raised] {
+    background: var(--surface-raised);
+  }
+</style>

@@ -1,0 +1,42 @@
+---
+/* The number of an evening, set as a badge.
+ *
+ * The one curve in this brand: `--radius-badge` rounds the bottom-right corner
+ * and leaves the other three square. Everything else about the badge scales
+ * from `size`, as in the export.
+ */
+import type { HTMLAttributes } from 'astro/types';
+
+/* `style` composed rather than spread — see Brand.astro: written twice, the
+   caller's copy is the one a browser throws away. */
+interface Props extends Omit<HTMLAttributes<'span'>, 'style'> {
+  /** In px, like the export: type size, and the padding scales from it. */
+  size?: number;
+  style?: string;
+}
+
+const { size = 44, class: className, style, ...rest } = Astro.props;
+
+const inlineStyle = [`--badge-size: ${size}px`, style].filter(Boolean).join('; ');
+---
+
+<span class:list={['episode-badge', className]} style={inlineStyle} {...rest}>
+  <slot />
+</span>
+
+<style>
+  .episode-badge {
+    --badge-size: 44px;
+
+    display: inline-block;
+    padding: calc(var(--badge-size) * 0.36) calc(var(--badge-size) * 0.5)
+      calc(var(--badge-size) * 0.45);
+    background: var(--accent);
+    color: var(--text-on-accent);
+    border-radius: var(--radius-badge);
+    font-family: var(--font-display);
+    font-weight: var(--weight-black);
+    font-size: var(--badge-size);
+    line-height: 1;
+  }
+</style>
