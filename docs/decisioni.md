@@ -256,7 +256,8 @@ nessuna richiesta bloccante in più nel percorso critico per poche centinaia di
 byte, e nessun artefatto da rigenerare e tenere allineato a mano — che
 riaprirebbe la stessa distanza fra la collection e il CSS che questa PR chiude.
 `is:inline` perché il contenuto si conosce solo alla build, e perché queste
-regole non devono essere scopate al componente: vestono il documento. Dalla PR 5
+regole non devono restare circoscritte al componente: vestono il documento.
+Dalla PR 5
 il componente sta in `Base.astro` e nessuna pagina deve ricordarsene.
 
 **Una pagina che porta `data-cycle` deve portarsi anche le regole, e c'è una
@@ -275,6 +276,29 @@ guardia passava sull'accento senza guardare niente. Con `--accent: #hex` e
 sbagliata diventa rossa in `dist/` senza che sia servito scrivere una guardia
 nuova. Un test pretende che l'accento resti un esadecimale letterale: tornare a
 un puntatore la rimetterebbe a dormire in silenzio.
+
+**Del colore che arriva dal CMS si controlla il contrasto, non il gusto.**
+Le cinque regole cancellate garantivano per costruzione che un accento fosse uno
+dei cinque token tarati; ora il colore lo scrive un redattore in un file, e fra
+il CMS e la pagina pubblicata resta un controllo di sintassi esadecimale:
+`#0a3550` è un esadecimale validissimo ed è quasi il fondo. Una guardia pretende
+**3:1** sul fondo, la soglia WCAG per gli elementi d'interfaccia, che è quello
+che l'accento è — l'occhiello, il bordo della scena, la tacca. I cinque stanno
+fra 3.88 e 5.55, quindi non è una soglia che stringe la palette: è la riga sotto
+la quale la pagina non si legge. Che nessun ciclo *prevalga* sugli altri resta
+invece un giudizio sulla saturazione accanto ad altri cinque colori, e una
+guardia che ci provasse discuterebbe con un designer. *(PR 4, in revisione)*
+
+**Il valore predefinito dell'accento sta a specificità zero.** Scritto `:root`
+pareggia con ogni `[data-cycle="N"]` emesso — entrambi (0,1,0) — e un pareggio lo
+decide l'ordine dei documenti, che mette lo `<style>` in linea *prima* del foglio
+bundlato. Oggi i due selettori pescano elementi diversi e non succede niente; il
+giorno che una pagina porta `data-cycle` su `<html>`, che è il posto naturale
+quando un'intera pagina appartiene a un ciclo, `:root` vincerebbe e l'intera
+pagina uscirebbe arancio — con la guardia verde, perché una regola per quel ciclo
+esiste davvero: chiede se c'è, non se vince. `:where(:root)` azzera la
+specificità e toglie il pareggio; un test dello strato `build` pretende che il
+minificatore non lo riscriva. *(PR 4, in revisione)*
 
 **Un sesto ciclo e la serata che lo usa.** Con i soli cicli 2 e 3, che portano
 esattamente due dei colori predefiniti, i due casi che contano — un colore
@@ -610,15 +634,30 @@ che su una guardia accecata sono risposte opposte.
 
 Lo gira la CI e non `npm test`: costa la suite intera una volta per guardia, un
 minuto abbondante, che è il prezzo sbagliato da pagare a ogni salvataggio e
-quello giusto per sapere che l'impianto non è diventato decorazione. Modifica i
-sorgenti sul posto e li rimette: gli originali stanno in memoria, il ripristino
-è in un `finally` e su ogni segnale, ogni file accecato porta un marcatore che
-rende riconoscibile una corsa interrotta, e l'ultima cosa che fa è rileggere i
-file e rifiutarsi di finire in silenzio se uno differisce. E ha il suo test,
-perché ha lo stesso modo di fallire che caccia: trovando *meno* guardie di
-quante ce ne sono direbbe «18 su 18», che si legge come una risposta — quindi
-il conto viene fatto due volte, in due modi diversi, e i due devono coincidere.
-*(PR 4)*
+quello giusto per sapere che l'impianto non è diventato decorazione.
+
+**Prima di accecare qualsiasi cosa esegue la suite intatta, e ricostruendo.**
+Senza, la risposta non vale niente nella situazione più ordinaria che ci sia: un
+`dist/` stantio lascia rosso lo strato `build` prima che si tocchi niente, ogni
+accecamento sembra «visto», e lo strumento stampa un tranquillo «22 su 22» senza
+aver chiesto niente — lo stesso guasto che rimprovera alle guardie.
+
+**Rimette a posto solo il file che ha accecato.** Teneva in memoria una copia di
+tutti e li riscriveva tutti alla fine, il che cancellava senza dire niente
+qualunque modifica fatta mentre girava — oltre un minuto, durante il quale
+nessuno ha motivo di credere che il proprio editor sia pericoloso. E il ciclo
+ora è asincrono: era una sequenza di chiamate bloccanti, quindi gli handler dei
+segnali non potevano girare — e registrarli aveva già tolto a Node la
+terminazione predefinita, cioè Ctrl-C non fermava più niente. Ogni file accecato
+porta un marcatore, che rende riconoscibile una corsa interrotta all'avvio
+successivo, ed è quello che la verifica finale cerca.
+
+**E ha il suo test, perché ha lo stesso modo di fallire che caccia**: trovando
+*meno* guardie di quante ce ne sono direbbe «18 su 18», che si legge come una
+risposta. Il conto si fa due volte e in modi diversi — le due metà non devono
+condividere né l'elenco dei file né il modo di riconoscere una dichiarazione,
+altrimenti concordano su ciò che non esiste, che è l'unica cosa su cui devono
+poter litigare. *(PR 4)*
 
 **L'indipendenza dal fuso si prova eseguendo, non dichiarando.** `TZ` si legge
 una volta all'avvio del processo, quindi una suite sola prova solo la macchina

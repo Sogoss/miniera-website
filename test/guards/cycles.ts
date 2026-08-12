@@ -19,12 +19,45 @@
  * expression, and only the published HTML says what it came out as.
  */
 import { stripComments } from './css.ts';
+import { stripMarkupComments } from './language.ts';
 import { type Violation, lineNumber } from './types.ts';
+
+/** Every `selector { … }` in a chunk of CSS, innermost first, with the offset
+ *  of the first character of the selector rather than of the whitespace before
+ *  it — which is what a reported line number has to point at. */
+function cssRules(css: string): { selector: string; body: string; index: number }[] {
+  const found: { selector: string; body: string; index: number }[] = [];
+  const pattern = /([^{}]+)\{([^{}]*)\}/g;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(css)) !== null) {
+    const selector = match[1] ?? '';
+    found.push({
+      selector,
+      body: match[2] ?? '',
+      index: match.index + (selector.length - selector.trimStart().length),
+    });
+  }
+  return found;
+}
+
+/* `[data-cycle]` and `[data-cycle="2"]`, and deliberately not `[data-cycle-x]`:
+   an attribute whose name merely starts the same way is a different attribute,
+   and a guard that reports it is one somebody switches off. */
+const CYCLE_SELECTOR = /\[\s*data-cycle\s*(?:[~^|$*]?=[^\]]*)?\]/i;
+const DECLARES_ACCENT = /--accent(?:-rgb)?\s*:/i;
 
 /* --- Rule 12, first half: no hand-written rules -------------------------- */
 
 /**
- * A `[data-cycle…]` selector in a stylesheet or in a component's `<style>`.
+ * A hand-written rule that gives a cycle its accent.
+ *
+ * Both halves of that sentence do work. Reporting every `[data-cycle…]`
+ * selector regardless of what it declares forbids far more than rule 12 says:
+ * the scroller of PR 7 will legitimately write `[data-cycle] { scroll-snap-align:
+ * start }`, which declares no accent and cannot shadow an emitted rule, and a
+ * guard that turns that PR red with a message about the order of the
+ * stylesheets is a guard that gets loosened — taking the real check with it.
+ * The sibling guard below already reasons this way, and the two now agree.
  *
  * Source only — see the note at the top of this file. Comments are blanked
  * first, so the paragraph in colors.css explaining where the rules come from
@@ -37,12 +70,11 @@ export function checkHandWrittenCycleRules(
   const violations: Violation[] = [];
   const clean = stripComments(css);
 
-  const pattern = /\[\s*data-cycle\b/gi;
-  let match: RegExpExecArray | null;
-  while ((match = pattern.exec(clean)) !== null) {
+  for (const rule of cssRules(clean)) {
+    if (!CYCLE_SELECTOR.test(rule.selector) || !DECLARES_ACCENT.test(rule.body)) continue;
     violations.push({
       rule: 'rule 12',
-      detail: `${path} line ${lineNumber(clean, match.index)}: a \`[data-cycle…]\` rule written by hand. The accent of a cycle comes from its file in src/content/cicli/ and is emitted at build time; a copy here has the same specificity as the emitted rule, so which of the two wins is decided by the order of the stylesheets — and the day that order changes the old colour comes back with nothing failing`,
+      detail: `${path} line ${lineNumber(clean, rule.index)}: a \`[data-cycle…]\` rule declaring an accent by hand. The accent of a cycle comes from its file in src/content/cicli/ and is emitted at build time; a copy here has the same specificity as the emitted rule, so which of the two wins is decided by the order of the stylesheets — and the day that order changes the old colour comes back with nothing failing`,
     });
   }
 
@@ -50,6 +82,75 @@ export function checkHandWrittenCycleRules(
 }
 
 /* --- Rule 12, second half: the rules travel with the attribute ----------- */
+
+/* --- The accent has to be readable on the ground it sits on -------------- */
+
+/** Relative luminance, as WCAG defines it. */
+function luminance(hex: string): number | null {
+  const digits = /^#([0-9a-fA-F]{6})$/.exec(hex.trim())?.[1];
+  if (!digits) return null;
+
+  const channels = [0, 2, 4]
+    .map((at) => parseInt(digits.slice(at, at + 2), 16) / 255)
+    .map((channel) => (channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4));
+
+  return 0.2126 * channels[0]! + 0.7152 * channels[1]! + 0.0722 * channels[2]!;
+}
+
+/** The WCAG contrast ratio between two colours, or null if either is unreadable. */
+export function contrastRatio(one: string, other: string): number | null {
+  const a = luminance(one);
+  const b = luminance(other);
+  if (a === null || b === null) return null;
+  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+}
+
+/* 3:1, the WCAG floor for large text and for interface elements — which is what
+   the accent is: the kicker, the border of a scene, the tick of the Timeline.
+   The five tuned colours of the design sit between 3.88 and 5.55 and the sixth
+   at 4.81, so this is not a bar the palette has to stretch for; it is the line
+   below which a colour is not a design decision but an unreadable page. */
+const MINIMUM_CONTRAST = 3;
+
+/**
+ * A cycle colour that cannot be read on the ground of the site.
+ *
+ * Until PR 4 an accent could only ever be one of the five tokens in colors.css,
+ * tuned to equal lightness and saturation so that no cycle prevails and the
+ * contrast holds. Now the colour comes from a content file an editor fills in,
+ * and the only thing between the CMS and the published page is a six-digit-hex
+ * syntax check: `#0a3550` is a valid hex and is nearly the blue ground itself.
+ * Nothing else in the suite would say a word, and the failure is visible only by
+ * looking at the deployed site.
+ *
+ * This does not check the rest of the tuning — that no cycle *prevails* is a
+ * judgement about saturation next to five other colours, and a guard that tried
+ * would be arguing with a designer. It checks the half that is a number.
+ */
+export function checkAccentContrast(
+  cycle: { number: number; name: string; color: string },
+  ground: string,
+  path = 'the cycle',
+): Violation[] {
+  const ratio = contrastRatio(cycle.color, ground);
+  if (ratio === null) {
+    return [
+      {
+        rule: 'rule 12',
+        detail: `${path}: the colour \`${cycle.color}\` or the ground \`${ground}\` is not a six-digit hex, so no contrast can be worked out for cycle #${cycle.number} «${cycle.name}»`,
+      },
+    ];
+  }
+
+  if (ratio >= MINIMUM_CONTRAST) return [];
+
+  return [
+    {
+      rule: 'rule 12',
+      detail: `${path}: cycle #${cycle.number} «${cycle.name}» has the colour \`${cycle.color}\`, which sits at ${ratio.toFixed(2)}:1 against the ground \`${ground}\` — below the ${MINIMUM_CONTRAST}:1 an accent needs to be read at all. The five tuned colours of the design are between 3.88 and 5.55; a colour this close to the ground publishes a kicker and a scene border nobody can see`,
+    },
+  ];
+}
 
 /** Every value a `data-cycle` attribute carries in the published markup. */
 function attributeValues(markup: string): Map<string, number> {
@@ -90,11 +191,9 @@ function selectorValues(selector: string): string[] {
  */
 function accentedValues(css: string): Set<string> {
   const found = new Set<string>();
-  const rules = /([^{}]+)\{([^{}]*)\}/g;
-  let rule: RegExpExecArray | null;
-  while ((rule = rules.exec(css)) !== null) {
-    if (!/--accent\s*:/.test(rule[2] ?? '')) continue;
-    for (const value of selectorValues(rule[1] ?? '')) found.add(value);
+  for (const rule of cssRules(css)) {
+    if (!/--accent\s*:/.test(rule.body)) continue;
+    for (const value of selectorValues(rule.selector)) found.add(value);
   }
   return found;
 }
@@ -106,14 +205,20 @@ function accentedValues(css: string): Set<string> {
  * keep by carrying `CycleAccents`: forget it and every evening keeps the
  * `:root` orange, which looks like a design decision rather than a missing
  * component. The CSS handed in is the CSS that page actually receives — the
- * stylesheets of dist/ plus its own `<style>` blocks.
+ * stylesheets it links plus its own `<style>` blocks.
+ *
+ * Markup comments are blanked first. Astro copies them into dist/ untouched, so
+ * a scene left commented out in a draft — `<!-- <article data-cycle="9"> -->` —
+ * would otherwise be read as a cycle in use and fail the build over a page that
+ * renders perfectly, naming a component that is in fact there. The guard on the
+ * Italian `data-*` names blanks them for exactly this reason.
  */
 export function checkCycleRulesResolve(
   markup: string,
   css: string,
   path = 'the page',
 ): Violation[] {
-  const used = attributeValues(markup);
+  const used = attributeValues(stripMarkupComments(markup));
   if (used.size === 0) return [];
 
   const declared = accentedValues(stripComments(css));

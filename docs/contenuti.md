@@ -126,6 +126,13 @@ quella taratura.** Si scrive come esadecimale a sei cifre — `#00a9b0` — e in
 nessun altro modo: è testo che finisce dentro un foglio di stile, quindi ciò che
 non è riconosciuto ferma la build invece di essere pubblicato.
 
+Della taratura una metà è un numero, e quella la controlla la suite: il colore
+deve staccare dal fondo blu **almeno 3 a 1**, che è la soglia sotto la quale non
+è più una scelta di tinta ma un occhiello che non si legge. I cinque predefiniti
+stanno fra 3.88 e 5.55 e il sesto a 4.81, quindi non è un limite che stringe: è
+la rete sotto un colore scelto vicino al fondo. L'altra metà — che nessun ciclo
+prevalga sugli altri — resta un giudizio che si fa guardando.
+
 **Il numero di un ciclo non si ripete.** Non è solo l'ordine in cui i cicli si
 sono succeduti: è il nome con cui il ciclo si chiama nel CSS, quindi due cicli
 con lo stesso numero finirebbero per condividere un colore — vince l'ultimo

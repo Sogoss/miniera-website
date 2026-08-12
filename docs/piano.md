@@ -554,6 +554,38 @@ cicli*. In breve:
 > risposta — ed è stato visto scattare mettendogli davanti una guardia che
 > nessun test copre: la nomina ed esce con 1.
 
+> **Trovato in revisione.** Quindici difetti, e il grosso stava nello strumento
+> nuovo: quattro modi diversi in cui `test:mutate` poteva stampare «22 su 22»
+> senza aver accecato una guardia. Lo scanner attribuiva a una funzione col corpo
+> su una riga sola l'offset della funzione *dopo* — così quella veniva accecata
+> due volte e questa, mai toccata, risultava coperta; non c'era nessun controllo
+> che la suite fosse verde *prima* di cominciare, e con un `dist/` stantio ogni
+> accecamento sembra notato; e il «secondo conteggio indipendente» condivideva
+> con lo scanner sia la regola per riconoscere una dichiarazione sia l'elenco dei
+> file, cioè concordava proprio su ciò di cui doveva litigare. In più il
+> ripristino riscriveva *tutti* i file da una copia di minuti prima, cancellando
+> in silenzio le modifiche fatte nel frattempo, e gli handler dei segnali non
+> potevano girare perché il ciclo era sincrono — avendo però già tolto a Node la
+> terminazione predefinita, cioè Ctrl-C non fermava più niente.
+>
+> Sul dominio, tre cose. La guardia sulle regole scritte a mano segnalava
+> qualunque `[data-cycle…]` — compreso `[data-cycle-label]` e compreso lo
+> `scroll-snap-align` che la PR 7 scriverà legittimamente — mentre la gemella
+> nello stesso file ragiona esplicitamente al contrario; leggeva inoltre i soli
+> fogli di `src/styles`, quindi una regola d'accento in `public/` passava
+> indisturbata. La guardia sulle pagine pubblicate non annullava i commenti HTML,
+> e una scena lasciata in bozza avrebbe fatto fallire la CI accusando un
+> componente presente. E il valore predefinito dell'accento, spostato in `:root`,
+> pareggia con le regole emesse: `:where(:root)` toglie il pareggio.
+>
+> Due riguardano ciò che questa PR ha smesso di garantire senza dirlo. Il colore
+> di un ciclo non ha più i cinque token a limitarlo, e fra il CMS e la pagina
+> restava la sola sintassi esadecimale: ora una guardia pretende 3:1 sul fondo.
+> E `checkRgbTriples`, che la PR dichiarava di aver *acceso* sull'accento, ha
+> smesso in silenzio di segnalare una terna orfana — con `--accent` che ora vale
+> più esadecimali diversi, il suo ramo «non c'è un'unica risposta» è diventato il
+> caso normale, ed è esattamente la forma che lo scroller della PR 7 scriverà.
+
 ### Test manuali
 
 - Cambiare il colore di un ciclo nel suo file e vedere l'accento cambiare in

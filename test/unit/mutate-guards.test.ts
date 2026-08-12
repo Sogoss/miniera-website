@@ -12,7 +12,8 @@
  */
 import { describe, expect, it } from 'vitest';
 import { checksIn, failedCount, sourceFiles } from '../../scripts/mutate-guards.mjs';
-import { read } from '../support/paths.ts';
+import { filesWithExtension, read, repoRoot } from '../support/paths.ts';
+import { join } from 'node:path';
 
 describe('checksIn', () => {
   it('finds an exported guard and the start of its body', () => {
@@ -61,6 +62,38 @@ describe('checksIn', () => {
     const [found] = checksIn(source);
     expect(source.slice(found!.body)).toBe('\n  return [];\n}\n');
   });
+
+  it('gives two consecutive checks two different bodies', () => {
+    // The offsets, not just the names. Handing both the same offset would blind
+    // one function twice and report the other — never touched — as held up by a
+    // test, which is the one answer the script must never give.
+    const source =
+      'export function checkOne(a: string) {\n  return [];\n}\n\n' +
+      'export function checkTwo(b: string) {\n  return [];\n}\n';
+    const [one, two] = checksIn(source);
+    expect(one!.body).not.toBe(two!.body);
+    expect(source.slice(one!.body)).toContain('export function checkTwo');
+    expect(source.slice(two!.body)).not.toContain('export function');
+  });
+
+  it('does not reach into the next function for a body it cannot find', () => {
+    // A one-line body. The search used to run to the end of the file and take
+    // the *next* function's offset; now it stops at the next declaration and
+    // this one is simply not found — which the cross-count below turns red.
+    const source =
+      'export function checkCompact(a: string) { return []; }\n\n' +
+      'export function checkNormal(b: string) {\n  return [];\n}\n';
+    expect(checksIn(source).map((check) => check.name)).toEqual(['checkNormal']);
+  });
+
+  it('drops a check whose argument list never closes, rather than guessing', () => {
+    // An unbalanced `(` in a comment inside the parameters. Dropping it is
+    // safe only because dropping it is loud: the cross-count says a name is
+    // missing.
+    const source =
+      'export function checkOdd(\n  // the fallback ( see rule 4\n  a: string,\n) {\n  return [];\n}\n';
+    expect(checksIn(source)).toEqual([]);
+  });
 });
 
 /* Reading the one line of vitest output the whole answer rests on.
@@ -98,17 +131,44 @@ describe('failedCount', () => {
   });
 });
 
+/* The cross-count, and why it is built out of different parts.
+ *
+ * A count that shares the scanner's regex, or the scanner's file list, agrees
+ * with it about what does not exist — which is the one thing it was added to
+ * disagree about. Both halves are therefore arrived at another way: the files
+ * through `filesWithExtension`, which walks subfolders, and the names through a
+ * pattern that also admits the declaration shapes the scanner does not read.
+ * The day a guard is written as `export const checkX = (…) =>` or filed under
+ * test/guards/css/, this goes red instead of the script printing a tidy
+ * «n/n held up» over a shorter list.
+ */
 describe('the checks the script will find in this repository', () => {
   const files = sourceFiles();
 
-  /** The same count, arrived at without the scanner. */
-  const declared = files.flatMap((path: string) =>
-    [...read(path).matchAll(/^export function ((?:check|find)\w+)/gm)].map((match) => match[1]!),
+  const walked = [
+    ...filesWithExtension(join(repoRoot, 'test/guards'), ['.ts']),
+    ...filesWithExtension(join(repoRoot, 'src/lib'), ['.ts']),
+  ];
+
+  /** Every exported name a guard could plausibly be declared under. */
+  const declared = walked.flatMap((path) =>
+    [
+      ...read(path).matchAll(
+        /^export (?:async function|function|const|let) ((?:check|find)\w+)/gm,
+      ),
+    ].map((match) => match[1]!),
   );
 
   it('reads both folders where a check can live', () => {
     expect(files.some((path: string) => path.startsWith('test/guards/'))).toBe(true);
     expect(files.some((path: string) => path.startsWith('src/lib/'))).toBe(true);
+  });
+
+  it('sees the same files a recursive walk sees', () => {
+    // Its own enumeration is a readdir; this one walks. A guard filed one
+    // folder deeper would drop out of the script and out of the cross-count
+    // below together, and both would stay green.
+    expect([...files].sort()).toEqual([...walked].sort());
   });
 
   it('finds every one of them', () => {

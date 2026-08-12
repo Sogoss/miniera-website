@@ -71,10 +71,6 @@
   --cycle-4-rgb: 224, 90, 129;
   --cycle-5-rgb: 172, 112, 198;
 
-  /* Outside a declared cycle the accent is the brand orange. Inside one it is
-     that cycle's own colour, from a rule emitted at build time. */
-  --accent: var(--cycle-1);
-  --accent-rgb: var(--cycle-1-rgb);
 
   /* --- Semantic --------------------------------------------------------- */
   --surface-page: var(--blue-700);
@@ -105,6 +101,24 @@
   --status-ok: #4f9d69;
   --status-warning: #e0a32e;
   --status-error: #d64545;
+}
+
+/* The accent outside any declared cycle: the brand orange. Inside one it is
+   that cycle's own colour, from a rule emitted at build time.
+
+   In `:where()` on purpose, which makes this rule's specificity zero. Written
+   plainly as `:root` it *ties* with every emitted `[data-cycle="N"]` — both
+   (0,1,0) — and a tie is broken by document order, which puts the inline
+   <style> of CycleAccents before the bundled stylesheet. The two selectors
+   match different elements today, so nothing is wrong yet; the day a page
+   carries `data-cycle` on <html> itself — the natural place when a whole page
+   belongs to one cycle, and what PR 5 and PR 9 will want — :root would win on
+   that element and every accent of the page would render brand orange, with the
+   guard still green because a rule for that cycle does exist. At zero
+   specificity there is nothing left to win. */
+:where(:root) {
+  --accent: var(--cycle-1);
+  --accent-rgb: var(--cycle-1-rgb);
 }
 
 /* Light surface: print, documents, email. Same brand, cream ground. */

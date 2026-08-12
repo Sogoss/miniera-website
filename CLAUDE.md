@@ -110,11 +110,19 @@ non una preferenza.
     specificità di quella emessa, quindi a decidere il colore del sito sarebbe
     l'ordine dei fogli. **E una pagina che porta `data-cycle` deve portarsi
     anche le regole**: senza `CycleAccents` ogni serata resta sull'arancio di
-    `:root`, che è una pagina giusta del colore sbagliato. Due guardie in
-    `test/guards/cycles.ts`: la prima legge il sorgente — in `dist/` le regole
-    emesse ci sono per costruzione — la seconda le pagine pubblicate, perché nel
-    sorgente `data-cycle={n}` è un'espressione. Due cicli con lo stesso numero
-    fermano la build: il numero è il nome del ciclo nel CSS.
+    `:root`, che è una pagina giusta del colore sbagliato. Tre guardie in
+    `test/guards/cycles.ts`: la prima legge il sorgente — ogni foglio che la
+    build spedisce, `public/` compreso, e segnala solo le regole che
+    **dichiarano un accento**, perché `[data-cycle] { scroll-snap-align }` è
+    lavoro legittimo — la seconda le pagine pubblicate, perché nel sorgente
+    `data-cycle={n}` è un'espressione; la terza pretende che il colore di un
+    ciclo si legga sul fondo, **almeno 3:1**, che è la sola metà numerica della
+    taratura che le cinque regole cancellate garantivano per costruzione. Due
+    cicli con lo stesso numero fermano la build: il numero è il nome del ciclo
+    nel CSS. E il valore predefinito fuori da un ciclo sta in `:where(:root)`,
+    a specificità zero: scritto `:root` pareggerebbe con le regole emesse e
+    vincerebbe per ordine dei fogli il giorno che `data-cycle` finisce su
+    `<html>`.
 
 ## Lingua
 

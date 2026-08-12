@@ -122,6 +122,24 @@ describe('the accents published from the collection', () => {
     }
   });
 
+  it('hands each page the stylesheets that page actually links', () => {
+    // Without this the check above could be satisfied by another page's
+    // bundle: the guard would answer «the rules reach this page» by reading a
+    // file this page never asks for.
+    const pages = publishedPages();
+    expect(pages.some((page) => page.css.includes('--accent'))).toBe(true);
+    expect(pages.every((page) => page.css.length > 0)).toBe(true);
+  });
+
+  it('keeps the outside-a-cycle default at zero specificity', () => {
+    // `:where(:root)`, not `:root`: at equal specificity the emitted rules and
+    // the default are separated only by the order of the stylesheets, and the
+    // published <style> comes first. Read out of dist/ because the minifier is
+    // free to rewrite a selector, and a rewrite here would put the tie back
+    // without touching the source.
+    expect(css).toMatch(/:where\(\s*:root\s*\)[^{]*\{[^}]*--accent\s*:/);
+  });
+
   it('publishes at least one page that declares a cycle', () => {
     // Otherwise the check above is a loop over pages that never declare one:
     // green, and looking at nothing.

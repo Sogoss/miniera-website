@@ -17,7 +17,7 @@ import {
   checkDuplicateSpeakers,
   checkKickerRepeatsCycle,
 } from '../guards/content.ts';
-import { checkHandWrittenCycleRules } from '../guards/cycles.ts';
+import { checkAccentContrast, checkHandWrittenCycleRules } from '../guards/cycles.ts';
 import { cycleAccentCss, findCycleNumberConflicts } from '../../src/lib/cycles.ts';
 import {
   checkAmbientTime,
@@ -36,6 +36,15 @@ import { exists, filesWithExtension, read, readJson, repoRoot } from '../support
 import { componentCss } from '../support/styles.ts';
 
 const styleFiles = filesWithExtension(join(repoRoot, 'src/styles'), ['.css']);
+/* Every stylesheet the build can ship, which is a wider net than the tokens:
+   a .css sitting next to a component, and everything in public/, which is
+   copied into dist/ verbatim. Rule 12 has to be asked of all of them — a
+   hand-written accent rule in public/overrides.css would pass both halves of
+   the rule while quietly deciding the colour of a cycle. */
+const shippedCss = [
+  ...filesWithExtension(join(repoRoot, 'src'), ['.css']),
+  ...(exists('public') ? filesWithExtension(join(repoRoot, 'public'), ['.css']) : []),
+];
 const astroFiles = filesWithExtension(join(repoRoot, 'src'), ['.astro']);
 /* Everything in src/ that can format a date: the modules and the frontmatter
    of the components. */
@@ -80,11 +89,18 @@ describe('src/styles', () => {
     expect(checkItalianCustomProperties(read(path), path)).toEqual([]);
   });
 
-  it.each(styleFiles)('%s leaves the cycle accents to the collection', (path) => {
+  it('has every shipped stylesheet, not only the tokens, to check', () => {
+    expect(shippedCss.length).toBeGreaterThanOrEqual(styleFiles.length);
+    for (const path of styleFiles) expect(shippedCss).toContain(path);
+  });
+
+  it.each(shippedCss)('%s leaves the cycle accents to the collection', (path) => {
     // colors.css held five of these until PR 4, pointing at five tokens, and
     // the colour an editor wrote in a file reached nobody. Put back as a
     // fallback they would have the same specificity as the emitted rules, so
     // the order of the stylesheets would decide the colour of the site.
+    // Asked of every stylesheet that ships and not only of src/styles: public/
+    // is copied into dist/ as it stands, and a rule there is just as final.
     expect(checkHandWrittenCycleRules(read(path), path)).toEqual([]);
   });
 });
@@ -275,6 +291,24 @@ describe('src/content', () => {
     expect(() => cycleAccentCss(cycleEntries)).not.toThrow();
   });
 
+  it.each(cycleEntries.map((cycle) => [cycle.id, cycle] as const))(
+    '%s has an accent that can be read on the ground of the site',
+    (_id, cycle) => {
+      // What the five hand-written rules used to guarantee by construction: an
+      // accent could only be one of the tuned tokens. Now it comes from a
+      // content file, and a valid hex can still be invisible on the blue. The
+      // ground is read from the tokens rather than written here, so retuning
+      // the surface moves this check with it.
+      const ground = /--blue-700\s*:\s*(#[0-9a-fA-F]{6})/.exec(
+        read('src/styles/tokens/colors.css'),
+      )?.[1];
+      expect(ground, 'colors.css no longer declares --blue-700').toBeTruthy();
+      expect(
+        checkAccentContrast(cycle, ground!, `src/content/cicli/${cycle.id}.md`),
+      ).toEqual([]);
+    },
+  );
+
   it('keeps a sample of a role overridden on the event', () => {
     // The `speakers[].role ?? person.role` branch has no other coverage: no
     // guard can see it, and the day no content file carries an override the
@@ -326,6 +360,18 @@ describe('src/content', () => {
 describe('src/styles/tokens/colors.css', () => {
   it('keeps every --*-rgb triple in step with its hex colour', () => {
     expect(checkRgbTriples(read('src/styles/tokens/colors.css'))).toEqual([]);
+  });
+
+  it('points --accent and --accent-rgb at the same cycle', () => {
+    // The one pair checkRgbTriples cannot check: both sides are `var()`, which
+    // it skips by design, so retuning the outside-a-cycle accent and forgetting
+    // the line under it would publish one colour with another's transparencies
+    // — a mismatch small enough to read as a design decision.
+    const css = read('src/styles/tokens/colors.css');
+    const colour = /--accent\s*:\s*var\(\s*--cycle-(\d+)\s*\)/.exec(css)?.[1];
+    const triple = /--accent-rgb\s*:\s*var\(\s*--cycle-(\d+)-rgb\s*\)/.exec(css)?.[1];
+    expect(colour, 'no --accent default in colors.css').toBeTruthy();
+    expect(triple).toBe(colour);
   });
 });
 

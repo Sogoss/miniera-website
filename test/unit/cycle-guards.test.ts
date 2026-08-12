@@ -6,8 +6,10 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  checkAccentContrast,
   checkCycleRulesResolve,
   checkHandWrittenCycleRules,
+  contrastRatio,
 } from '../guards/cycles.ts';
 
 const EMITTED = `
@@ -43,6 +45,28 @@ describe('checkHandWrittenCycleRules', () => {
     expect(checkHandWrittenCycleRules('[ data-cycle = "3" ] { --accent: red; }')).toHaveLength(1);
   });
 
+  it('reports a hand-written triple as well as a hand-written colour', () => {
+    // Half a rule is the same defect: --accent-rgb written by hand drifts from
+    // the colour the collection emits, and the transparencies go with it.
+    expect(checkHandWrittenCycleRules('[data-cycle="3"] { --accent-rgb: 1, 2, 3; }')).toHaveLength(1);
+  });
+
+  it('leaves alone a cycle rule that declares no accent', () => {
+    // What PR 7 will legitimately write. Reporting it would turn that PR red
+    // with a message about the order of the stylesheets, which does not apply
+    // to a rule that cannot shadow an accent — and a guard that fires on
+    // correct work is a guard that gets loosened, taking the real check with
+    // it. The sibling guard in this file has always reasoned this way.
+    expect(checkHandWrittenCycleRules('[data-cycle] { scroll-snap-align: start; }')).toEqual([]);
+    expect(checkHandWrittenCycleRules('[data-cycle="2"] { border-color: #f26419; }')).toEqual([]);
+  });
+
+  it('leaves alone an attribute that merely starts the same way', () => {
+    // `\\b` matched `[data-cycle-label]`, which is a different attribute.
+    expect(checkHandWrittenCycleRules('[data-cycle-label] { display: none; }')).toEqual([]);
+    expect(checkHandWrittenCycleRules('[data-cycle-label] { --accent: red; }')).toEqual([]);
+  });
+
   it('says nothing about a comment that names one', () => {
     // colors.css explains where the rules come from and names them doing it.
     // A guard that turns red on the paragraph explaining itself gets switched
@@ -53,6 +77,46 @@ describe('checkHandWrittenCycleRules', () => {
       :root { --accent: var(--cycle-1); }
     `;
     expect(checkHandWrittenCycleRules(documented, 'colors.css')).toEqual([]);
+  });
+});
+
+describe('checkAccentContrast', () => {
+  const ground = '#003049';
+  const cycle = (color: string) => ({ number: 6, name: 'Turni', color });
+
+  it('accepts the five tuned colours of the design and the sixth', () => {
+    for (const color of ['#f26419', '#cb9e00', '#3baa73', '#e05a81', '#ac70c6', '#00a9b0']) {
+      expect(checkAccentContrast(cycle(color), ground), color).toEqual([]);
+    }
+  });
+
+  it('reports a colour that is nearly the ground itself', () => {
+    // A valid six-digit hex, accepted by the schema and by the generator, that
+    // publishes a kicker nobody can read. Until this PR the CSS read a token
+    // and an editor could not get here.
+    const violations = checkAccentContrast(cycle('#0a3550'), ground, 'src/content/cicli/6-turni.md');
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain('src/content/cicli/6-turni.md');
+    expect(violations[0]!.detail).toContain('#0a3550');
+    expect(violations[0]!.detail).toContain(':1');
+  });
+
+  it('reports a dark colour as well as a dull one', () => {
+    expect(checkAccentContrast(cycle('#000000'), ground)).toHaveLength(1);
+    expect(checkAccentContrast(cycle('#123456'), ground)).toHaveLength(1);
+  });
+
+  it('says so rather than passing when a colour cannot be read', () => {
+    expect(checkAccentContrast(cycle('rosso'), ground)).toHaveLength(1);
+    expect(checkAccentContrast(cycle('#00a9b0'), 'nero')).toHaveLength(1);
+  });
+
+  it('computes the ratios the palette was chosen with', () => {
+    // The numbers quoted in docs/decisioni.md, so that the prose and the guard
+    // cannot drift apart in silence.
+    expect(contrastRatio('#00a9b0', ground)!).toBeCloseTo(4.81, 1);
+    expect(contrastRatio('#cb9e00', ground)!).toBeCloseTo(5.55, 1);
+    expect(contrastRatio('#ac70c6', ground)!).toBeCloseTo(3.88, 1);
   });
 });
 
@@ -89,6 +153,14 @@ describe('checkCycleRulesResolve', () => {
 
   it('has nothing to say about a page that declares no cycle', () => {
     expect(checkCycleRulesResolve('<p>Chi siamo</p>', '')).toEqual([]);
+  });
+
+  it('does not read a commented-out scene as a cycle in use', () => {
+    // Astro copies markup comments into dist/ as they are. A scene left in
+    // draft would otherwise fail the build over a page that renders perfectly,
+    // and the message would name a component that is right there.
+    const draft = '<!-- <article data-cycle="9">bozza</article> --><article data-cycle="2"></article>';
+    expect(checkCycleRulesResolve(draft, EMITTED)).toEqual([]);
   });
 
   it('does not accept a bare [data-cycle] as the rule for a value', () => {
