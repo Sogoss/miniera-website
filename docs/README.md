@@ -54,11 +54,13 @@ Fatto:
   collection lasciati in italiano di proposito, e favicon dal marchio
 - Utilità di dominio: ordine, confine fra passato e futuro in `Europe/Rome`,
   date in italiano, ruoli, note, scena di apertura
+- L'accento di ogni serata viene dal colore del suo ciclo, emesso alla build
+  dalla collection: `colors.css` non decide più il colore di nessuno
 
 Da fare: l'elenco completo dei passi, in ordine e uno per PR, sta in
-[piano.md](piano.md). In sintesi — impianto di verifica, utilità di dominio,
-i componenti del design system, lo scroller con la `Timeline`, le pagine delle
-serate, il CMS, la pubblicazione. La migrazione delle 81 serate storiche resta
+[piano.md](piano.md). In sintesi — il layout di base, i componenti del design
+system, lo scroller con la `Timeline`, le pagine delle serate, il CMS, la
+pubblicazione. La migrazione delle 81 serate storiche resta
 fuori dalla beta, vedi [questioni-aperte.md](questioni-aperte.md).
 
 `src/pages/index.astro` è una pagina di verifica provvisoria: serve solo a

@@ -1,0 +1,28 @@
+---
+/* The accent of every cycle, emitted from the collection at build time.
+ *
+ * Wherever this component sits, everything under `[data-cycle="N"]` gets that
+ * cycle's colour as `--accent` and its triple as `--accent-rgb`. The page has
+ * to carry it: without it every `data-cycle` in the markup matches no rule and
+ * every evening falls back to the brand orange of `:root` — which is a page
+ * that renders perfectly and is the wrong colour, so a guard checks that no
+ * published page uses the attribute without the rules travelling with it. From
+ * PR 5 this lives in the base layout and no page has to remember.
+ *
+ * `is:inline` because the content is only known at build time: without it Astro
+ * extracts the block, scopes it to this component and bundles it at compile
+ * time — and scoping is precisely what these rules must not have, since they
+ * dress the whole document. Left inline they also stay readable in dist/, where
+ * the build layer reads them along with the rest of the CSS.
+ *
+ * Not an endpoint serving a real .css file: that is one more blocking request
+ * in the critical path for a few hundred bytes. Not a file generated before the
+ * build either: that is an artefact to keep in step by hand, and the whole
+ * point here is that there is one source.
+ */
+import { loadCycleAccents } from '../lib/programme.ts';
+
+const css = await loadCycleAccents();
+---
+
+<style is:inline set:html={css}></style>

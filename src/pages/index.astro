@@ -14,6 +14,7 @@
 // to the Italian words would have it read an evening's description looking for
 // «in programma».
 import '../styles/global.css';
+import CycleAccents from '../components/CycleAccents.astro';
 import { loadProgramme } from '../lib/programme.ts';
 import { stateOf, type EventState } from '../lib/events.ts';
 
@@ -36,6 +37,7 @@ const { scenes, nextIndex } = await loadProgramme();
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>La Miniera Culturale in Periferia</title>
+    <CycleAccents />
   </head>
   <body>
     <main style="padding: var(--space-7) var(--gutter-page); max-width: var(--max-page); margin: 0 auto;">

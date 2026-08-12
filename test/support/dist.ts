@@ -3,7 +3,8 @@
  * For style, reading the source is not enough — the minifier can take things
  * out. Everything in this file therefore looks at dist/, never at src/.
  */
-import { distDir, filesWithExtension, read, walk } from './paths.ts';
+import { dirname, join } from 'node:path';
+import { distDir, exists, filesWithExtension, read, walk } from './paths.ts';
 import { extractStyleBlocks, styleAttributesOf } from './styles.ts';
 
 /** Files in dist/ that are worth scanning as text. */
@@ -40,6 +41,56 @@ export function readPublishedCss(): string {
   }
 
   return pieces.join('\n');
+}
+
+/**
+ * Every published page with the CSS that page actually receives: the
+ * stylesheets of dist/ plus its own `<style>` blocks.
+ *
+ * readPublishedCss() concatenates everything, which is what the guards over the
+ * tokens want — a name declared anywhere is declared. The cycle accents are the
+ * opposite question: a rule emitted by a component only reaches the pages that
+ * carry the component, so «the rules exist somewhere in dist/» would pass on a
+ * page that has none of them.
+ */
+export function publishedPages(): { path: string; html: string; css: string }[] {
+  return filesWithExtension(distDir, ['.html']).map((path) => {
+    const html = read(path);
+    return { path, html, css: [...linkedStylesheets(html, path), ...extractStyleBlocks(html)].join('\n') };
+  });
+}
+
+/**
+ * The stylesheets a page actually links, read out of dist/.
+ *
+ * Not every .css in dist/, which is what this used to hand over: Astro emits a
+ * stylesheet per entrypoint, so the day the accent rules stop being inline — PR
+ * 5 moves the component into the layout and someone drops `is:inline`, or a
+ * group of routes gets its own bundle — a page that links none of them would
+ * still have been handed another page's, and the guard that asks «do the rules
+ * this page needs reach this page» would answer with somebody else's file.
+ */
+function linkedStylesheets(html: string, pagePath: string): string[] {
+  const found: string[] = [];
+  const links = /<link\b[^>]*>/gi;
+  let link: RegExpExecArray | null;
+
+  while ((link = links.exec(html)) !== null) {
+    if (!/\brel\s*=\s*["']?stylesheet\b/i.test(link[0])) continue;
+
+    const href = /\bhref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i.exec(link[0]);
+    const url = (href?.[1] ?? href?.[2] ?? href?.[3] ?? '').split('?')[0]?.trim() ?? '';
+    // Anything served from somewhere else is not ours to read — and there is
+    // nothing of the sort in this project, which self-hosts even its fonts.
+    if (!url || /^[a-z]+:/i.test(url) || url.startsWith('//')) continue;
+
+    const file = url.startsWith('/')
+      ? join('dist', url.slice(1))
+      : join(dirname(pagePath), url);
+    if (exists(file)) found.push(read(file));
+  }
+
+  return found;
 }
 
 const NAMED_ENTITIES: Record<string, string> = {

@@ -102,6 +102,28 @@ non una preferenza.
     la macchina che builda, cioè UTC, e una serata delle 21 si pubblica *ore
     22*: `checkDateHasOffset` in `test/guards/content.ts`.
 
+12. **Le regole `[data-cycle]` non si scrivono a mano.** L'accento di un ciclo
+    sta nel suo file in `src/content/cicli/` e diventa CSS alla build —
+    `src/lib/cycles.ts`, emesso dal componente `CycleAccents`. I cinque
+    `--cycle-N` di `colors.css` restano dichiarati come palette di riferimento e
+    nessuna regola li legge più: una copia scritta a mano avrebbe la stessa
+    specificità di quella emessa, quindi a decidere il colore del sito sarebbe
+    l'ordine dei fogli. **E una pagina che porta `data-cycle` deve portarsi
+    anche le regole**: senza `CycleAccents` ogni serata resta sull'arancio di
+    `:root`, che è una pagina giusta del colore sbagliato. Tre guardie in
+    `test/guards/cycles.ts`: la prima legge il sorgente — ogni foglio che la
+    build spedisce, `public/` compreso, e segnala solo le regole che
+    **dichiarano un accento**, perché `[data-cycle] { scroll-snap-align }` è
+    lavoro legittimo — la seconda le pagine pubblicate, perché nel sorgente
+    `data-cycle={n}` è un'espressione; la terza pretende che il colore di un
+    ciclo si legga sul fondo, **almeno 3:1**, che è la sola metà numerica della
+    taratura che le cinque regole cancellate garantivano per costruzione. Due
+    cicli con lo stesso numero fermano la build: il numero è il nome del ciclo
+    nel CSS. E il valore predefinito fuori da un ciclo sta in `:where(:root)`,
+    a specificità zero: scritto `:root` pareggerebbe con le regole emesse e
+    vincerebbe per ordine dei fogli il giorno che `data-cycle` finisce su
+    `<html>`.
+
 ## Lingua
 
 Due lingue, separate da un confine netto: **il codice è in inglese, quello che
@@ -138,9 +160,11 @@ design-export/     export di Claude Design — la specifica, non si spedisce
 docs/              documentazione di progetto
 scripts/           utilità (sincronizzazione dei caratteri)
 src/assets/fonts/  woff2 self-hostati e licenze OFL
+src/components/    i componenti .astro
 src/content/       eventi, cicli, sedi, relatori
 src/content.config.ts   schema Zod delle quattro collection
-src/lib/           il dominio: events.ts puro, programme.ts legge le collection
+src/lib/           il dominio: events.ts e cycles.ts puri, programme.ts legge
+                   le collection
 src/styles/tokens/ i token del design
 src/styles/global.css   strato base del documento
 test/guards/       le guardie ai vincoli, come funzioni pure
@@ -162,6 +186,12 @@ o l'*apertura dello scroller* che questa pagina scrive intorno. Sostituirla
 vuol dire riportare i tre attributi sullo scroller e mostrare le stesse cose,
 non riscrivere le prove sul fuso. Tutto il resto di questa pagina si butta.
 
+Porta anche `<CycleAccents />` nel `<head>` e `data-cycle` su ogni serata, che
+è il quarto attributo e l'unico che ha bisogno di compagnia: finché il layout
+della PR 5 non esiste, le regole dell'accento viaggiano con la pagina che le
+usa. Da lì in poi stanno nel layout e nessuna pagina deve ricordarsene — ma la
+guardia continua a chiederlo a ognuna.
+
 ## Comandi
 
 Serve **Node 24** — la versione è fissata in `.nvmrc`, e `engine-strict` fa
@@ -173,6 +203,8 @@ npm run dev          # sviluppo
 npm run build        # build statica in dist/
 npm run preview      # anteprima della build
 npm test             # guardie e test, con una build dentro
+npm run test:mutate  # acceca ogni guardia a turno e pretende che la suite se
+                     # ne accorga — un minuto abbondante, la gira la CI
 npm run check        # astro check, typecheck
 npm run fonts:sync   # ricopia i caratteri dai pacchetti @fontsource
 npm run favicon:build  # rigenera public/favicon.ico da public/favicon.svg —
@@ -194,3 +226,12 @@ la perdita si vede.
 Quando aggiungi una regola ai vincoli, aggiungi la sua guardia in
 `test/guards/` **e il test che la fa fallire**: una guardia che non è mai stata
 vista scattare non si distingue da una che non sta guardando.
+
+A tenere in piedi quella regola c'è `npm run test:mutate`, che la CI esegue a
+ogni PR: acceca ogni guardia a turno — le fa restituire «nessuna violazione»
+qualunque cosa le si dia — e pretende che la suite se ne accorga. Se una
+guardia si può accecare senza che niente diventi rosso, i suoi test non la
+stanno tenendo. **Cercare il nome di una guardia dentro i test non risponde
+alla stessa domanda**: conta come i test sono scritti, non cosa tengono, e una
+guardia chiamata da una helper locale non compare in nessuno degli `it()` che
+la coprono.

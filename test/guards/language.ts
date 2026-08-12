@@ -142,7 +142,7 @@ export function checkItalianCustomProperties(
    line numbers stay accurate: the HTML comments, plus the block comments
    stripComments already handles — in an .astro file they arrive wrapped in
    braces, which changes nothing for the pattern. */
-function stripMarkupComments(markup: string): string {
+export function stripMarkupComments(markup: string): string {
   return stripComments(markup).replace(/<!--[\s\S]*?-->/g, (comment) =>
     comment.replace(/[^\n]/g, ' '),
   );

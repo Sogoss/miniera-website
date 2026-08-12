@@ -17,6 +17,8 @@ import {
   checkDuplicateSpeakers,
   checkKickerRepeatsCycle,
 } from '../guards/content.ts';
+import { checkAccentContrast, checkHandWrittenCycleRules } from '../guards/cycles.ts';
+import { cycleAccentCss, findCycleNumberConflicts } from '../../src/lib/cycles.ts';
 import {
   checkAmbientTime,
   checkLocalDateMethods,
@@ -30,10 +32,19 @@ import {
 } from '../guards/language.ts';
 import { checkDevDepsInLockfile, checkNoTailwind } from '../guards/packages.ts';
 import { collectionEntries, dateOf } from '../support/frontmatter.ts';
-import { filesWithExtension, read, readJson, repoRoot } from '../support/paths.ts';
+import { exists, filesWithExtension, read, readJson, repoRoot } from '../support/paths.ts';
 import { componentCss } from '../support/styles.ts';
 
 const styleFiles = filesWithExtension(join(repoRoot, 'src/styles'), ['.css']);
+/* Every stylesheet the build can ship, which is a wider net than the tokens:
+   a .css sitting next to a component, and everything in public/, which is
+   copied into dist/ verbatim. Rule 12 has to be asked of all of them — a
+   hand-written accent rule in public/overrides.css would pass both halves of
+   the rule while quietly deciding the colour of a cycle. */
+const shippedCss = [
+  ...filesWithExtension(join(repoRoot, 'src'), ['.css']),
+  ...(exists('public') ? filesWithExtension(join(repoRoot, 'public'), ['.css']) : []),
+];
 const astroFiles = filesWithExtension(join(repoRoot, 'src'), ['.astro']);
 /* Everything in src/ that can format a date: the modules and the frontmatter
    of the components. */
@@ -78,6 +89,20 @@ describe('src/styles', () => {
     expect(checkItalianCustomProperties(read(path), path)).toEqual([]);
   });
 
+  it('has every shipped stylesheet, not only the tokens, to check', () => {
+    expect(shippedCss.length).toBeGreaterThanOrEqual(styleFiles.length);
+    for (const path of styleFiles) expect(shippedCss).toContain(path);
+  });
+
+  it.each(shippedCss)('%s leaves the cycle accents to the collection', (path) => {
+    // colors.css held five of these until PR 4, pointing at five tokens, and
+    // the colour an editor wrote in a file reached nobody. Put back as a
+    // fallback they would have the same specificity as the emitted rules, so
+    // the order of the stylesheets would decide the colour of the site.
+    // Asked of every stylesheet that ships and not only of src/styles: public/
+    // is copied into dist/ as it stands, and a rule there is just as final.
+    expect(checkHandWrittenCycleRules(read(path), path)).toEqual([]);
+  });
 });
 
 /* The tokens read across the whole source at once.
@@ -129,6 +154,12 @@ describe('src/**/*.astro component styles', () => {
     // the `//` comments of the frontmatter too — which stripComments cannot
     // blank — and report the Italian in a line explaining the rename.
     expect(checkItalianCustomProperties(componentCss(read(path)), path)).toEqual([]);
+  });
+
+  it.each(astroFiles)('%s leaves the cycle accents to the collection', (path) => {
+    // The component that emits them has an empty <style>: what it writes is
+    // built at run time and belongs to no source file, which is the point.
+    expect(checkHandWrittenCycleRules(componentCss(read(path)), path)).toEqual([]);
   });
 
   it.each(astroFiles)('%s names its data-* attributes in English', (path) => {
@@ -197,6 +228,16 @@ describe('src/content', () => {
   const events = collectionEntries('eventi');
   const cycles = collectionEntries('cicli');
 
+  /* The cycles in the shape the domain works on. Read off the frontmatter
+     rather than through astro:content, so the checks below say which file is
+     wrong without a build having to run first. */
+  const cycleEntries = cycles.map((entry) => ({
+    id: entry.id,
+    number: Number(entry.data.number),
+    name: String(entry.data.name ?? entry.path),
+    color: String(entry.data.color ?? ''),
+  }));
+
   it('has content to check in the first place', () => {
     expect(events.length).toBeGreaterThan(0);
     expect(cycles.length).toBeGreaterThan(0);
@@ -234,6 +275,39 @@ describe('src/content', () => {
     }));
     expect(findNumberDateConflicts(programme)).toEqual([]);
   });
+
+  it('numbers each cycle once', () => {
+    // The number of a cycle is how it is named in the CSS, so two files
+    // claiming one number emit two rules and the last one wins: half the
+    // evenings take the other cycle's colour, and nothing fails. The build
+    // stops on this too — loadCycleAccents throws — but this says which pair
+    // and does not need a build to say it.
+    expect(findCycleNumberConflicts(cycleEntries)).toEqual([]);
+  });
+
+  it('gives every cycle a colour that reaches the CSS', () => {
+    // A colour the generator does not recognise stops the build with a message
+    // naming the cycle; here it names the file as well, and before the build.
+    expect(() => cycleAccentCss(cycleEntries)).not.toThrow();
+  });
+
+  it.each(cycleEntries.map((cycle) => [cycle.id, cycle] as const))(
+    '%s has an accent that can be read on the ground of the site',
+    (_id, cycle) => {
+      // What the five hand-written rules used to guarantee by construction: an
+      // accent could only be one of the tuned tokens. Now it comes from a
+      // content file, and a valid hex can still be invisible on the blue. The
+      // ground is read from the tokens rather than written here, so retuning
+      // the surface moves this check with it.
+      const ground = /--blue-700\s*:\s*(#[0-9a-fA-F]{6})/.exec(
+        read('src/styles/tokens/colors.css'),
+      )?.[1];
+      expect(ground, 'colors.css no longer declares --blue-700').toBeTruthy();
+      expect(
+        checkAccentContrast(cycle, ground!, `src/content/cicli/${cycle.id}.md`),
+      ).toEqual([]);
+    },
+  );
 
   it('keeps a sample of a role overridden on the event', () => {
     // The `speakers[].role ?? person.role` branch has no other coverage: no
@@ -287,6 +361,18 @@ describe('src/styles/tokens/colors.css', () => {
   it('keeps every --*-rgb triple in step with its hex colour', () => {
     expect(checkRgbTriples(read('src/styles/tokens/colors.css'))).toEqual([]);
   });
+
+  it('points --accent and --accent-rgb at the same cycle', () => {
+    // The one pair checkRgbTriples cannot check: both sides are `var()`, which
+    // it skips by design, so retuning the outside-a-cycle accent and forgetting
+    // the line under it would publish one colour with another's transparencies
+    // — a mismatch small enough to read as a design decision.
+    const css = read('src/styles/tokens/colors.css');
+    const colour = /--accent\s*:\s*var\(\s*--cycle-(\d+)\s*\)/.exec(css)?.[1];
+    const triple = /--accent-rgb\s*:\s*var\(\s*--cycle-(\d+)-rgb\s*\)/.exec(css)?.[1];
+    expect(colour, 'no --accent default in colors.css').toBeTruthy();
+    expect(triple).toBe(colour);
+  });
 });
 
 describe('src/styles/tokens/spacing.css', () => {
@@ -312,6 +398,15 @@ describe('package.json', () => {
 
   it('agrees with the lockfile about what is development-only', () => {
     expect(checkDevDepsInLockfile(manifest, readJson('package-lock.json'))).toEqual([]);
+  });
+
+  it('keeps the command that blinds the guards', () => {
+    // The script answers a question nothing else can, and it answers it only
+    // as long as it can be reached: renamed or dropped, the CI step goes red
+    // with a message about npm rather than about the guards.
+    const scripts = (manifest as { scripts?: Record<string, string> }).scripts ?? {};
+    expect(scripts['test:mutate'] ?? '').toContain('mutate-guards.mjs');
+    expect(exists('scripts/mutate-guards.mjs')).toBe(true);
   });
 
   it('builds in UTC, the zone Cloudflare builds in', () => {

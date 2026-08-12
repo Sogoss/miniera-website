@@ -281,13 +281,23 @@ export function checkRgbTriples(css: string): Violation[] {
         local.get(name) ?? (shared?.size === 1 ? [...shared][0] : undefined);
 
       if (!hex) {
-        // Declared in several blocks with different values and in none of them
-        // next to this triple: there is no single answer to check against, and
-        // inventing one would report a drift that may not exist.
-        if (shared && shared.size > 1) continue;
+        /* No colour beside the triple, and no single answer elsewhere either.
+           This used to `continue` in silence when the name was declared with
+           several different values, on the grounds that inventing one would
+           report a drift that may not exist — but silence is the worse of the
+           two answers, and PR 4 turned this branch from a curiosity into the
+           common case: the emitted rules put one `--accent: #hex` per cycle, so
+           `--accent` now has several values file-wide and every stray
+           `--accent-rgb` written without its colour lands here. That is exactly
+           the pair the scroller of PR 7 will write per scene, and it was being
+           waved through. So it says what it can: not that the triple is wrong,
+           but that nothing can check it. */
         violations.push({
           rule: 'rule 3',
-          detail: `the triple \`--${name}-rgb\` has no hex base colour \`--${name}\``,
+          detail:
+            shared && shared.size > 1
+              ? `the triple \`--${name}-rgb\` has no \`--${name}\` in its own block, and \`--${name}\` is declared with ${shared.size} different values elsewhere: there is nothing to compare it against. Write the colour next to the triple`
+              : `the triple \`--${name}-rgb\` has no hex base colour \`--${name}\``,
         });
         continue;
       }

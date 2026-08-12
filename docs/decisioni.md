@@ -216,6 +216,103 @@ giorno è quello dell'avvio del server: un server lasciato acceso oltre la
 mezzanotte mostra un'etichetta vecchia finché non riparte, e non pubblica
 niente. *(PR 3, in revisione)*
 
+## Accento dai cicli
+
+*(12 agosto 2026, PR 4)*
+
+**La collection è l'unica sorgente delle regole `[data-cycle]`.** Erano cinque
+blocchi scritti a mano in `colors.css` che puntavano a cinque token, e il campo
+`color` dei cicli non lo leggeva nessuno: due metà che non si toccavano, così
+un colore cambiato in un file arrivava da nessuna parte e non falliva niente.
+Ora le regole le emette `src/lib/cycles.ts` alla build, da ogni ciclo presente
+nella collection. Tenere anche quelle scritte a mano come ripiego voleva dire
+due dichiarazioni della stessa proprietà alla stessa specificità, decise
+dall'ordine dei fogli: giusto oggi, sbagliato il giorno che un import si
+sposta o che l'inlining di Astro scatta — e sbagliato in silenzio, che è la
+forma di guasto che questo repository si è dato l'impianto per intercettare. La
+regola 12 del `CLAUDE.md` e una guardia sul sorgente lo tengono così.
+
+**I cinque colori restano dichiarati, e non li legge più nessuno.** Sono la
+palette su cui il design è stato tarato — stessa luminosità e saturazione, tinta
+ruotata — e restano in `colors.css` come riferimento per chi sceglie il colore
+di un ciclo nuovo nel CMS: discostarsene molto rompe la garanzia che nessun
+ciclo prevalga e che il contrasto sul fondo blu regga. Il commento accanto dice
+perché ci sono, così fra sei mesi non sembrino codice morto da togliere.
+L'unico ancora letto è `--cycle-1`: fuori da un ciclo dichiarato l'accento è
+l'arancio del marchio.
+
+**Il numero di un ciclo è unico, e la build lo pretende.** Il numero è il nome
+del ciclo nel CSS, quindi due file che reclamano il 3 emettono due
+`[data-cycle="3"]` e vince l'ultima: metà delle serate prende il colore
+dell'altro ciclo, senza un errore da nessuna parte. Zod non può vederlo — ogni
+file è valido per conto suo — e nemmeno il riferimento dell'evento, che risolve
+per nome di file ed è contento comunque. `findCycleNumberConflicts` nomina
+entrambi i cicli, come `findNumberDateConflicts` fa per le serate gemelle, e
+per lo stesso motivo: quale dei due sia sbagliato lo sa l'associazione.
+
+**Il CSS lo emette un componente, non un endpoint e non un file generato.**
+`CycleAccents.astro` scrive le regole in un `<style is:inline set:html>`:
+nessuna richiesta bloccante in più nel percorso critico per poche centinaia di
+byte, e nessun artefatto da rigenerare e tenere allineato a mano — che
+riaprirebbe la stessa distanza fra la collection e il CSS che questa PR chiude.
+`is:inline` perché il contenuto si conosce solo alla build, e perché queste
+regole non devono restare circoscritte al componente: vestono il documento.
+Dalla PR 5
+il componente sta in `Base.astro` e nessuna pagina deve ricordarsene.
+
+**Una pagina che porta `data-cycle` deve portarsi anche le regole, e c'è una
+guardia.** È la promessa che le PR 5, 7 e 9 devono mantenere: dimenticare il
+componente non rompe niente, pubblica ogni serata sull'arancio di `:root` — una
+pagina che rende perfettamente, del colore sbagliato. La guardia legge le pagine
+di `dist/` e non il sorgente, perché nel sorgente `data-cycle={n}` è
+un'espressione; la sua gemella sul sorgente fa il contrario, perché in `dist/`
+le regole emesse ci sono per costruzione e le segnalerebbe tutte.
+
+**La terna dell'accento diventa letterale, e accende una guardia che dormiva.**
+`--accent-rgb: var(--cycle-N-rgb)` è un puntatore, e `checkRgbTriples` lo salta
+apposta per non leggere `NaN`: finché gli accenti erano scritti così, quella
+guardia passava sull'accento senza guardare niente. Con `--accent: #hex` e
+`--accent-rgb: r, g, b` nello stesso blocco confronta davvero, e una conversione
+sbagliata diventa rossa in `dist/` senza che sia servito scrivere una guardia
+nuova. Un test pretende che l'accento resti un esadecimale letterale: tornare a
+un puntatore la rimetterebbe a dormire in silenzio.
+
+**Del colore che arriva dal CMS si controlla il contrasto, non il gusto.**
+Le cinque regole cancellate garantivano per costruzione che un accento fosse uno
+dei cinque token tarati; ora il colore lo scrive un redattore in un file, e fra
+il CMS e la pagina pubblicata resta un controllo di sintassi esadecimale:
+`#0a3550` è un esadecimale validissimo ed è quasi il fondo. Una guardia pretende
+**3:1** sul fondo, la soglia WCAG per gli elementi d'interfaccia, che è quello
+che l'accento è — l'occhiello, il bordo della scena, la tacca. I cinque stanno
+fra 3.88 e 5.55, quindi non è una soglia che stringe la palette: è la riga sotto
+la quale la pagina non si legge. Che nessun ciclo *prevalga* sugli altri resta
+invece un giudizio sulla saturazione accanto ad altri cinque colori, e una
+guardia che ci provasse discuterebbe con un designer. *(PR 4, in revisione)*
+
+**Il valore predefinito dell'accento sta a specificità zero.** Scritto `:root`
+pareggia con ogni `[data-cycle="N"]` emesso — entrambi (0,1,0) — e un pareggio lo
+decide l'ordine dei documenti, che mette lo `<style>` in linea *prima* del foglio
+bundlato. Oggi i due selettori pescano elementi diversi e non succede niente; il
+giorno che una pagina porta `data-cycle` su `<html>`, che è il posto naturale
+quando un'intera pagina appartiene a un ciclo, `:root` vincerebbe e l'intera
+pagina uscirebbe arancio — con la guardia verde, perché una regola per quel ciclo
+esiste davvero: chiede se c'è, non se vince. `:where(:root)` azzera la
+specificità e toglie il pareggio; un test dello strato `build` pretende che il
+minificatore non lo riscriva. *(PR 4, in revisione)*
+
+**Un sesto ciclo e la serata che lo usa.** Con i soli cicli 2 e 3, che portano
+esattamente due dei colori predefiniti, i due casi che contano — un colore
+diverso dal predefinito, un ciclo oltre il quinto — non si vedevano girare su
+contenuti veri, ed è lo stesso motivo per cui la PR 3 ha aggiunto due serate. Il
+ciclo 6 è *Turni*, `#00a9b0`, calcolato come i cinque: luminosità e croma medi
+della palette in oklch, tinta nel buco grande della ruota — fra il verde a 158°
+e il viola a 315° — e tenuta lontana dal fondo blu, che sta a 238°. Il contrasto
+sul fondo è 4.81, dentro la banda dei cinque (3.88–5.55). Ha la componente rossa
+a zero, quindi il caso `#00…` della conversione — dove un `|| default` di
+troppo trasforma un turchese in altro — lo esercita un contenuto vero e non solo
+una fixture. La serata 83 porta `+01:00`, lo scostamento invernale che i
+contenuti d'esempio non avevano.
+
 ## Verifiche
 
 *(11 agosto 2026, PR 1)*
@@ -512,6 +609,55 @@ stringa vuota, che fa scattare la guardia — e **l'elenco dei file guardati si
 ricava dalla cartella**, con l'eccezione dichiarata e a sua volta verificata:
 un test pretende che `programme.ts` l'orologio lo legga davvero. *(PR 3, in
 revisione)*
+
+**Le guardie si contano accecandole, non cercandone il nome.** La domanda
+«funzionano tutte?» è stata posta per la prima volta nella PR 4, e il primo
+modo di rispondere — cercare il nome di ogni guardia nei test e vedere chi ha
+un caso che se l'aspetta rossa — ha risposto *21 su 22* e ha accusato due volte
+la guardia sbagliata: conta come i test sono scritti, non cosa tengono, e una
+guardia chiamata da una helper locale non compare in nessuno degli `it()` che
+la coprono. `npm run test:mutate` fa la domanda per davvero: acceca ogni
+guardia a turno — le fa restituire «nessuna violazione» qualunque cosa le si
+dia — e pretende che la suite se ne accorga. Ventidue su ventidue, da due a
+undici asserzioni ciascuna.
+
+La sua risposta si appoggia a una riga di output di qualcun altro, e quella riga
+cambia con l'ambiente: `Tests  9 failed` sulla scrivania, la stessa riga dipinta
+di codici di colore su una macchina di build. Al primo giro in CI lo strumento
+ha risposto «0 su 22, la suite non ha risposto» su una suite che stava girando e
+fallendo come doveva — lo stesso comando che dice due cose diverse a seconda di
+dove gira, cioè il fuso orario da un altro lato. Si chiede all'ambiente di non
+colorare **e** si tolgono i colori comunque, perché chi vinca fra `NO_COLOR` e
+`FORCE_COLOR` non lo decide questo repository; la lettura è una funzione
+esportata con i suoi test, e distingue «nessun conteggio» da «zero falliti»,
+che su una guardia accecata sono risposte opposte.
+
+Lo gira la CI e non `npm test`: costa la suite intera una volta per guardia, un
+minuto abbondante, che è il prezzo sbagliato da pagare a ogni salvataggio e
+quello giusto per sapere che l'impianto non è diventato decorazione.
+
+**Prima di accecare qualsiasi cosa esegue la suite intatta, e ricostruendo.**
+Senza, la risposta non vale niente nella situazione più ordinaria che ci sia: un
+`dist/` stantio lascia rosso lo strato `build` prima che si tocchi niente, ogni
+accecamento sembra «visto», e lo strumento stampa un tranquillo «22 su 22» senza
+aver chiesto niente — lo stesso guasto che rimprovera alle guardie.
+
+**Rimette a posto solo il file che ha accecato.** Teneva in memoria una copia di
+tutti e li riscriveva tutti alla fine, il che cancellava senza dire niente
+qualunque modifica fatta mentre girava — oltre un minuto, durante il quale
+nessuno ha motivo di credere che il proprio editor sia pericoloso. E il ciclo
+ora è asincrono: era una sequenza di chiamate bloccanti, quindi gli handler dei
+segnali non potevano girare — e registrarli aveva già tolto a Node la
+terminazione predefinita, cioè Ctrl-C non fermava più niente. Ogni file accecato
+porta un marcatore, che rende riconoscibile una corsa interrotta all'avvio
+successivo, ed è quello che la verifica finale cerca.
+
+**E ha il suo test, perché ha lo stesso modo di fallire che caccia**: trovando
+*meno* guardie di quante ce ne sono direbbe «18 su 18», che si legge come una
+risposta. Il conto si fa due volte e in modi diversi — le due metà non devono
+condividere né l'elenco dei file né il modo di riconoscere una dichiarazione,
+altrimenti concordano su ciò che non esiste, che è l'unica cosa su cui devono
+poter litigare. *(PR 4)*
 
 **L'indipendenza dal fuso si prova eseguendo, non dichiarando.** `TZ` si legge
 una volta all'avvio del processo, quindi una suite sola prova solo la macchina

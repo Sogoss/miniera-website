@@ -139,6 +139,32 @@ describe('checkRgbTriples', () => {
     expect(violations[0]!.detail).toContain('no hex base colour');
   });
 
+  it('reports a triple it cannot check rather than waving it through', () => {
+    // The shape PR 4 made ordinary: `--accent` now holds a different hex in
+    // every emitted rule, so a stray `--accent-rgb` with no colour beside it
+    // has no single value to be compared against. This used to `continue` in
+    // silence — and a per-scene `--accent-rgb` in a style attribute, which is
+    // how the scroller of PR 7 will write it, would have gone unchecked with
+    // nothing said.
+    const css =
+      '[data-cycle="2"] { --accent: #cb9e00; --accent-rgb: 203, 158, 0; }' +
+      '[data-cycle="6"] { --accent: #00a9b0; --accent-rgb: 0, 169, 176; }' +
+      '[style] { --accent-rgb: 1, 2, 3; }';
+    const violations = checkRgbTriples(css);
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain('nothing to compare it against');
+  });
+
+  it('still keeps the two emitted rules apart from each other', () => {
+    // The reason the resolution is per block: two cycles legitimately declare
+    // the same name with different values, and a file-wide index would call
+    // one of them drifted.
+    const css =
+      '[data-cycle="2"] { --accent: #cb9e00; --accent-rgb: 203, 158, 0; }' +
+      '[data-cycle="6"] { --accent: #00a9b0; --accent-rgb: 0, 169, 176; }';
+    expect(checkRgbTriples(css)).toEqual([]);
+  });
+
   it('accepts the minified spacing produced by the build', () => {
     expect(checkRgbTriples(':root{--blue-700:#003049;--blue-700-rgb:0, 48, 73}')).toEqual([]);
   });

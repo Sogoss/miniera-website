@@ -4,7 +4,7 @@ Il sito si costruisce per passi numerati, uno per PR. Questo documento è
 l'elenco dei passi, in ordine, con quello che ciascuno deve dimostrare prima di
 poter essere chiuso.
 
-Aggiornato all'11 agosto 2026.
+Aggiornato al 12 agosto 2026.
 
 ## Come si lavora
 
@@ -59,7 +59,7 @@ sostituisce un telefono vero.
 | 1 | Impianto di verifica | `impianto-verifiche` | fatta |
 | 2 | Igiene: lingua, README, favicon, contenuti | `igiene-lingua-e-contenuti` | fatta |
 | 3 | Utilità di dominio | `lib-eventi` | fatta |
-| 4 | Accento dai cicli della collection | `accento-dai-cicli` | da fare |
+| 4 | Accento dai cicli della collection | `accento-dai-cicli` | fatta |
 | 5 | Layout di base e forme di ritaglio | `layout-base` | da fare |
 | 6 | Gli otto componenti del design system | `design-system-astro` | da fare |
 | 7 | Lo scroller del programma | `scroller-programma` | da fare |
@@ -435,30 +435,164 @@ dominio*. In breve:
 
 **Branch:** `accento-dai-cicli` · **Dipende da:** 3
 
-Il ponte che oggi manca fra `src/content/cicli/` e `--accent`. Serve prima
+Il ponte che mancava fra `src/content/cicli/` e `--accent`. La collection aveva
+il campo `color` da quando esiste lo schema e non lo leggeva nessuno;
+`colors.css` aveva cinque regole `[data-cycle="N"]` che puntavano ai cinque
+token del design. Le due metà non si toccavano: cambiare il colore di un ciclo
+nel suo file non si vedeva da nessuna parte, e non falliva niente. Serve prima
 dello scroller, che cambia accento a ogni serata.
+
+### Decisioni prese scrivendo la PR
+
+Le sette per esteso stanno in [decisioni.md](decisioni.md), sotto *Accento dai
+cicli*. In breve:
+
+- **La collection è l'unica sorgente delle regole `[data-cycle]`**: le cinque
+  scritte a mano escono da `colors.css`, perché due dichiarazioni della stessa
+  proprietà alla stessa specificità le decide l'ordine dei fogli — giusto oggi,
+  sbagliato in silenzio il giorno che quell'ordine cambia
+- **I cinque colori restano dichiarati e non più letti**, come palette di
+  riferimento per chi ne sceglie uno nuovo; l'unico ancora letto è `--cycle-1`,
+  l'accento fuori da un ciclo
+- **Il numero di un ciclo è unico e la build lo pretende**: è il nome del ciclo
+  nel CSS, e due gemelli si sovrascriverebbero l'accento a vicenda
+- **Il CSS lo emette un componente**, `CycleAccents.astro`, non un endpoint né
+  un file generato: nessuna richiesta in più, nessun artefatto da tenere
+  allineato, e dalla PR 5 sta nel layout
+- **La terna dell'accento diventa letterale**, e questo fa cominciare a
+  controllare `checkRgbTriples`, che su un `var(--cycle-N-rgb)` passava senza
+  guardare niente
+- **Un sesto ciclo e la serata 83**, perché i due casi che contano — un colore
+  diverso dal predefinito, un ciclo oltre il quinto — non si vedevano girare su
+  contenuti veri
 
 ### Obiettivi
 
-- [ ] Le regole `[data-cycle="N"] { --accent; --accent-rgb }` sono emesse
+- [x] Le regole `[data-cycle="N"] { --accent; --accent-rgb }` sono emesse
       alla build da ogni ciclo presente nella collection
-- [ ] I cinque colori di `colors.css` restano come valori predefiniti
-      dichiarati, non come unica fonte
-- [ ] Nessun `color-mix()` introdotto per ricavare le trasparenze dell'accento
+- [x] I cinque colori di `colors.css` restano come valori predefiniti
+      dichiarati, non come unica fonte — e le cinque regole statiche escono,
+      perché due sorgenti si contraddicono in silenzio
+- [x] Nessun `color-mix()` introdotto per ricavare le trasparenze dell'accento
+- [x] Due cicli con lo stesso numero fermano la build, nominando entrambi
+- [x] `src/lib/cycles.ts` non ha import e non legge l'orologio, come `events.ts`
+- [x] `CycleAccents.astro` esiste e la pagina provvisoria lo include: il bordo
+      di ogni scena prende il colore del suo ciclo — l'attributo `data-cycle`
+      c'era già, da qui in poi fa qualcosa
+- [x] Il ciclo 6 e la serata 83 stanno nei contenuti d'esempio
 
 ### Test automatici
 
 - Un ciclo il cui colore differisce dal predefinito arriva col colore giusto
-  nel CSS di `dist/`
+  nel CSS di `dist/`, e l'attesa si ricava dalla collection: un esadecimale
+  scritto nel test diventerebbe rosso il giorno che un redattore ritara un
+  ciclo, indicando un test invece del contenuto
 - Un ciclo con numero oltre il quinto ottiene il suo accento
 - La conversione esadecimale → terna `rgb` è corretta, compresi i valori con
-  componenti a zero
+  componenti a zero — dove un `|| default` di troppo trasforma un turchese in
+  altro — e le due scritture delle cifre
+- **Guardia**: nessuna regola `[data-cycle]` scritta a mano nei fogli di
+  `src/styles/` né nei `<style>` dei componenti. Il caso negativo è la riga che
+  questa PR ha tolto
+- **Guardia**: ogni `data-cycle` pubblicato in una pagina di `dist/` trova la
+  sua regola nel CSS che quella pagina riceve. È la promessa che le PR 5, 7 e 9
+  devono mantenere portandosi dietro il componente, e provata rimuovendolo per
+  davvero: sei asserzioni diventano rosse, e la prima dice quale componente
+  manca
+- Il generatore rifiuta quello che non riconosce invece di scriverlo: `set:html`
+  non fa escape, quindi un colore che non è un esadecimale a sei cifre ferma la
+  build (regola 12)
+- Ogni ciclo della collection ha in `dist/` una regola con la terna coerente col
+  suo esadecimale, e l'accento resta un esadecimale letterale — tornare a un
+  puntatore rimetterebbe a dormire la guardia in silenzio
 - Le guardie della PR 1 continuano a passare
+
+> **Trovato rileggendo.** La seconda guardia contava i selettori invece degli
+> accenti: una regola che nominava il ciclo senza dichiarare `--accent` — un
+> bordo, un `display` — bastava a soddisfarla, cioè rispondeva *sì* a una
+> domanda diversa da quella che il suo messaggio d'errore pone. Ora guarda le
+> regole che l'accento lo dichiarano davvero, dentro le media query comprese, e
+> ha i due casi in più che lo provano.
+
+> **Lacuna della PR 3, chiusa qui.** Contando le guardie per rispondere a
+> «funzionano tutte?» ne è saltata fuori una senza caso negativo:
+> `checkDateHasOffset`, usata in un posto solo e sui contenuti veri, dove ci si
+> aspetta che non trovi niente — cioè mai vista scattare, che per il
+> `CLAUDE.md` non si distingue da una che non sta guardando. Guardava: scatta su
+> una data senza scostamento, su una data nuda e sul campo mancante, e tace su
+> `+01:00` e su `Z`. Quello che mancava è ciò che la tiene a guardare, e ora sono
+> cinque asserzioni — compreso il ramo che si rifiuta di rispondere su una data
+> arrivata già convertita in `Date`, che è l'unico modo in cui questa guardia
+> potrebbe passare su tutti i file per cui esiste.
+>
+> Il conto è stato poi rifatto **accecando ogni guardia a turno** — sostituendone
+> il corpo con «nessuna violazione» e guardando se la suite se ne accorge —
+> invece che cercandone il nome nei test, che le contava per come sono scritte e
+> non per quello che tengono: **22 su 22**, ognuna sostenuta da un numero di
+> asserzioni che va da due a undici.
+>
+> **Il primo giro in CI dello strumento nuovo è stato rosso, per il difetto che
+> lo strumento caccia.** Rispondeva «0 su 22, la suite non ha risposto» mentre la
+> suite girava e falliva esattamente come doveva. Il riepilogo di vitest è
+> `Tests  9 failed`, e su una macchina di build fra la parola e il numero ci sono
+> i codici di colore; in locale non ci sono. Lo stesso comando rispondeva una cosa
+> sulla scrivania e un'altra in CI, che è la forma del fuso orario vista da un
+> altro lato — e il primo tentativo di riprodurlo in locale con le variabili
+> d'ambiente della CI *non* l'ha riprodotto, il che l'ha reso più istruttivo, non
+> meno. Adesso la lettura toglie i colori e chiede di non averli, è una funzione
+> esportata con i suoi test — compreso il riepilogo colorato che ha causato il
+> guasto — e distingue «nessun conteggio» da «zero falliti», che su una guardia
+> accecata sono risposte opposte. E quando la suite non arriva a un conteggio, lo
+> strumento stampa la coda del suo output: taceva esattamente dove doveva
+> parlare, che è la cosa che rimprovera alle guardie.
+>
+> Quel conto è diventato un comando, `npm run test:mutate`, e uno step della CI:
+> farlo a mano una volta rispondeva alla domanda di oggi e a nessuna di domani.
+> Non sta in `npm test` perché costa la suite intera una volta per guardia. Ha
+> il suo test, perché ha esattamente il modo di fallire che caccia — trovando
+> meno guardie di quante ce ne sono direbbe «18 su 18», che si legge come una
+> risposta — ed è stato visto scattare mettendogli davanti una guardia che
+> nessun test copre: la nomina ed esce con 1.
+
+> **Trovato in revisione.** Quindici difetti, e il grosso stava nello strumento
+> nuovo: quattro modi diversi in cui `test:mutate` poteva stampare «22 su 22»
+> senza aver accecato una guardia. Lo scanner attribuiva a una funzione col corpo
+> su una riga sola l'offset della funzione *dopo* — così quella veniva accecata
+> due volte e questa, mai toccata, risultava coperta; non c'era nessun controllo
+> che la suite fosse verde *prima* di cominciare, e con un `dist/` stantio ogni
+> accecamento sembra notato; e il «secondo conteggio indipendente» condivideva
+> con lo scanner sia la regola per riconoscere una dichiarazione sia l'elenco dei
+> file, cioè concordava proprio su ciò di cui doveva litigare. In più il
+> ripristino riscriveva *tutti* i file da una copia di minuti prima, cancellando
+> in silenzio le modifiche fatte nel frattempo, e gli handler dei segnali non
+> potevano girare perché il ciclo era sincrono — avendo però già tolto a Node la
+> terminazione predefinita, cioè Ctrl-C non fermava più niente.
+>
+> Sul dominio, tre cose. La guardia sulle regole scritte a mano segnalava
+> qualunque `[data-cycle…]` — compreso `[data-cycle-label]` e compreso lo
+> `scroll-snap-align` che la PR 7 scriverà legittimamente — mentre la gemella
+> nello stesso file ragiona esplicitamente al contrario; leggeva inoltre i soli
+> fogli di `src/styles`, quindi una regola d'accento in `public/` passava
+> indisturbata. La guardia sulle pagine pubblicate non annullava i commenti HTML,
+> e una scena lasciata in bozza avrebbe fatto fallire la CI accusando un
+> componente presente. E il valore predefinito dell'accento, spostato in `:root`,
+> pareggia con le regole emesse: `:where(:root)` toglie il pareggio.
+>
+> Due riguardano ciò che questa PR ha smesso di garantire senza dirlo. Il colore
+> di un ciclo non ha più i cinque token a limitarlo, e fra il CMS e la pagina
+> restava la sola sintassi esadecimale: ora una guardia pretende 3:1 sul fondo.
+> E `checkRgbTriples`, che la PR dichiarava di aver *acceso* sull'accento, ha
+> smesso in silenzio di segnalare una terna orfana — con `--accent` che ora vale
+> più esadecimali diversi, il suo ramo «non c'è un'unica risposta» è diventato il
+> caso normale, ed è esattamente la forma che lo scroller della PR 7 scriverà.
 
 ### Test manuali
 
 - Cambiare il colore di un ciclo nel suo file e vedere l'accento cambiare in
-  `npm run dev`
+  `npm run dev` — fatto anche a build ferma, con il colore del ciclo 6 spostato
+  e ritrovato in `dist/` senza che la suite se ne lamentasse
+- Guardare i sei colori sul fondo blu: nessuno prevale, nessuno si confonde col
+  fondo
 
 ---
 
