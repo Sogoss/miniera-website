@@ -143,7 +143,7 @@ non una preferenza.
 
 13. **Le forme di ritaglio non si scrivono a mano e non si copiano.** Le genera
     `src/lib/shapes.ts`, modulo puro come `events.ts` e `cycles.ts`, e le emette
-    `ClipShapes.astro`. Quattro sono **ispirate a Material 3**, non le forme di
+    `ClipShapes.astro`. Cinque sono **ispirate a Material 3**, non le forme di
     Material: Google non pubblica né i path né i parametri, quindi la
     ricostruzione è nostra, con i parametri scritti accanto alla forma — e la
     documentazione dice *ispirate*, perché promettere una fedeltà che nessuno

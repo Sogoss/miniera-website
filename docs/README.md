@@ -56,7 +56,7 @@ Fatto:
   date in italiano, ruoli, note, scena di apertura
 - L'accento di ogni serata viene dal colore del suo ciclo, emesso alla build
   dalla collection: `colors.css` non decide più il colore di nessuno
-- Il layout di base: lingua, meta e anteprime social, salta-a, e le cinque forme
+- Il layout di base: lingua, meta e anteprime social, salta-a, e le forme
   di ritaglio del design — una pagina non si scrive più il documento da sé
 - Gli otto componenti del design system, in `.astro` e senza React, con la loro
   rassegna a `/componenti`; le forme di ritaglio non sono più copiate ma

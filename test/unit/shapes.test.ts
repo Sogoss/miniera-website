@@ -11,6 +11,7 @@ import {
   CLIP_SHAPES,
   type Corner,
   gemCorners,
+  pillCorners,
   roundedPolygonPath,
   scallopedPath,
 } from '../../src/lib/shapes.ts';
@@ -228,10 +229,76 @@ describe('roundedPolygonPath', () => {
   });
 });
 
+describe('pillCorners', () => {
+  const PILL = { ratio: 0.84, tilt: -15 };
+
+  it('rounds a rectangle all the way into a capsule', () => {
+    // Four corners, four arcs, and each arc as wide as the short side lets it
+    // be: half of it. That cap is what turns a rectangle into a capsule — the
+    // arcs meet in the middle of the short sides with nothing straight left
+    // between them — rather than into a rounded rectangle.
+    const corners = pillCorners(PILL);
+    const path = roundedPolygonPath(corners);
+    expect(path.match(/A /g)).toHaveLength(4);
+
+    const shortSide = Math.hypot(
+      corners[1]!.point.x - corners[2]!.point.x,
+      corners[1]!.point.y - corners[2]!.point.y,
+    );
+    for (const command of commandsOf(path)) {
+      if (command.kind === 'A') expect(command.numbers[0]).toBeCloseTo(shortSide / 2, 3);
+    }
+  });
+
+  it('becomes a circle when the rectangle is a square', () => {
+    // The degenerate case, and the one that says the rounding really is capped
+    // at half the edge: four quarter-circles of radius 0.5 meeting at the
+    // midpoints is a circle.
+    const path = roundedPolygonPath(pillCorners({ ratio: 1, tilt: 0 }));
+    for (const command of commandsOf(path)) {
+      if (command.kind === 'A') expect(command.numbers[0]).toBeCloseTo(0.5, 3);
+    }
+  });
+
+  it('tilts off the horizontal, which is what makes it Material’s pill', () => {
+    // Untilted, the shape is symmetric about both axes; tilted, it is not. A
+    // tilt silently dropped would leave a capsule that reads as a plain rounded
+    // rectangle — the thing this shape is deliberately not.
+    const straight = pillCorners({ ...PILL, tilt: 0 });
+    const tilted = pillCorners(PILL);
+
+    expect(straight.every((corner) => Math.abs(corner.point.y - 0.5) > 0.001)).toBe(true);
+    expect(straight.map((corner) => corner.point.y).sort()).not.toEqual(
+      tilted.map((corner) => corner.point.y).sort(),
+    );
+  });
+
+  it('stays inside its box, tilt included', () => {
+    for (const { point } of pillCorners(PILL)) {
+      expect(point.x).toBeGreaterThanOrEqual(0);
+      expect(point.x).toBeLessThanOrEqual(1);
+      expect(point.y).toBeGreaterThanOrEqual(0);
+      expect(point.y).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('does not reach all four edges, unlike the lobed shapes', () => {
+    // Stated because it is a difference somebody will otherwise read as a bug:
+    // a tilted rectangle is scaled to fit the wider of its two spans, and
+    // scaling the two independently would stretch the arcs into ellipses the
+    // tangency no longer holds for.
+    const points = pillCorners(PILL).map((corner) => corner.point);
+    const spanX = Math.max(...points.map((p) => p.x)) - Math.min(...points.map((p) => p.x));
+    const spanY = Math.max(...points.map((p) => p.y)) - Math.min(...points.map((p) => p.y));
+    expect(Math.max(spanX, spanY)).toBeCloseTo(1, 3);
+    expect(Math.min(spanX, spanY)).toBeLessThan(1);
+  });
+});
+
 describe('CLIP_SHAPES', () => {
-  it('carries the five shapes of the design, named once each', () => {
-    expect(CLIP_SHAPES).toHaveLength(5);
-    expect(new Set(CLIP_SHAPES.map((shape) => shape.id)).size).toBe(5);
+  it('carries the six shapes of the design, named once each', () => {
+    expect(CLIP_SHAPES).toHaveLength(6);
+    expect(new Set(CLIP_SHAPES.map((shape) => shape.id)).size).toBe(6);
   });
 
   it('gives every shape a geometry', () => {
@@ -249,8 +316,19 @@ describe('CLIP_SHAPES', () => {
       'clip-cookie-6',
       'clip-clover-8',
       'clip-gem',
+      'clip-pill',
       'clip-skewed',
     ]);
+  });
+
+  it('keeps the pill the shape apart from the pill the radius', () => {
+    // Two different things carry the name. `--radius-pill` is what buttons and
+    // labels are cut with and it could not be a clip path — under
+    // objectBoundingBox `rx=.5 ry=.5` gives an ellipse, not a capsule. This one
+    // is Material's shape, and it is not a substitute for that radius: the
+    // description says so where a reader of the gallery will see it.
+    const pill = CLIP_SHAPES.find((shape) => shape.id === 'clip-pill')!;
+    expect(pill.description).toContain('non è il raggio');
   });
 
   it('keeps the export geometry for the one shape Material has no name for', () => {

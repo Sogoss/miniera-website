@@ -13,7 +13,10 @@
  *   f-esafoglio                → clip-cookie-6      (6-sided cookie)
  *   f-ottofoglio, m-ottofoglio → clip-clover-8      (8-leaf clover)
  *   f-gemma                    → clip-gem           (gem)
+ *   —                          → clip-pill          (pill)
  *   f-obliqua                  → clip-skewed        (no Material equivalent)
+ *
+ * `clip-pill` is in no design file: it is Material's own, added in PR 6.
  *
  * The last one is the exception, and it is named plainly for a reason:
  * Material's `slanted` is a rounded square on a tilted axis, and this is a
@@ -22,21 +25,22 @@
  * from Material was that they say what you get. It is also the one shape that
  * kept the export's own geometry, for the same reason.
  *
- * And the shape somebody will come here looking for is not here at all: the
- * pill. The design uses it seven times and never as a clip path — it is
- * `border-radius: var(--radius-pill)`, on buttons and labels. It could not be
- * one either: under `objectBoundingBox` the radii are fractions of width and
- * height, so they stretch with the aspect ratio and `rx=.5 ry=.5` gives an
- * ellipse rather than a capsule.
+ * `clip-pill` is not the pill the design uses. That one is
+ * `border-radius: var(--radius-pill)` on buttons and labels, it is used seven
+ * times, and it could not be a clip path at all: under `objectBoundingBox` the
+ * radii are fractions of width and height, so `rx=.5 ry=.5` gives an ellipse
+ * rather than a capsule. Material's Pill is a rounded, tilted quadrilateral —
+ * a different geometry that happens to share the name, and not a substitute
+ * for the radius.
  *
- * Five and not six: the export defines the eight-lobed shape twice, once per
- * file, because it is two designs — desktop and mobile — and this is one site.
+ * The eight-lobed shape appears once and not twice: the export defines it in
+ * both files because it is two designs — desktop and mobile — and this is one
+ * site.
  *
- * Four of the five are a declared catalogue: the design applies only the
- * eight-lobed one, to the 56×56 portraits of the guests, and so does this site —
- * `GuestRow`. They are kept for the same reason the five cycle colours are kept
- * in colors.css: the design chose them, and a comment is cheaper than
- * rediscovering why they went missing.
+ * The design applies only the eight-lobed one, to the 56×56 portraits of the
+ * guests, and so does this site — `GuestRow`. The others are shown in the
+ * gallery at /componenti, which is what keeps them from being published for
+ * PRs on end with nobody able to see whether they are right.
  *
  * The `<svg>` is zero-sized and hidden from assistive technology: it defines,
  * it does not draw.

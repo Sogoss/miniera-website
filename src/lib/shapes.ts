@@ -218,6 +218,68 @@ export function roundedPolygonPath(corners: readonly Corner[]): string {
   return pieces.join(' ');
 }
 
+/** A capsule: a rectangle rounded as far as it goes, tilted off the axis. */
+export type PillSpec = {
+  /** Height as a fraction of width. 1 would round into a circle. */
+  ratio: number;
+  /** Degrees off the horizontal. Material's pill is not axis-aligned. */
+  tilt: number;
+};
+
+/**
+ * The pill, which needs saying twice because two different things carry the
+ * name.
+ *
+ * The design's pill is `border-radius: var(--radius-pill)` on buttons and
+ * labels, and it could not be a clip path: under `objectBoundingBox` the radii
+ * are fractions of width and height, so `rx=.5 ry=.5` gives an ellipse instead
+ * of a capsule. That is still true and that pill is still a radius.
+ *
+ * Material's Pill is a different shape: a rounded quadrilateral, tilted off the
+ * horizontal, and it is built the way the others here are. The two are not
+ * interchangeable and this one is not a substitute for the radius.
+ *
+ * Rounding is asked for far larger than it can be given, on purpose: the cap on
+ * the corner cut — half the shorter edge — is exactly what turns a rectangle
+ * into a capsule, with the arcs meeting at the middle of the short sides and no
+ * straight segment left across them.
+ *
+ * The tilt is why this one does not touch all four edges of its box the way the
+ * others do: the shape is scaled to fit the wider of the two spans, and scaling
+ * the two independently would stretch the arcs into ellipses that the tangency
+ * no longer holds for.
+ */
+export function pillCorners(spec: PillSpec): Corner[] {
+  const { ratio, tilt } = spec;
+  const angle = (tilt * Math.PI) / 180;
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+
+  const rectangle: Point[] = [
+    { x: -0.5, y: -ratio / 2 },
+    { x: 0.5, y: -ratio / 2 },
+    { x: 0.5, y: ratio / 2 },
+    { x: -0.5, y: ratio / 2 },
+  ];
+
+  const turned = rectangle.map((point) => ({
+    x: point.x * cos - point.y * sin,
+    y: point.x * sin + point.y * cos,
+  }));
+
+  const span = Math.max(
+    ...turned.map((point) => Math.abs(point.x)),
+    ...turned.map((point) => Math.abs(point.y)),
+  );
+  const scale = RADIUS / span;
+
+  return turned.map((point) => ({
+    point: { x: CENTRE.x + point.x * scale, y: CENTRE.y + point.y * scale },
+    // More than any corner can take, which is the point: see above.
+    rounding: 1,
+  }));
+}
+
 /**
  * The gem: eight facets at uneven distances from the centre, cut longer across
  * one diagonal than the other.
@@ -277,6 +339,11 @@ export const CLIP_SHAPES: { id: string; description: string; path: string }[] = 
     id: 'clip-gem',
     description: 'otto lati arrotondati',
     path: roundedPolygonPath(gemCorners()),
+  },
+  {
+    id: 'clip-pill',
+    description: 'capsula inclinata — non è il raggio dei bottoni',
+    path: roundedPolygonPath(pillCorners({ ratio: 0.84, tilt: -15 })),
   },
   {
     id: 'clip-skewed',

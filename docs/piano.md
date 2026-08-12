@@ -745,6 +745,9 @@ system* e *Forme di ritaglio, la geometria*. In breve:
 - **Le geometrie di Material si ricostruiscono qui**, con parametri nostri, e la
   documentazione dice che sono *ispirate* a Material e non le sue
 - **Le forme a lobi si costruiscono con i cerchi**, non arrotondando un poligono
+- **La Pill di Material entra fra le forme**, chiesta a lavoro in corso: è un
+  quadrilatero arrotondato e inclinato, non il `--radius-pill` dei bottoni, e la
+  decisione della PR 5 che escludeva «la pill» parlava dell'altra delle due
 
 ### Obiettivi
 
@@ -759,9 +762,11 @@ system* e *Forme di ritaglio, la geometria*. In breve:
       grezzi
 - [x] `GuestRow` ritaglia il ritratto con `clip-clover-8`, e il ritaglio arriva
       in `dist/`
-- [x] `src/lib/shapes.ts` genera le quattro forme ricostruite: puro, senza
-      import e senza orologio, come `events.ts` e `cycles.ts`
-- [x] `ClipShapes.astro` emette i path generati con gli stessi cinque `id`
+- [x] `src/lib/shapes.ts` genera le forme ricostruite — quattro, più la Pill di
+      Material aggiunta in corsa: puro, senza import e senza orologio, come
+      `events.ts` e `cycles.ts`
+- [x] `ClipShapes.astro` emette i path generati, e gli `id` di prima non
+      cambiano
 - [x] Una pagina di rassegna interna mostra tutti i componenti e le loro
       varianti, con un solo `<h1>` e `noindex`
 - [x] La questione delle geometrie è chiusa e la documentazione aggiornata

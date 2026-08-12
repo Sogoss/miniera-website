@@ -341,13 +341,20 @@ netti: il nome prometteva un'altra forma, che è il contrario del motivo per cui
 si va a prenderli da Material. Se una geometria non ha corrispondente, porta un
 nome descrittivo e la tabella lo dichiara. *(PR 5, in revisione)*
 
-**La pill non è una forma di ritaglio, e cercarla fra i `clipPath` non ha
-senso.** Il design la usa sette volte e sempre come
-`border-radius: var(--radius-pill)`. Non potrebbe essere un ritaglio: sotto
-`objectBoundingBox` i raggi sono frazioni di larghezza e altezza, quindi si
-deformano con il rapporto d'aspetto e `rx=.5 ry=.5` dà un'ellisse, non una
-capsula. Sta scritto in [design.md](design.md) accanto alle forme, perché è lì
-che qualcuno andrà a cercarla. *(PR 5, in revisione)*
+**La pillola *del design* non è una forma di ritaglio.** Il design la usa sette
+volte e sempre come `border-radius: var(--radius-pill)`. Non potrebbe essere un
+ritaglio: sotto `objectBoundingBox` i raggi sono frazioni di larghezza e
+altezza, quindi si deformano con il rapporto d'aspetto e `rx=.5 ry=.5` dà
+un'ellisse, non una capsula. Sta scritto in [design.md](design.md) accanto alle
+forme, perché è lì che qualcuno andrà a cercarla. *(PR 5, in revisione)*
+
+> **Corretta alla PR 6.** Questa decisione diceva «la pill non è una forma di
+> ritaglio», senza aggettivo, e in quella forma era mezza sbagliata: vale per la
+> pillola dei bottoni e non per la **Pill di Material 3 Expressive**, che è un
+> quadrilatero arrotondato e inclinato, non un rettangolo con i raggi. Sono due
+> geometrie diverse tenute insieme dal nome, e la decisione ne escludeva una
+> parlando dell'altra. La forma di Material è ora `clip-pill`, generata come le
+> altre; il raggio resta il raggio.
 
 **Nessun pacchetto di forme di terzi entra nel repository.** Ne è stato valutato
 uno durante la revisione: nessuna licenza dichiarata, nessuna indicazione se le
@@ -853,7 +860,7 @@ in [design.md](design.md) lo dichiara.
 
 **Gli `id` non cambiano, ed è il collaudo di ciò che la PR 5 aveva promesso.**
 Cambiare geometria tocca il contenuto del componente e niente altro: nessuno di
-chi le referenzia se n'è accorto, e le asserzioni che pretendono le cinque forme
+chi le referenzia se n'è accorto, e le asserzioni che pretendono ogni forma
 su ogni pagina sono rimaste verdi senza essere toccate.
 
 **Una forma sbagliata non fa fallire niente, quindi ciò che è aritmetica si
