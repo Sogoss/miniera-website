@@ -784,6 +784,15 @@ altro carattere. Nessuna delle due schermate usa la banda, quindi non c'è un
 layout che la stringa più lunga possa rompere, e l'uso ovvio del componente
 adesso è quello giusto.
 
+**E porta `data-brand`, deciso in revisione.** Era stata lasciata senza, con
+l'argomento che è una fascia tipografica e non il marchio, e che una banda che
+dice «GIOVEDÌ SERA» è una cosa legittima da volere. Quello che restava era un
+`text` libero capace di pubblicare il marchio breve su ogni pagina con un piè di
+pagina, senza che nessuna delle due guardie della regola 7 potesse vederlo: una
+si aggancia a quell'attributo, l'altra legge solo `Brand.astro`. Una fascia con
+un altro testo si può ancora scrivere; semplicemente non è questo componente,
+il cui predefinito *è* la firma.
+
 **Le misure numeriche dell'export diventano custom property con il default nel
 componente.** `altezza` e `corpo` reggevano proporzioni calcolate in JavaScript
 — la barra del marchio è `altezza * 0.16`, il sottotitolo `altezza * 0.5`. Ora
