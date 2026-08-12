@@ -614,8 +614,14 @@ In breve:
   `CycleAccents` e `ClipShapes`. Un accento rimasto arancio, una foto non
   ritagliata e una pagina senza lingua sono tre guasti muti
 - **I nomi delle forme vengono da Material 3, la geometria dal design**: gli
-  `id` sono codice, e la libreria di Google ha già un nome per ognuna di queste
+  `id` sono codice, e la libreria di Google ha già un nome per quattro di queste
   geometrie. La tabella sta in [design.md](design.md)
+- **Ma un nome si prende solo se corrisponde**: l'obliqua si chiama
+  `clip-skewed`, perché lo `slanted` di Material è un quadrato arrotondato e
+  questa è un quadrilatero a spigoli netti — deciso guardando le forme a
+  schermo, nel controllo manuale. E la pill, che qualcuno cercherà fra le forme,
+  non è un ritaglio ma `--radius-pill`: il design la usa così sette volte, e
+  sotto `objectBoundingBox` un raggio si deforma col rapporto d'aspetto
 - **Le forme distinte sono cinque, non sei**: l'ottofoglio è definito due volte
   nell'export perché quelli sono due design
 - **Le geometrie esatte di Material sono rimandate alla PR 6**, la prima che

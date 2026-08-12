@@ -330,9 +330,32 @@ dalla memoria di chi scrive la pagina.
 sono codice, quindi la regola sulla lingua li vuole in inglese; tradurre
 *quadrifoglio* e *ottofoglio* a orecchio avrebbe prodotto un vocabolario
 privato, e la libreria di forme di Google ha già un nome per ognuna di queste
-geometrie — `4-leaf clover`, `6-sided cookie`, `8-leaf clover`, `gem`,
-`slanted`. La tabella con la corrispondenza sta in [design.md](design.md),
-perché è un giudizio sulla forma e non un dato dell'export.
+geometrie — `4-leaf clover`, `6-sided cookie`, `8-leaf clover`, `gem`. La
+tabella con la corrispondenza sta in [design.md](design.md), perché è un
+giudizio sulla forma e non un dato dell'export.
+
+**Ma un nome si prende solo se corrisponde: l'obliqua si chiama `clip-skewed`.**
+Era stata battezzata `clip-slanted`, e lo `slanted` di Material è un quadrato
+arrotondato su un asse inclinato mentre questa è un quadrilatero a spigoli
+netti: il nome prometteva un'altra forma, che è il contrario del motivo per cui
+si va a prenderli da Material. Se una geometria non ha corrispondente, porta un
+nome descrittivo e la tabella lo dichiara. *(PR 5, in revisione)*
+
+**La pill non è una forma di ritaglio, e cercarla fra i `clipPath` non ha
+senso.** Il design la usa sette volte e sempre come
+`border-radius: var(--radius-pill)`. Non potrebbe essere un ritaglio: sotto
+`objectBoundingBox` i raggi sono frazioni di larghezza e altezza, quindi si
+deformano con il rapporto d'aspetto e `rx=.5 ry=.5` dà un'ellisse, non una
+capsula. Sta scritto in [design.md](design.md) accanto alle forme, perché è lì
+che qualcuno andrà a cercarla. *(PR 5, in revisione)*
+
+**Nessun pacchetto di forme di terzi entra nel repository.** Ne è stato valutato
+uno durante la revisione: nessuna licenza dichiarata, nessuna indicazione se le
+forme fossero originali o riprese dalle risorse di Google, e un progetto da
+cinque megabyte per un'app builder. In un repository che tiene le licenze OFL
+accanto ai `.woff2` sarebbe stata l'unica cosa di provenienza sconosciuta — e
+per una forma non serve: le quattro che restano vengono dall'export, che è la
+specifica. *(PR 5, in revisione)*
 
 **Le forme distinte sono cinque, non sei**: l'ottofoglio è definito due volte
 nell'export, una per file, perché quelli sono due design e questo è un sito

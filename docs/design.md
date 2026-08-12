@@ -153,7 +153,21 @@ geometrie nella sua libreria di forme.
 | `f-esafoglio` | centro largo, sei lobi | 6-sided cookie | `clip-cookie-6` |
 | `f-ottofoglio` · `m-ottofoglio` | centro stretto, otto lobi | 8-leaf clover | `clip-clover-8` |
 | `f-gemma` | otto lati arrotondati | gem | `clip-gem` |
-| `f-obliqua` | quadrilatero con due lati inclinati | slanted | `clip-slanted` |
+| `f-obliqua` | quadrilatero con due lati inclinati | *nessuna* | `clip-skewed` |
+
+L'ultima è l'eccezione, e porta un nome descrittivo di proposito: lo `slanted`
+di Material è un quadrato arrotondato su un asse inclinato, questa è un
+quadrilatero a spigoli netti. Prendere in prestito quel nome avrebbe promesso
+una forma diversa da quella che si ottiene — che è esattamente l'opposto del
+motivo per cui i nomi vengono da Material.
+
+> **La pill non è qui, e non è una forma di ritaglio.** Il design la usa sette
+> volte ed è sempre `border-radius: var(--radius-pill)`, su bottoni ed
+> etichette. Non potrebbe nemmeno essere un `clipPath`: con
+> `clipPathUnits="objectBoundingBox"` i raggi sono frazioni di larghezza e
+> altezza, quindi si deformano col rapporto d'aspetto e `rx=.5 ry=.5` dà
+> un'ellisse invece di una capsula. Chi cerca la pillola fra le forme la trova
+> fra i raggi, in `spacing.css`.
 
 **Una sola è applicata nell'export**: quella a otto lobi, sui ritratti degli
 ospiti da 56×56. `f-gemma` compare come dato (`formaA`) che nessun elemento

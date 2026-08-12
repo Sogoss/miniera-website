@@ -16,7 +16,20 @@
  *   f-esafoglio               → clip-cookie-6      (6-sided cookie)
  *   f-ottofoglio, m-ottofoglio → clip-clover-8     (8-leaf clover)
  *   f-gemma                   → clip-gem           (gem)
- *   f-obliqua                 → clip-slanted       (slanted)
+ *   f-obliqua                 → clip-skewed        (no Material equivalent)
+ *
+ * The last one is the exception, and it is named plainly for a reason: Material's
+ * `slanted` is a rounded square on a tilted axis, and this is a hard-edged
+ * quadrilateral with two sloping sides. Borrowing the name would have promised a
+ * shape this is not — the whole argument for taking the names from Material was
+ * that they say what you get.
+ *
+ * And the shape somebody will come here looking for is not here at all: the pill.
+ * The design uses it seven times and never as a clip path — it is
+ * `border-radius: var(--radius-pill)`, on buttons and labels. It could not be one
+ * either: under `objectBoundingBox` the radii are fractions of width and height,
+ * so they stretch with the aspect ratio and `rx=.5 ry=.5` gives an ellipse rather
+ * than a capsule.
  *
  * Five and not six: the export defines the eight-lobed shape twice, once per
  * file, because it is two designs — desktop and mobile — and this is one site.
@@ -77,7 +90,7 @@
       ></path>
     </clipPath>
 
-    <clipPath id="clip-slanted" clipPathUnits="objectBoundingBox">
+    <clipPath id="clip-skewed" clipPathUnits="objectBoundingBox">
       <polygon points="0,0.08 1,0 1,0.92 0,1"></polygon>
     </clipPath>
   </defs>
