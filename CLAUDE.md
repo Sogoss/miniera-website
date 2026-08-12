@@ -76,6 +76,31 @@ non una preferenza.
 
 10. **Il numero della serata è il suo URL e non si riassegna mai.**
     Passato e futuro non sono campi: si calcolano da `date` alla build.
+    L'ordine del sito è il numero, non la data; se i due ordini divergono la
+    build si ferma.
+
+11. **Ogni data si formatta dichiarando `timeZone: 'Europe/Rome'`**, i moduli
+    puri di `src/lib/` non leggono l'orologio — `now` arriva sempre come
+    argomento, e l'unico a crearlo è `programme.ts`, una volta per build — e non
+    si usano i metodi locali di `Date`: `getHours`, `getMinutes`, `getSeconds`,
+    `getDay`, `getDate`, `getMonth`, `getFullYear`, `toDateString`,
+    `toTimeString`. Sono i nove che la guardia vieta, ed è l'elenco intero: non
+    hanno un'opzione per dichiarare il fuso. `getTime()` e la famiglia
+    `getUTC…` invece vanno bene, perché dicono la stessa cosa su ogni macchina.
+    **E una `Date` non si dà mai in pasto a qualcosa che si aspetta una
+    stringa** — `{scene.date}`, `${event.date}` — perché è un `toString()` che
+    nessuna guardia sulla forma della chiamata può distinguere: le stringhe le
+    scrive `src/lib/events.ts`. Cloudflare builda in UTC e le serate si svolgono
+    a Torino: una formattazione senza fuso è giusta sul portatile di chi la
+    scrive e pubblica *ore 19* al posto di *ore 21*. Quattro guardie in
+    `test/guards/dates.ts` — le prime tre leggono il codice, la quarta il testo
+    pubblicato in `dist/`. La build gira con `TZ=UTC`, fissato nello script
+    `build`: è il fuso di Cloudflare, e senza quel vincolo un `dist/` costruito
+    a Torino e riusato con `REUSE_DIST=1` passerebbe per il motivo sbagliato.
+    **E lo stesso vincolo vale nei contenuti: il campo `date` porta sempre il
+    suo scostamento** — `+02:00` d'estate, `+01:00` d'inverno. Senza, lo legge
+    la macchina che builda, cioè UTC, e una serata delle 21 si pubblica *ore
+    22*: `checkDateHasOffset` in `test/guards/content.ts`.
 
 ## Lingua
 
@@ -115,6 +140,7 @@ scripts/           utilità (sincronizzazione dei caratteri)
 src/assets/fonts/  woff2 self-hostati e licenze OFL
 src/content/       eventi, cicli, sedi, relatori
 src/content.config.ts   schema Zod delle quattro collection
+src/lib/           il dominio: events.ts puro, programme.ts legge le collection
 src/styles/tokens/ i token del design
 src/styles/global.css   strato base del documento
 test/guards/       le guardie ai vincoli, come funzioni pure
@@ -123,8 +149,18 @@ test/build/        le asserzioni su ciò che finisce in dist/
 ```
 
 `src/pages/index.astro` è una **pagina di verifica provvisoria**: dimostra che
-token, caratteri e collection funzionano insieme. Va sostituita dallo scroller
-vero, non estesa.
+token, caratteri, collection e utilità di dominio funzionano insieme. Va
+sostituita dallo scroller vero, non estesa — con un'eccezione dichiarata, che
+vale la pena conoscere prima della PR 7.
+
+È anche **l'unica prova pubblicata che lo strato `build` può leggere**, e per
+questo porta su ogni serata tre ancoraggi che non sono decorazione:
+`data-number`, `data-state` e `data-open` sulla scena di apertura. Le
+asserzioni di `test/build/published-dates.test.ts` cercano quelli e i contenuti
+— il nome del ciclo, quello della sede, la nota del dominio — mai il `#78 · `
+o l'*apertura dello scroller* che questa pagina scrive intorno. Sostituirla
+vuol dire riportare i tre attributi sullo scroller e mostrare le stesse cose,
+non riscrivere le prove sul fuso. Tutto il resto di questa pagina si butta.
 
 ## Comandi
 

@@ -58,7 +58,7 @@ sostituisce un telefono vero.
 |---|---|---|---|
 | 1 | Impianto di verifica | `impianto-verifiche` | fatta |
 | 2 | Igiene: lingua, README, favicon, contenuti | `igiene-lingua-e-contenuti` | fatta |
-| 3 | Utilità di dominio | `lib-eventi` | da fare |
+| 3 | Utilità di dominio | `lib-eventi` | fatta |
 | 4 | Accento dai cicli della collection | `accento-dai-cicli` | da fare |
 | 5 | Layout di base e forme di ritaglio | `layout-base` | da fare |
 | 6 | Gli otto componenti del design system | `design-system-astro` | da fare |
@@ -252,42 +252,182 @@ usati da tutto il resto.
 
 ## PR 3 — Utilità di dominio
 
-**Branch:** `lib-eventi` · **Dipende da:** 1
+**Branch:** `lib-eventi` · **Dipende da:** 1, 2
 
 `src/lib/events.ts`: il cuore logico del sito, puro e testabile, che tutte le
-pagine useranno.
+pagine useranno. Nasce qui e non dentro le pagine che lo consumeranno perché
+dentro un componente `.astro` non si può passare un "adesso" finto, e senza un
+adesso finto il confine fra passato e futuro non si prova: si aspetta.
+
+Il vincolo che decide la forma è che **Cloudflare builda in UTC e le serate si
+svolgono a Torino**. Una formattazione senza fuso funziona sulla macchina di
+chi la scrive e sbaglia in produzione di due ore d'estate e di una d'inverno,
+senza un errore da nessuna parte: è lo stesso guasto muto del ripiego
+collassato e del `var()` senza dichiarazione.
+
+### Decisioni prese scrivendo la PR
+
+Le otto per esteso stanno in [decisioni.md](decisioni.md), sotto *Logica di
+dominio*. In breve:
+
+- **La verità cronologica è `number`**, non `date`: il numero è l'identità
+  della serata. Un controllo alla build ferma tutto se i due ordini divergono
+  o se due serate hanno lo stesso numero
+- **La nota di una serata passata è sempre *Puntata registrata in sala***,
+  anche senza materiali: a mancare senza link è il bottone, non la frase
+- **Una serata annullata ha come nota *Serata annullata***, e lo scroller si
+  apre sulla prima serata non ancora passata **e non annullata**
+- **Le date portano l'anno**, che il design non aveva: su ottantuno serate
+  *18 giugno* non identifica niente
+- **Il dominio è in due file e il puro non importa niente**, `now` compreso: è
+  ciò che permette di eseguirlo con `node` sotto due fusi diversi
+- **Due serate d'esempio in più** — la 78, passata, con presenze e materiali, e
+  la 82 — perché con la sola serata 81 metà del dominio non si vedrebbe girare
+  su contenuti veri e il controllo d'ordine sarebbe vacuo
 
 ### Obiettivi
 
-- [ ] Ordinamento cronologico degli eventi
-- [ ] Passato e futuro calcolati **in `Europe/Rome`**: una serata diventa
-      già svolta alla mezzanotte del giorno successivo, non all'ora di inizio
-- [ ] Formattazione italiana delle date: `24 set` per la Timeline,
-      `giovedì 24 settembre, ore 21` per la scena
-- [ ] Risoluzione dei riferimenti a ciclo, sede e relatori, con il ruolo
-      dell'evento che sovrascrive quello della persona
-- [ ] Nota predefinita calcolata — *Ingresso libero, posti limitati* /
-      *Puntata registrata in sala* — sovrascrivibile dal campo `note`
-- [ ] Indice della prima serata futura, su cui si aprirà lo scroller
-- [ ] Un controllo alla build fallisce se l'ordine per `number` e l'ordine per
-      `date` divergono
+- [x] Ordinamento degli eventi per `number`, che è l'ordine del sito
+- [x] Passato e futuro calcolati **in `Europe/Rome`**, per confronto fra date
+      civili e non per aritmetica sugli offset: una serata diventa già svolta
+      alla mezzanotte del giorno successivo, non all'ora di inizio
+- [x] Formattazione italiana delle date: `24 set 26` per la Timeline,
+      `gio 24 set 26, ore 21` per la scena — minuti solo quando ci sono
+- [x] Risoluzione dei riferimenti a ciclo, sede e relatori, con il ruolo
+      dell'evento che sovrascrive quello della persona. Un riferimento che non
+      risolve ferma la build invece di viaggiare come `undefined`
+- [x] Nota predefinita calcolata — *Ingresso libero, posti limitati* /
+      *Puntata registrata in sala* / *Serata annullata* — sovrascrivibile dal
+      campo `note`
+- [x] Indice della prossima serata che si svolgerà, su cui si aprirà lo
+      scroller
+- [x] Un controllo alla build fallisce se l'ordine per `number` e l'ordine per
+      `date` divergono, e nomina le due serate
+- [x] `src/lib/events.ts` non ha import e non legge l'orologio
+- [x] La pagina provvisoria mostra le stringhe calcolate: è ciò che dà allo
+      strato `build` qualcosa su cui asserire
 
 ### Test automatici
 
 - Una serata alle 21 di giovedì è ancora *in programma* alle 23:59 di giovedì
-- La stessa serata è *già svolta* alle 00:00 di venerdì, ora italiana
-- Il passaggio all'ora legale e a quella solare non sposta il confine
-- Una build eseguita con `TZ=UTC` dà lo stesso risultato di una eseguita con
-  `TZ=Europe/Rome` — è il caso reale, perché Cloudflare builda in UTC
+- La stessa serata è *già svolta* alle 00:00 di venerdì, ora italiana — cioè
+  alle 22:00Z d'estate e alle 23:00Z d'inverno, che è il caso che la CI vive
+- Il passaggio all'ora legale e a quella solare non sposta il confine: quattro
+  asserzioni a cavallo delle due notti del 2026
+- La build gira con `TZ=UTC`, come Cloudflare, e le stringhe italiane si
+  leggono in `dist/`; due processi figli girano lo stesso modulo sotto `TZ=UTC`
+  e `TZ=Europe/Rome` e danno lo stesso risultato — che è anche quello atteso,
+  perché l'uguaglianza da sola passerebbe su due risposte sbagliate uguali
+- **Guardia**: nessun `Intl.DateTimeFormat` e nessun `toLocale…` senza
+  `timeZone` in `src/`; nessuna lettura dell'orologio in `src/lib/events.ts`.
+  Entrambe con i loro casi negativi (regola 11)
+- **Guardia**: in `dist/` non compare nessuna data scritta dalla macchina —
+  `Thu Sep 24 2026`, `Thu, 24 Sep 2026`, `GMT` — che è la sola via per cui una
+  `Date` supera le guardie sul codice: `{scene.date}` è un `toString()` come
+  tutti gli altri
+- **Guardia**: ogni `date` nel frontmatter porta il suo scostamento dal fuso,
+  perché senza lo decide la macchina che builda
+- Lo stato di ogni serata si legge da `data-state` e non dalle parole italiane,
+  e la coppia stato-nota copre anche l'annullamento
+- Le attese dello strato `build` si ricavano dai contenuti: aggiungere una
+  serata, aprire una seconda sede o annullarne una non fa diventare rossa la
+  suite
 - Il ruolo dichiarato sull'evento vince su quello della persona; se manca, vale
   quello della persona
-- Una serata annullata resta nell'elenco e conserva il suo numero
-- Ordine per `number` e ordine per `date` coincidono
+- Una serata annullata resta nell'elenco, conserva il suo numero e prende la
+  sua nota; lo scroller la salta
+- Ordine per `number` e ordine per `date` coincidono, sui contenuti veri e su
+  una coppia invertita scritta a mano
+- Ogni data del frontmatter si legge: una data illeggibile farebbe passare in
+  silenzio il controllo d'ordine, perché ogni confronto con una *Invalid Date*
+  è falso
+
+> **Trovato in revisione.** Dieci difetti, e la metà erano guardie che non
+> guardavano — la forma di guasto che questo repository si è dato l'impianto
+> per intercettare, ripetuta dentro l'impianto stesso. Un apostrofo negli
+> argomenti di un formattatore (`l'ora`) sfasava il conteggio delle virgolette,
+> e il controllo finiva per leggere il `timeZone` di *un'altra* chiamata più
+> in basso: nessuna violazione, mai. Il fuso veniva controllato per chiave e
+> non per valore, quindi `timeZone: 'UTC'` passava — ed `'UTC'` è già scritto
+> mezza dozzina di volte qui dentro, pronto da copiare. I metodi locali di
+> `Date` — `getHours`, `getDay` — non li vedeva nessuno strato: un componente
+> che ne usasse uno pubblicherebbe una serata di giovedì come mercoledì con la
+> suite verde. La guardia sull'orologio era puntata su un percorso scritto a
+> mano, così il secondo modulo puro sarebbe nato scoperto. E le righe di
+> continuazione di un commento `/* … */` venivano lette come codice, cioè una
+> guardia che diventa rossa sulla prosa — e quella la si spegne.
+>
+> Gli altri cinque: `nextEventIndex` contraddiceva il proprio contratto quando
+> l'ultima serata è annullata, `findNumberDateConflicts` moriva con un
+> `RangeError` proprio sulla data illeggibile che doveva raccontare — e prima
+> di morire accusava del disordine anche il numero doppio, con una frase falsa
+> in faccia («#81 viene prima di #81 ma si svolge dopo») — le asserzioni dello
+> strato `build` sarebbero diventate rosse da sole il 9 ottobre 2026, quando la
+> serata 82 passa, e si appoggiavano al `#78 · ` della pagina provvisoria
+> invece che a un `data-number` che lo scroller porterà comunque.
+
+> **Trovato nella seconda revisione.** Altri dieci, e i due temi sono gli
+> stessi di prima visti da un altro lato. Le guardie sul fuso fallivano aperte
+> in due modi nuovi: un `timeZone` scritto dentro un commento veniva letto come
+> se fosse codice — bastava commentarlo mentre si debugga — e una costante di
+> fuso importata da un altro file passava senza controllo, che è esattamente il
+> refactoring che la PR 8 inviterà a fare. `REUSE_DIST=1` saltava l'unico posto
+> in cui `TZ=UTC` era dichiarato, così un `dist/` costruito a Torino passava per
+> il motivo che quelle asserzioni escludono: il fuso è passato nello script
+> `build`. E lo strato `build` era saldato alle tre serate d'esempio e alla
+> prosa italiana — annullare una serata, aggiungere la 083, aprire una seconda
+> sede o scrivere una descrizione che contiene *in programma* facevano diventare
+> rossa la suite senza che niente fosse rotto, con l'errore puntato su un test
+> invece che sul contenuto.
+>
+> Gli altri: `loadProgramme` rileggeva l'orologio a ogni chiamata, e la garanzia
+> che il suo stesso commento dichiarava valeva solo dentro una pagina; nessuna
+> guardia vedeva una `Date` data in pasto a qualcosa che si aspetta una stringa,
+> che è la stessa differenza di due ore per una via che nessun controllo sulla
+> forma della chiamata può riconoscere; la regola 11 elencava quattro metodi
+> vietati e la guardia ne vietava nove, cioè la CI poteva citare una regola che
+> non nomina il metodo su cui è scattata — e la reazione naturale a quello è
+> allargare l'elenco della guardia; e la pagina provvisoria era stata estesa
+> contro quello che il `CLAUDE.md` prescrive, senza dirlo. L'estensione è
+> deliberata e ora è scritta nella regola: quella pagina è l'unica prova
+> pubblicata che lo strato `build` ha, e porta `data-number` e `data-state` per
+> questo.
+
+> **Trovata nella terza revisione.** Dieci, e la prima vale da sola tutte le
+> altre: `'**` seguito da `/*` — il glob con cui si carica una collection —
+> conteneva un apri-commento, così il controllo «questo indice sta dentro un
+> commento?» dichiarava commentato tutto quello che veniva dopo. In
+> `content.config.ts` quel glob sta alla riga 31: da lì in giù **le tre guardie
+> sul codice non guardavano niente**, ed era la terza revisione di fila a
+> trovare una guardia che non guarda. Le stringhe si cancellano ora prima di
+> cercare i commenti.
+>
+> Due difetti erano nel dominio: il controllo d'ordine confrontava istanti e non
+> giorni civili, quindi due serate lo stesso giorno facevano fallire la build con
+> una frase che nominava la stessa data da tutte e due le parti; e un numero
+> doppio lasciava dentro il gemello sbagliato, a seconda dell'ordine dei file,
+> facendo accusare del disordine la serata giusta. Due erano nello strato
+> `build`: confrontava il frontmatter grezzo con il markup, dove Astro fa
+> l'escape degli apostrofi — un ruolo come *coordinatrice dell'archivio* bastava
+> a far diventare rossa la suite — e si appoggiava ancora a due stringhe italiane
+> della pagina provvisoria che il `CLAUDE.md` prometteva di non dover
+> conservare.
+>
+> Gli altri: `toUTCString()` passava tutte e quattro le guardie, la guardia
+> sull'orologio guardava solo `src/lib`, lo stato di una serata era un ternario
+> nel markup senza test — con la sola serata annullata che nessun contenuto
+> d'esempio ha — e `TZ=UTC` alla build cambia come `z.coerce.date()` legge una
+> data senza scostamento, che è l'unica regola sul tempo che vive nei contenuti
+> e ora ha la sua guardia. Uno solo è stato lasciato aperto per scelta: il
+> prefisso `TZ=UTC` non funziona su Windows, che questo repository non supporta
+> comunque.
 
 ### Test manuali
 
 - Lettura a campione delle stringhe di data generate: maiuscole, preposizioni,
-  nessun anno dove il design non lo prevede
+  l'anno al posto giusto in entrambe le forme
+- `npm run dev`, spostare a ieri la data di una serata d'esempio e vedere nota,
+  ordine e scena di apertura cambiare
 
 ---
 

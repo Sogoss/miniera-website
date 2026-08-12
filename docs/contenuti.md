@@ -33,8 +33,8 @@ almeno una volta.
 | Non c'è | Perché |
 |---|---|
 | passato / futuro | si calcolano da `date` alla build |
-| una data breve ("20 mar") | è una formattazione di `date` |
-| la data distesa ("giovedì 20 marzo, ore 21") | idem |
+| una data breve ("24 set 26") | è una formattazione di `date` |
+| la data distesa ("gio 24 set 26, ore 21") | idem |
 | il nome del ciclo | viene dal riferimento al ciclo |
 | `soloAudio` | **eliminato**: nel design era un bottone senza URL, quell'audio non esiste |
 
@@ -63,13 +63,54 @@ Se due eventi finissero con lo stesso numero la build fallisce da sola, perché
 due rotte reclamerebbero lo stesso percorso. È una rete di sicurezza, non un
 controllo da aggiungere.
 
+### Come si scrive la data
+
+Sempre **con lo scostamento dal fuso**, che d'estate è `+02:00` e d'inverno
+`+01:00`:
+
+```yaml
+date: 2026-10-08T21:00:00+02:00   # ottobre, ora legale
+date: 2026-11-05T21:00:00+01:00   # novembre, ora solare
+```
+
+Senza, il fuso lo decide la macchina che costruisce il sito — che è quella di
+Cloudflare, in UTC — e una serata delle 21 si pubblica *ore 22*. Sul portatile
+di chi l'ha scritta si legge giusta, quindi il difetto si vede solo online. Il
+CMS scrive lo scostamento da sé; scrivendo il file a mano va messo, e una
+guardia della suite lo pretende.
+
+Le due date non sono intercambiabili: conta lo scostamento che l'Italia aveva
+**quella sera**, non quello di oggi.
+
 ### Quando una serata diventa "già svolta"
 
 Alla **mezzanotte del giorno successivo**, non all'ora di inizio: una serata
 che comincia alle 21 di giovedì resta "in programma" mentre è in corso.
 
+Mezzanotte **a Torino**, non sulla macchina che costruisce il sito: Cloudflare
+builda in UTC, e fra i due ci sono due ore d'estate e una d'inverno. Il calcolo
+sta in `src/lib/events.ts` e confronta date civili invece di sommare offset,
+così le due notti del cambio d'ora non sono un caso particolare.
+
 Il calcolo avviene alla build, quindi dipende dal rebuild notturno — vedi
 [architettura.md](architettura.md).
+
+### L'ordine è il numero
+
+Il sito elenca le serate per `number`, non per `date`. I due ordini coincidono
+— la numerazione segue il calendario — e un controllo alla build ferma tutto se
+smettono di coincidere, o se due serate finiscono con lo stesso numero.
+
+### La nota sotto il titolo
+
+Non si scrive: si calcola. *Ingresso libero, posti limitati* per una serata in
+programma, *Puntata registrata in sala* per una già svolta — anche quando i
+materiali non ci sono ancora, perché la registrazione esiste e i link arrivano
+dopo: quello che manca senza link è il bottone, non la frase — e *Serata
+annullata* per una annullata.
+
+Il campo `note` sovrascrive tutte e tre, e serve al caso che non rientra:
+«Prenotazione obbligatoria», «Rinviata a data da destinarsi».
 
 ### I cicli sono etichette, non periodi
 

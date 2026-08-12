@@ -74,6 +74,20 @@ export function entryId(
 }
 
 /**
+ * The `date` of an entry, whichever shape the parser gave it.
+ *
+ * YAML 1.2 has no timestamp type, so `yaml` hands back a string and Astro
+ * coerces it with Zod. Both shapes are accepted here rather than depending on
+ * which — the day the parser changes its mind, an `Invalid Date` would make
+ * every comparison false and leave the checks above it looking fine.
+ */
+export function dateOf(entry: Entry): Date {
+  return entry.data.date instanceof Date
+    ? entry.data.date
+    : new Date(String(entry.data.date));
+}
+
+/**
  * Every entry of a collection, parsed.
  *
  * A file that does not parse is carried, not thrown: this runs while vitest is

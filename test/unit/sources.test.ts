@@ -13,21 +13,40 @@ import {
   checkUndefinedCustomProperties,
 } from '../guards/css.ts';
 import {
+  checkDateHasOffset,
   checkDuplicateSpeakers,
   checkKickerRepeatsCycle,
 } from '../guards/content.ts';
+import {
+  checkAmbientTime,
+  checkLocalDateMethods,
+  checkMissingTimeZone,
+} from '../guards/dates.ts';
+import { findNumberDateConflicts } from '../../src/lib/events.ts';
 import { checkDisplayFontWeightRange } from '../guards/fonts.ts';
 import {
   checkItalianCustomProperties,
   checkItalianDataAttributes,
 } from '../guards/language.ts';
 import { checkDevDepsInLockfile, checkNoTailwind } from '../guards/packages.ts';
-import { collectionEntries } from '../support/frontmatter.ts';
+import { collectionEntries, dateOf } from '../support/frontmatter.ts';
 import { filesWithExtension, read, readJson, repoRoot } from '../support/paths.ts';
 import { componentCss } from '../support/styles.ts';
 
 const styleFiles = filesWithExtension(join(repoRoot, 'src/styles'), ['.css']);
 const astroFiles = filesWithExtension(join(repoRoot, 'src'), ['.astro']);
+/* Everything in src/ that can format a date: the modules and the frontmatter
+   of the components. */
+const codeFiles = filesWithExtension(join(repoRoot, 'src'), ['.ts', '.astro']);
+
+/* The one file allowed to read the clock, and everything else that is not.
+   A list built from the folder, not a path written by hand: the second pure
+   module under src/lib/ has to arrive guarded — and so does the scroller.
+   Pointed at src/lib alone, this left every component and page free to write
+   its own `new Date()`, which is the same self-contradicting build the one
+   clock read in programme.ts exists to prevent. */
+const CLOCK_HOLDER = 'src/lib/programme.ts';
+const clocklessFiles = codeFiles.filter((path) => path !== CLOCK_HOLDER);
 
 /* All the CSS the source has to offer, in one string: the stylesheets, the
    <style> blocks of the components, and the inline `style` attributes — which
@@ -119,6 +138,53 @@ describe('src/**/*.astro component styles', () => {
   });
 });
 
+/* The three halves of the time zone.
+ *
+ * Cloudflare builds in UTC and the evenings happen in Turin. A formatter with
+ * no `timeZone` is right on a laptop in Italy and two hours wrong in
+ * production — nothing fails, the page just says «ore 19». The methods that
+ * read a date component in the machine's own zone are the same defect with no
+ * option to fix it, so they are forbidden rather than checked. And the last
+ * guard keeps the pure modules unable to ask what time it is, which is what
+ * makes the boundary testable at all: with `now` in the arguments the two
+ * clock changes are four assertions in events.test.ts instead of two nights a
+ * year.
+ */
+describe('the code that handles dates', () => {
+  it('has code to check in the first place', () => {
+    expect(codeFiles.length).toBeGreaterThan(0);
+    expect(clocklessFiles.length).toBeGreaterThan(0);
+  });
+
+  it.each(codeFiles)('%s names the time zone wherever it formats a date', (path) => {
+    expect(checkMissingTimeZone(read(path), path).map((violation) => violation.detail)).toEqual(
+      [],
+    );
+  });
+
+  it.each(codeFiles)('%s reads no date component in the machine zone', (path) => {
+    expect(checkLocalDateMethods(read(path), path).map((violation) => violation.detail)).toEqual(
+      [],
+    );
+  });
+
+  it.each(clocklessFiles)('%s does not read the clock', (path) => {
+    // Every file of src/ except the one place the clock is allowed:
+    // loadProgramme(), once, with the value passed down from there. Named as
+    // an exception rather than as the only file checked — the guard used to be
+    // pointed at a single hard-coded path, then at src/lib alone, which left a
+    // component free to work out its own «adesso» and publish an evening as
+    // upcoming on one page and past on the next.
+    expect(checkAmbientTime(read(path), path).map((violation) => violation.detail)).toEqual([]);
+  });
+
+  it('has the clock in programme.ts and nowhere else in src', () => {
+    // The other side of the exception: if loadProgramme() ever stops reading
+    // the clock, the list above is guarding a rule nobody is bound by.
+    expect(checkAmbientTime(read(CLOCK_HOLDER), CLOCK_HOLDER).length).toBeGreaterThan(0);
+  });
+});
+
 /* The content, which is the other side of the language boundary.
  *
  * Nothing here reads the Italian itself: whether it is written well is read by
@@ -146,6 +212,29 @@ describe('src/content', () => {
     },
   );
 
+  it.each(events.map((event) => [event.path, event] as const))(
+    '%s has a date that parses',
+    (_path, event) => {
+      // The check below reports an unreadable date as well, but in a sentence
+      // about the programme. This one fails with the file name in the title
+      // of the test, which is what the editor who typed it needs.
+      expect(Number.isNaN(dateOf(event).getTime())).toBe(false);
+    },
+  );
+
+  it('numbers the evenings in the order they happen', () => {
+    // The site is ordered by number and everything else is worked out from
+    // the date: if the two disagree the programme reads in one order and
+    // reasons in another. The build fails on this too — programme.ts throws —
+    // but this says which pair and does not need a build to say it.
+    const programme = events.map((event) => ({
+      number: Number(event.data.number),
+      title: String(event.data.title ?? event.path),
+      date: dateOf(event),
+    }));
+    expect(findNumberDateConflicts(programme)).toEqual([]);
+  });
+
   it('keeps a sample of a role overridden on the event', () => {
     // The `speakers[].role ?? person.role` branch has no other coverage: no
     // guard can see it, and the day no content file carries an override the
@@ -162,6 +251,18 @@ describe('src/content', () => {
       ).length,
     ).toBeGreaterThan(0);
   });
+
+  it.each(events.map((event) => [event.path, event] as const))(
+    '%s says which zone its date is in',
+    (_path, event) => {
+      // The one defect of this family that lives in the content and not in the
+      // code: `z.coerce.date()` reads a date with no offset in the zone of the
+      // machine parsing it, and that machine is Cloudflare, in UTC. Nine in the
+      // evening becomes «ore 22» in production and stays right on the laptop
+      // where it was typed.
+      expect(checkDateHasOffset(event.data, event.path)).toEqual([]);
+    },
+  );
 
   it.each(events.map((event) => [event.path, event] as const))(
     '%s lists nobody twice among its speakers',
@@ -211,5 +312,15 @@ describe('package.json', () => {
 
   it('agrees with the lockfile about what is development-only', () => {
     expect(checkDevDepsInLockfile(manifest, readJson('package-lock.json'))).toEqual([]);
+  });
+
+  it('builds in UTC, the zone Cloudflare builds in', () => {
+    // The zone belongs to the build script and not only to the globalSetup of
+    // the test layer, and this is what holds it there. Set in the setup alone,
+    // the invariant «the dist under test was built in UTC» held only when the
+    // setup actually built: `REUSE_DIST=1` over a dist built by hand in Turin
+    // published Italian hours for the wrong reason and the suite agreed.
+    const scripts = (manifest as { scripts?: Record<string, string> }).scripts ?? {};
+    expect(scripts.build ?? '').toContain('TZ=UTC');
   });
 });

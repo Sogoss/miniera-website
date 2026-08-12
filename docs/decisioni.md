@@ -110,6 +110,112 @@ URL: quell'audio non esiste.
 dimentica: una foto da 4 MB committata una volta resta nella storia per
 sempre. Originali non compressi fuori dal repository.
 
+## Logica di dominio
+
+*(11 agosto 2026, PR 3)*
+
+**La verità cronologica è `number`.** Il sito ordina per numero editoriale, non
+per data: il numero è l'identità della serata, è il suo URL, e l'associazione
+lo assegna alla programmazione. La data è il dato da cui si calcola tutto il
+resto — passato, futuro, stringhe — ma quando i due ordini si contraddicono chi
+ha sbagliato è la data.
+
+**Un controllo alla build fallisce se i due ordini divergono**, e nomina le due
+serate. Non deve succedere: la numerazione segue il calendario. Se un giorno
+dovesse succedere davvero — una serata riemersa a cui si dà un numero in coda —
+si deciderà allora come rappresentarla, verosimilmente con un suffisso, e il
+controllo si allenta lì. Fino a quel giorno è un anno battuto male in un
+frontmatter. Lo stesso controllo intercetta due serate con lo stesso numero:
+finché non esistono le rotte della PR 9, nessun altro se ne accorge.
+
+**Il confine fra passato e futuro si calcola confrontando date civili**, non
+facendo aritmetica sugli offset. `romeDay()` porta un istante nella sua data a
+Torino — `2026-09-24` — e `isPast` confronta due di quelle stringhe. Non c'è un
+`+2` scritto da nessuna parte, e per questo le due notti del cambio d'ora non
+sono un caso particolare: sono quattro asserzioni che passano da sole.
+
+**La nota di una serata passata è sempre *Puntata registrata in sala*,** anche
+senza materiali collegati: la registrazione esiste, i link possono arrivare
+dopo. Quello che manca senza link è il bottone, non la frase.
+
+**Una serata annullata ha come nota predefinita *Serata annullata*.** Serve
+alla PR 9, che deve mostrarne lo stato. Il campo `note` sovrascrive comunque
+tutto.
+
+**Lo scroller si apre sulla prossima serata che si svolgerà davvero:** la prima
+non ancora passata **e non annullata**. Un annullamento non è un appuntamento,
+e aprire su una scena barrata sarebbe la prima cosa che si vede entrando nel
+sito. Con tutte le serate alle spalle si apre sull'ultima, che è la più
+recente: un indice `-1` diventerebbe una scena vuota.
+
+**Le date portano l'anno, tutte** — `24 set 26`, `gio 24 set 26, ore 21`. Nel
+design non c'era perché il design mostrava sei serate dentro una stagione sola,
+dove *18 giugno* identifica qualcosa; su ottantuno non identifica niente.
+
+**E lo portano a due cifre, in tutte e due le forme.** La rotaia della Timeline
+è stretta e `24 set 2026` se ne prendeva un terzo in più; *giovedì 24 settembre
+2026* era una riga e mezza di un'intestazione il cui lavoro è il titolo. Sono
+la stessa data in due misure — la tacca, e la tacca con davanti il giorno della
+settimana e dietro l'ora — invece di due modi diversi di scrivere una data
+dentro lo stesso sito. Forma chiesta dal committente e guardata a schermo nel
+controllo manuale della PR 3. *(PR 3, in revisione)*
+
+**Il dominio è diviso in due file, e il puro non importa niente.**
+`src/lib/events.ts` descrive strutturalmente le forme che gli servono invece di
+importare i tipi di `astro:content`, e riceve `now` come argomento;
+`src/lib/programme.ts` è l'unico che legge le collection e l'orologio. Non è
+tidiness: è ciò che permette di eseguire il modulo con `node
+src/lib/events.ts`, che è come la suite prova che sotto `TZ=UTC` e sotto
+`TZ=Europe/Rome` le risposte coincidono. Un solo import di `astro:content`, e
+quella prova non si potrebbe più fare.
+
+**Un riferimento che non risolve ferma la build**, invece di viaggiare come
+`undefined` dentro il markup. Lì diventerebbe un nome di ciclo mancante e un
+accento fermo sul predefinito, senza un errore da nessuna parte.
+
+**Il controllo d'ordine confronta giorni civili, non istanti.** Due serate
+possono cadere lo stesso giorno — una proiezione il pomeriggio e un incontro
+alle nove — e quale delle due porti il numero più basso è una scelta
+dell'associazione, non una contraddizione. Confrontando istanti la build
+falliva su quella coppia con una frase che nominava la stessa data da tutte e
+due le parti, cioè illeggibile per chi doveva ripararla, e non c'era niente da
+riparare: il sito ordina per numero, e tutto il resto del dominio ragiona in
+giorni. Una vera inversione a cavallo di due giorni resta segnalata.
+*(PR 3, in revisione)*
+
+**Un numero doppio toglie dal controllo d'ordine entrambe le serate, non solo
+la seconda.** Tenere la prima voleva dire tenere quella che il loader aveva
+consegnato per prima — i file si leggono in ordine di nome — così un `080b.md`
+che reclamava il numero 81 restava dentro con la sua data del 2020 e faceva
+sembrare fuori posto la serata *giusta* che lo precedeva: due messaggi, il
+secondo falso, e l'editor mandato a controllare una data che stava bene.
+Finché un numero appartiene a due serate non c'è niente di vero da dire su
+dove sta: il doppione è la cosa da correggere, ed è già stata detta una volta.
+*(PR 3, in revisione)*
+
+**Lo stato di una serata è una funzione pura del dominio, non un ternario nel
+markup.** `stateOf` sta in `events.ts` accanto a `noteOf`, e mette
+`cancelled` prima di `past`: una serata annullata non è né passata né futura, e
+la pagina che chiedeva `past ? … : …` la pubblicava come una delle due con
+sotto la nota che diceva che era stata annullata. Nessuna serata d'esempio è
+annullata, quindi quel ramo in `dist/` non si vede: è proprio per questo che è
+una funzione con il suo test invece che una riga dentro una pagina. La
+pubblicano l'attributo `data-state`, lo scroller della PR 7 per la scena
+barrata e la PR 9 per la pagina della serata — tutti e tre devono fare la
+stessa domanda. *(PR 3, in revisione)*
+
+**L'orologio si legge una volta per build, non una per chiamata.** Stava nel
+valore predefinito del parametro — `loadProgramme(now = new Date())` — che si
+valuta a ogni chiamata: `loadProgramme()` lo si chiama una volta per pagina, e
+le pagine di una build si generano nell'arco di qualche secondo. Una build
+partita alle 23:59:59 avrebbe classificato la stessa serata come *in programma*
+in home e come *già svolta* sulla sua pagina un secondo dopo, pubblicando un
+sito che si contraddice senza che niente fallisca. Ora la lettura sta a livello
+di modulo, che si carica una volta per processo. In `astro dev` significa che il
+giorno è quello dell'avvio del server: un server lasciato acceso oltre la
+mezzanotte mostra un'etichetta vecchia finché non riparte, e non pubblica
+niente. *(PR 3, in revisione)*
+
 ## Verifiche
 
 *(11 agosto 2026, PR 1)*
@@ -252,6 +358,168 @@ proprio perché la build lo rigenera: i due lati nascono dallo stesso sharp
 sulla stessa macchina. Su un `.ico` committato a mano sarebbe una guardia che
 scatta sul lavoro giusto appena qualcuno compila su un'altra piattaforma.
 *(PR 2)*
+
+**La build di prova gira con `TZ=UTC`,** anche su una macchina italiana: è il
+fuso di Cloudflare. Costruita a Torino, una pagina con una formattazione senza
+fuso pubblica l'ora giusta per il motivo sbagliato, e la suite resta verde fino
+al primo deploy. Le asserzioni dello strato `build` pretendono l'ora italiana
+da una macchina che non sa che l'Italia esista. *(PR 3)*
+
+**Il fuso sta nello script `build`, non solo nel `globalSetup`.** Scritto solo
+lì, l'invariante valeva unicamente sul ramo che costruisce davvero: `npm run
+build` a mano a Torino seguito da `REUSE_DIST=1 npm test` faceva leggere allo
+strato `build` un `dist/` costruito in ora italiana, che trovava *ore 21* per il
+motivo che quelle asserzioni esistono per escludere — e la scorciatoia
+documentata per iterare in locale spegneva in silenzio l'unica prova sul fuso.
+Ora ogni `dist/` prodotto da `npm run build`, da chiunque e ovunque, nasce in
+UTC; il `globalSetup` lo dichiara comunque, e un test in `sources.test.ts`
+impedisce allo script di perderlo. *(PR 3, in revisione)*
+
+**Il fuso ha una guardia, non un promemoria** — regola 11 del `CLAUDE.md`.
+`test/guards/dates.ts` segnala ogni `Intl.DateTimeFormat` e ogni `toLocale…`
+senza `timeZone`, e ogni lettura dell'orologio dentro il modulo puro. Sono
+guardie sul *codice*, non sulla prosa: il confine di `decisioni.md` regge —
+qui non si legge italiano, si legge la forma di una chiamata. Il controllo è
+sugli argomenti e non sul nome della chiamata, perché una guardia che vieta
+`toLocaleDateString` anche quando dichiara il fuso è una guardia che il primo
+caso legittimo fa spegnere, e si porta dietro il resto. *(PR 3)*
+
+**Nessuno spogliatore di commenti JavaScript, nemmeno adesso.** Le due guardie
+nuove saltano una riga che *comincia* come commento, che è l'unico modo in cui
+quei nomi compaiono in prosa qui dentro. Un estrattore vero — che salti
+stringhe e letterali regex — resta la cosa più fragile che si potrebbe
+scrivere, ed era già stato scartato per la guardia sulla lingua dei commenti.
+*(PR 3)*
+
+**Ma dentro gli argomenti di una chiamata i commenti si cancellano.** Non è un
+estrattore: la scansione di `argumentsAt` cammina già carattere per carattere
+per non farsi chiudere la chiamata da una parentesi dentro una stringa, e
+saltava i commenti solo per non farsi aprire una stringa da un apostrofo. Poi
+però restituiva il testo con i commenti dentro, ed era la stessa guardia che
+falliva aperta dall'altro verso: un `// timeZone: 'Europe/Rome'` commentato
+mentre si stava debuggando rispondeva per una chiamata che non dichiarava
+niente. Ora i commenti tornano come spazi, e gli a capo restano al loro posto.
+*(PR 3, in revisione)*
+
+**Una costante di fuso che non si trova nel file è una violazione, non un
+dubbio.** Le guardie leggono un file per volta, quindi `timeZone: ZONE`
+importato da un altro modulo è indistinguibile fra `'Europe/Rome'` e `'UTC'` — e
+esportare `ROME` da `events.ts` è esattamente la prima cosa che verrà voglia di
+fare il giorno in cui serve anche alla Timeline: da lì in poi ogni formattatore
+del progetto passerebbe senza controllo. Un'*espressione* resta invece lasciata
+stare, come prima: `zoneFor(event)` non è un nome che qualcuno ha scelto, e una
+guardia che scatta sul lavoro giusto la si spegne. *(PR 3, in revisione)*
+
+**Le guardie leggono il sorgente con le stringhe cancellate.** Il motivo ha un
+nome solo: il glob con cui si carica una collection. Porta un chiudi-commento
+al secondo carattere e un apri-commento al terzo, così il controllo «questo
+indice sta dentro un commento?» trovava un commento aperto e mai chiuso e
+dichiarava commentato tutto quello che veniva dopo. `content.config.ts` scrive
+quel glob quattro volte, la prima alla riga 31: da lì in giù **tutte e tre le
+guardie sul codice restituivano `[]`** su un file che nessuno aveva esentato.
+Cancellare il contenuto delle stringhe non è lo spogliatore di commenti che
+`decisioni.md` continua a rifiutare, e non deve esserlo: togliere una stringa
+può solo togliere marcatori di commento, e ogni marcatore che toglie non era un
+commento. *(PR 3, in revisione)*
+
+**Lo strato `build` confronta contenuti decodificati.** Astro fa l'escape di
+quello che stampa, quindi `quarant'anni` arriva in `dist/` come
+`quarant&#39;anni`: un test che legge il frontmatter e lo cerca nella pagina
+diventa rosso su qualunque stringa italiana con un apostrofo — un ruolo come
+*coordinatrice dell'archivio*, una sede che si chiama *Circolo L'Isola* — su
+una pagina perfettamente corretta, e nominando un test invece del file.
+*(PR 3, in revisione)*
+
+**La guardia sull'orologio guarda tutto `src/`, non solo `src/lib`.**
+L'eccezione dichiarata resta una sola, `programme.ts`, ma puntata sulla sola
+cartella dei moduli puri lasciava libero ogni componente e ogni pagina di
+calcolarsi il proprio «adesso» — che è esattamente il sito che si contraddice
+da una pagina all'altra per cui esiste la lettura unica. *(PR 3, in revisione)*
+
+**Lo scostamento del fuso è un vincolo sui contenuti, e ha la sua guardia.**
+`z.coerce.date()` è `new Date(string)`: una data senza scostamento la legge
+**nel fuso della macchina che la legge**, che alla build è UTC. Una serata
+scritta alle 21 si pubblica *ore 22*, e sul portatile di chi l'ha scritta si
+legge giusta — nessuna delle guardie sul fuso può vederlo, perché non c'è
+nessuna chiamata da guardare: il difetto sta nel file di contenuto. È l'unica
+regola sul tempo che non riguarda il codice, ed è scritta in
+[contenuti.md](contenuti.md) dove la legge chi redige. *(PR 3, in revisione)*
+
+**La quarta guardia legge il testo pubblicato, non il codice.** C'è una via che
+supera le altre tre: dare una `Date` a qualcosa che si aspetta una stringa —
+`{scene.date}`, `<time datetime={scene.date}>` — che è un `toString()`, non è un
+formattatore, non sta fra i metodi vietati, e nel sorgente si legge come una
+qualsiasi interpolazione. Risponde nel fuso *e nella lingua* di chi costruisce:
+«Thu Sep 24 2026 21:00:00 GMT+0200» sul portatile, «19:00:00 GMT+0000» da
+Cloudflare — in inglese, dentro un sito scritto in italiano, con due ore in
+meno. `checkMachineDateText` guarda quindi la risposta invece della chiamata, su
+tutto ciò che finisce in `dist/`: la forma della stringa, non l'ora che dice,
+perché una build sola gira in un fuso solo. *(PR 3, in revisione)*
+
+**Lo strato `build` non asserisce mai quale serata è passata.** La pagina si
+costruisce con l'orologio vero, quindi *«la serata 82 è in programma»* sarebbe
+stato vero fino all'8 ottobre 2026 e poi avrebbe fatto diventare rossa la suite
+su `main` senza che nessuno avesse toccato niente. Da lì si asserisce solo ciò
+che non dipende da oggi: le stringhe di data, l'ordine, e la **coppia** fra lo
+stato di una serata e la sua nota — che è quello che prova davvero che la
+pagina la nota se la fa dare dal dominio invece di scriverla. Quale serata
+cada da che parte lo decide `events.test.ts`, dove `now` è un argomento.
+*(PR 3, in revisione)*
+
+**Le asserzioni su `dist/` si ancorano a `data-number`, `data-state` e
+`data-open`**, non alla decorazione della pagina provvisoria. Ancorate al `#78 · ` che quella
+pagina scrive, si sarebbero rotte tutte insieme il giorno in cui la PR 7 fa
+quello che il `CLAUDE.md` prescrive — sostituirla — e la prova sul fuso sarebbe
+stata da riscrivere da capo. Lo scroller porterà gli stessi attributi.
+
+`data-state` è arrivato dopo, e per una ragione precisa: lo stato di una serata
+si leggeva cercando *«già svolta»* e *«in programma»* dentro il blocco
+pubblicato, che contiene anche la sua descrizione. Una descrizione che nomina di
+sfuggita una delle due — cosa che può scrivere chiunque rediga i contenuti —
+faceva risultare la serata in due stati insieme, e il messaggio d'errore diceva
+«la serata 82 non è né passata né futura» indicando qualcosa che non era
+sbagliato. Lo stato lo dichiara ora la pagina in un attributo, e ne ha tre:
+`cancelled` viene prima di `past`, perché una serata annullata non è né l'uno né
+l'altro. `data-open` è arrivato con lo stesso ragionamento: la scena di apertura
+si contava cercando le parole *apertura dello scroller*, che è decorazione di
+una pagina da buttare, e il `CLAUDE.md` intanto prometteva alla PR 7 che
+portarsi dietro gli attributi bastasse. O la promessa o la prova: si è spostata
+la prova. *(PR 3, in revisione)*
+
+**E le attese le ricava dai contenuti, non dalle tre serate d'esempio.**
+Scritte come letterali — l'elenco `[78, 81, 82]`, il nome dell'unica sede, le
+date di due serate — aggiungere la 083, aprire una seconda sede o annullare una
+serata avrebbe fatto diventare rossa la suite senza che niente fosse rotto, con
+il messaggio puntato su un test invece che sul contenuto: è il modo in cui una
+suite insegna a non toccare i contenuti. Ora le serate arrivano da
+`src/content/eventi`, i nomi delle sedi da `src/content/sedi`, e le stringhe di
+data da `src/lib/events.ts` — formattate in questo processo, nel fuso di questa
+macchina, e confrontate con quello che ha pubblicato una build in UTC. L'unica
+data scritta a mano che resta nella suite sta in `timezone.test.ts`, sopra un
+istante fisso che nessun redattore può spostare. *(PR 3, in revisione)*
+
+**Una guardia che non trova violazioni non è una guardia che passa.** La
+revisione della PR ne ha trovate cinque rotte in questo modo, dentro
+l'impianto che esiste apposta per questa forma di guasto: un apostrofo negli
+argomenti apriva una stringa che non si chiudeva più e faceva leggere il
+`timeZone` di un'altra chiamata; il fuso era controllato per chiave e non per
+valore, e `timeZone: 'UTC'` passava; i metodi locali di `Date` non li guardava
+nessuno; la guardia sull'orologio era puntata su un percorso scritto a mano
+invece che sulla cartella; e le righe di continuazione di un commento venivano
+lette come codice. Da qui due criteri: **quando lo scanner non capisce, deve
+parlare, non tacere** — un elenco di argomenti sbilanciato ora restituisce la
+stringa vuota, che fa scattare la guardia — e **l'elenco dei file guardati si
+ricava dalla cartella**, con l'eccezione dichiarata e a sua volta verificata:
+un test pretende che `programme.ts` l'orologio lo legga davvero. *(PR 3, in
+revisione)*
+
+**L'indipendenza dal fuso si prova eseguendo, non dichiarando.** `TZ` si legge
+una volta all'avvio del processo, quindi una suite sola prova solo la macchina
+su cui gira: in CI è UTC, su una scrivania a Torino no, ed è esattamente quella
+differenza che deve essere invisibile. Due processi figli girano lo stesso
+modulo sotto i due fusi e i risultati si confrontano fra loro **e** con
+l'attesa: l'uguaglianza da sola passerebbe su due risposte sbagliate allo
+stesso modo. *(PR 3)*
 
 ## Rimandate
 
