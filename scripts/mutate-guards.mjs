@@ -79,15 +79,44 @@ export function checksIn(source) {
   return found;
 }
 
+/* Colour codes out of the reading.
+ *
+ * The first CI run of this script answered «0 of 22, the suite did not run»
+ * while the suite was in fact running and failing exactly as it should: the
+ * summary it prints is `Tests  9 failed`, and in CI there are colour escapes
+ * between the word and the number, so the count was never found. Locally there
+ * are none — vitest colours by what it detects around it — so the same command
+ * answered one thing on a desk and another on a build machine, which is the
+ * shape of defect this repository already knows by another name: the time zone.
+ *
+ * Hence both halves. NO_COLOR asks for output that needs no cleaning, and this
+ * cleans it anyway, because asking depends on who wins between NO_COLOR and
+ * FORCE_COLOR in an environment nobody here controls.
+ */
+const ANSI = /\u001B\[[0-9;]*m/g;
+const plain = (text) => text.replace(ANSI, '');
+
+/**
+ * How many tests the suite reported red, or null if it never got that far.
+ *
+ * Its own function, and exported, because it is the part that was wrong: the
+ * whole answer of this script rests on reading one line of someone else's
+ * output, and that reading now has tests of its own — including the coloured
+ * summary that made it say «the suite did not run» twenty-two times.
+ */
+export function failedCount(output) {
+  const failed = /Tests\s+(\d+) failed/.exec(plain(output));
+  return failed ? Number(failed[1]) : null;
+}
+
 /**
  * What the suite says about a blinded guard.
  *
  * Three answers, not two. A suite that passes means nobody noticed. A suite
  * that fails with a count means the guard is held up, and by how many
- * assertions. A suite that fails *without* a count did not run at all — a
- * syntax error, a missing dependency — and that has to be said rather than
- * counted as a catch: it is the same failure as a guard passing for the wrong
- * reason.
+ * assertions. A suite that fails *without* a count never got as far as
+ * reporting one — a syntax error, a dependency that would not load — and that
+ * has to be said, with its reason, rather than counted either way.
  */
 function runSuite() {
   try {
@@ -101,13 +130,13 @@ function runSuite() {
       // arrives as a failure with the output truncated — which reads exactly
       // like a suite that could not run.
       maxBuffer: 64 * 1024 * 1024,
-      env: { ...process.env, REUSE_DIST: '1' },
+      env: { ...process.env, REUSE_DIST: '1', NO_COLOR: '1' },
     });
     return { noticed: false };
   } catch (error) {
-    const output = `${error.stdout ?? ''}${error.stderr ?? ''}`;
-    const failed = /Tests\s+(\d+) failed/.exec(output);
-    if (failed) return { noticed: true, failed: Number(failed[1]) };
+    const output = plain(`${error.stdout ?? ''}${error.stderr ?? ''}`);
+    const failed = failedCount(output);
+    if (failed !== null) return { noticed: true, failed };
 
     /* No count means the suite did not get as far as reporting one, and that
        has to arrive with its reason attached. Saying «did not run» and keeping

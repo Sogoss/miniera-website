@@ -11,7 +11,7 @@
  * and belongs to CI; this takes milliseconds and belongs to every save.
  */
 import { describe, expect, it } from 'vitest';
-import { checksIn, sourceFiles } from '../../scripts/mutate-guards.mjs';
+import { checksIn, failedCount, sourceFiles } from '../../scripts/mutate-guards.mjs';
 import { read } from '../support/paths.ts';
 
 describe('checksIn', () => {
@@ -60,6 +60,41 @@ describe('checksIn', () => {
     const source = 'export function checkThing(a: string): { n: number } {\n  return [];\n}\n';
     const [found] = checksIn(source);
     expect(source.slice(found!.body)).toBe('\n  return [];\n}\n');
+  });
+});
+
+/* Reading the one line of vitest output the whole answer rests on.
+ *
+ * This is where the script was wrong, and it was wrong in the way that is
+ * hardest to catch from a desk: the summary is `Tests  9 failed` here and the
+ * same line painted in colour escapes on a build machine, so the count was
+ * found locally and never in CI — where the script duly reported that the suite
+ * had not run, twenty-two times, over a suite that was running and failing
+ * exactly as it should. The same shape as the time zone, and it gets the same
+ * treatment: the environment is asked not to colour, and the reading copes
+ * whether or not it listened.
+ */
+describe('failedCount', () => {
+  const esc = String.fromCharCode(27);
+
+  it('reads a plain summary', () => {
+    expect(failedCount('  Tests  9 failed | 343 passed (352)')).toBe(9);
+  });
+
+  it('reads the same summary painted in colour', () => {
+    const coloured = `  ${esc}[2mTests${esc}[22m  ${esc}[1m${esc}[31m9 failed${esc}[39m${esc}[22m | 343 passed`;
+    expect(failedCount(coloured)).toBe(9);
+  });
+
+  it('answers null when the suite never got to a summary', () => {
+    // Not zero: «nothing reported» and «nothing failed» are opposite answers
+    // about a blinded guard, and telling them apart is the point.
+    expect(failedCount('Error: Cannot find module vitest')).toBeNull();
+    expect(failedCount('')).toBeNull();
+  });
+
+  it('does not read a passing run as a failing one', () => {
+    expect(failedCount('  Tests  352 passed (352)')).toBeNull();
   });
 });
 
