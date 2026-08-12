@@ -1,0 +1,145 @@
+---
+/* The button of the design, as an element rather than as a component with
+ * state.
+ *
+ * Two things change from the export, and both are corrections rather than
+ * inventions.
+ *
+ * The pressed effect was React state — `useState` on mouse down, mouse up and
+ * mouse leave — driving two declarations: the lift shadow off, and two pixels
+ * down. `:active` says the same thing, works under a finger, and cannot get
+ * stuck pressed when the pointer leaves the element mid-click, which the export
+ * handled with a third event handler.
+ *
+ * And it renders the element the job calls for. In the export a button is
+ * always wrapped by whatever makes it clickable — `<a><button>…</button></a>`
+ * for a link, `<button><button>…</button></button>` for an action — which is
+ * invalid markup twice over and, in front of a keyboard, two tab stops for one
+ * thing. Pass `href` and this *is* the link.
+ *
+ * A disabled link is not a link: it loses its `href`, which takes it out of the
+ * tab order, and carries `aria-disabled` so that it is announced rather than
+ * merely inert. A disabled button uses the native attribute, which does both.
+ */
+import type { HTMLAttributes } from 'astro/types';
+
+export type ButtonVariant = 'primary' | 'secondary' | 'flat';
+export type ButtonSize = 'sm' | 'md' | 'lg';
+
+interface Props extends Omit<HTMLAttributes<'button'>, 'type'> {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  /** Set it and the button is a link, not a button inside one. */
+  href?: string;
+  disabled?: boolean;
+  type?: 'button' | 'submit' | 'reset';
+}
+
+const {
+  variant = 'primary',
+  size = 'md',
+  href,
+  disabled = false,
+  type = 'button',
+  class: className,
+  ...rest
+} = Astro.props;
+
+const isLink = href !== undefined;
+const Tag = isLink ? 'a' : 'button';
+---
+
+<Tag
+  class:list={['button', className]}
+  data-variant={variant}
+  data-size={size}
+  href={isLink && !disabled ? href : undefined}
+  type={isLink ? undefined : type}
+  disabled={!isLink && disabled}
+  aria-disabled={isLink && disabled ? 'true' : undefined}
+  {...rest}
+>
+  <slot />
+</Tag>
+
+<style>
+  /* The horizontal padding of the three sizes — 14, 20 and 28 — sits half a
+     step off the 4px scale, and it did in the export too. Kept as it was
+     drawn: rounding all three to the scale would narrow the large button by
+     four pixels on each side to satisfy a system nobody is reading. */
+  .button {
+    --button-pad-y: var(--space-3);
+    --button-pad-x: 20px;
+    --button-text: var(--text-sm);
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--button-pad-y) var(--button-pad-x);
+    border: var(--border-width-strong) solid transparent;
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-size: var(--button-text);
+    font-weight: var(--weight-bold);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+      transform var(--dur-fast) var(--ease-out),
+      background var(--dur-fast) var(--ease-out);
+  }
+
+  .button[data-size='sm'] {
+    --button-pad-y: var(--space-2);
+    --button-pad-x: 14px;
+    --button-text: var(--text-xs);
+  }
+
+  .button[data-size='lg'] {
+    --button-pad-y: var(--space-4);
+    --button-pad-x: 28px;
+    --button-text: var(--text-md);
+  }
+
+  .button[data-variant='primary'] {
+    background: var(--accent);
+    color: var(--text-on-accent);
+    box-shadow: var(--shadow-lift);
+  }
+
+  .button[data-variant='secondary'] {
+    background: transparent;
+    color: var(--text-primary);
+    border-color: var(--border-strong);
+  }
+
+  .button[data-variant='flat'] {
+    background: transparent;
+    color: var(--text-accent);
+  }
+
+  /* Pressed: down two pixels, and the primary loses the shadow it was standing
+     on. The order matters — this has to come after the variants, which is what
+     lets one rule undo what three declared. */
+  .button:active {
+    transform: translateY(2px);
+  }
+
+  .button[data-variant='primary']:active {
+    box-shadow: var(--shadow-none);
+  }
+
+  .button:disabled,
+  .button[aria-disabled='true'] {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* Nothing moves when there is nothing to press. */
+  .button:disabled:active,
+  .button[aria-disabled='true']:active {
+    transform: none;
+  }
+</style>

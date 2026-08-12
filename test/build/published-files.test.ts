@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { buildFaviconIco } from '../../scripts/build-favicon.mjs';
 import { checkDesignRuntimeArtifacts } from '../guards/artifacts.ts';
 import { checkItalianDataAttributes } from '../guards/language.ts';
+import { checkNoReactRuntime } from '../guards/react.ts';
 import { listPublishedFiles, readPublishedFiles } from '../support/dist.ts';
 import { readBytes } from '../support/paths.ts';
 
@@ -17,6 +18,19 @@ describe('what the build publishes', () => {
     const violations = files.flatMap(({ path, text }) =>
       checkDesignRuntimeArtifacts(text, path),
     );
+    expect(violations.map((v) => v.detail)).toEqual([]);
+  });
+
+  it('ships no UI framework to the browser', () => {
+    // Rule 9, asked of what a visitor downloads. The dependency guard watches
+    // package.json and the directive guard watches the source; a runtime can
+    // reach dist/ without either — vendored, copied out of the export, dragged
+    // in by something else — and the eight components need no JavaScript at
+    // all, so anything of the sort is a decision reversed in silence.
+    const files = readPublishedFiles();
+    expect(files.length).toBeGreaterThan(0);
+
+    const violations = files.flatMap(({ path, text }) => checkNoReactRuntime(text, path));
     expect(violations.map((v) => v.detail)).toEqual([]);
   });
 

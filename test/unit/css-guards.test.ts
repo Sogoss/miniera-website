@@ -9,6 +9,7 @@ import { describe, expect, it } from 'vitest';
 import {
   checkDuplicateDeclarations,
   checkNoColorMixOrOklch,
+  checkRawColourValues,
   checkRgbTriples,
   checkSceneHeightFallback,
   checkUndefinedCustomProperties,
@@ -281,6 +282,80 @@ describe('checkUndefinedCustomProperties', () => {
   it('does not count a declaration that only exists in a comment', () => {
     const css = '/* --accent: #f26419; */\n.b { color: var(--accent); }';
     expect(checkUndefinedCustomProperties(css)).toHaveLength(1);
+  });
+});
+
+describe('checkRawColourValues', () => {
+  it('accepts a component dressed in tokens', () => {
+    const css = '.button { background: var(--accent); color: var(--text-on-accent); border: 2px solid transparent; }';
+    expect(checkRawColourValues(css)).toEqual([]);
+  });
+
+  it('reports a hex typed into a component', () => {
+    // Not wrong on the day it is typed: wrong the day --accent is retuned and
+    // this border keeps the old orange, with nothing failing.
+    const violations = checkRawColourValues('.b { border-top: 4px solid #f26419; }', 'Card.astro');
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain('#f26419');
+    expect(violations[0]!.detail).toContain('Card.astro');
+  });
+
+  it('accepts the prescribed form for transparency', () => {
+    // rgba(var(--x-rgb), …) is what CLAUDE.md rule 3 asks for in place of
+    // color-mix(). A guard that fired here would be switched off within a day,
+    // and it would be right to switch it off.
+    expect(checkRawColourValues('.v { background: rgba(var(--blue-900-rgb), 0.82); }')).toEqual([]);
+  });
+
+  it('reports channels written out by hand', () => {
+    const violations = checkRawColourValues('.v { background: rgba(0, 28, 43, 0.82); }');
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain('rgba(');
+  });
+
+  it('reports a colour word, and not the same word inside a token name', () => {
+    // `font-weight: var(--weight-black)` carries the word black and is exactly
+    // right; `color: black` is the same word and is the defect. Reading the
+    // value without resolving the var() would have made these two the same.
+    expect(checkRawColourValues('.t { font: var(--weight-black) 2rem var(--font-display); }')).toEqual([]);
+    const violations = checkRawColourValues('.t { color: black; }');
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain('black');
+  });
+
+  it('does not read a font name as a colour', () => {
+    expect(checkRawColourValues(":root { --font-display: 'Archivo Black', sans-serif; }")).toEqual([]);
+  });
+
+  it('does not read a clip-path reference as a hex', () => {
+    // `url(#clip-…)` starts with a hash, and the day a shape is named out of
+    // hex digits it would look like a colour.
+    expect(checkRawColourValues('.p { clip-path: url(#clip-clover-8); }')).toEqual([]);
+    expect(checkRawColourValues('.p { clip-path: url(#clip-decade); }')).toEqual([]);
+  });
+
+  it('looks past a fallback written inside another var()', () => {
+    // `var(--accent, var(--cycle-1))` is the shape a fallback takes, and
+    // stopping at the first `)` would leave `)` and the tail behind.
+    expect(checkRawColourValues('.b { background: var(--accent, var(--cycle-1)); }')).toEqual([]);
+    const violations = checkRawColourValues('.b { background: var(--accent, #f26419); }');
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain('#f26419');
+  });
+
+  it('says one thing about one colour repeated', () => {
+    const many = Array.from({ length: 5 }, (_, n) => `.b${n} { color: #fff; }`).join('\n');
+    expect(checkRawColourValues(many)).toHaveLength(1);
+  });
+
+  it('ignores what is only in a comment', () => {
+    expect(checkRawColourValues('/* was: color: #f26419; */\n.b { color: var(--accent); }')).toEqual([]);
+  });
+
+  it('reads an inline style attribute like any other declaration', () => {
+    // What styleAttributesOf() hands over: an attribute is CSS that reaches the
+    // browser exactly like the rest, and it is where the export writes colours.
+    expect(checkRawColourValues('[style] { border-top: 4px solid #f26419 }')).toHaveLength(1);
   });
 });
 

@@ -6,92 +6,52 @@
  * forgetting them does not fail a build, it publishes an unclipped photo. A
  * guard checks that every reference in a published page finds its shape here.
  *
- * The geometry is the design's, copied from design-export/. The names are
- * Material 3's: an `id` is code, so the language rule wants it in English, and
- * rather than translating the Italian of the export by ear these take the name
- * Google gives the same geometry in its shape library — a shared vocabulary
- * instead of a private one.
+ * The geometry is generated — src/lib/shapes.ts, which is where the reasoning
+ * about it lives — and the names are Material 3's:
  *
- *   f-quadrifoglio            → clip-clover-4      (4-leaf clover)
- *   f-esafoglio               → clip-cookie-6      (6-sided cookie)
- *   f-ottofoglio, m-ottofoglio → clip-clover-8     (8-leaf clover)
- *   f-gemma                   → clip-gem           (gem)
- *   f-obliqua                 → clip-skewed        (no Material equivalent)
+ *   f-quadrifoglio             → clip-clover-4      (4-leaf clover)
+ *   f-esafoglio                → clip-cookie-6      (6-sided cookie)
+ *   f-ottofoglio, m-ottofoglio → clip-clover-8      (8-leaf clover)
+ *   f-gemma                    → clip-gem           (gem)
+ *   f-obliqua                  → clip-skewed        (no Material equivalent)
  *
- * The last one is the exception, and it is named plainly for a reason: Material's
- * `slanted` is a rounded square on a tilted axis, and this is a hard-edged
- * quadrilateral with two sloping sides. Borrowing the name would have promised a
- * shape this is not — the whole argument for taking the names from Material was
- * that they say what you get.
+ * The last one is the exception, and it is named plainly for a reason:
+ * Material's `slanted` is a rounded square on a tilted axis, and this is a
+ * hard-edged quadrilateral with two sloping sides. Borrowing the name would
+ * have promised a shape this is not — the whole argument for taking the names
+ * from Material was that they say what you get. It is also the one shape that
+ * kept the export's own geometry, for the same reason.
  *
- * And the shape somebody will come here looking for is not here at all: the pill.
- * The design uses it seven times and never as a clip path — it is
- * `border-radius: var(--radius-pill)`, on buttons and labels. It could not be one
- * either: under `objectBoundingBox` the radii are fractions of width and height,
- * so they stretch with the aspect ratio and `rx=.5 ry=.5` gives an ellipse rather
- * than a capsule.
+ * And the shape somebody will come here looking for is not here at all: the
+ * pill. The design uses it seven times and never as a clip path — it is
+ * `border-radius: var(--radius-pill)`, on buttons and labels. It could not be
+ * one either: under `objectBoundingBox` the radii are fractions of width and
+ * height, so they stretch with the aspect ratio and `rx=.5 ry=.5` gives an
+ * ellipse rather than a capsule.
  *
  * Five and not six: the export defines the eight-lobed shape twice, once per
  * file, because it is two designs — desktop and mobile — and this is one site.
- * The two definitions are identical.
  *
- * Four of the five are a declared catalogue: the export applies only the
- * eight-lobed one, to the 56×56 portraits of the guests. They are kept for the
- * same reason the five cycle colours are kept in colors.css — the design chose
- * them, and a comment is cheaper than rediscovering why they went missing.
- *
- * Whether to replace these with Material's own geometry is deliberately still
- * open: Google generates its shapes at run time from a rounded polygon and
- * publishes neither the paths nor the parameters, so it would mean depending on
- * somebody else's reconstruction. It is decided in PR 6, in front of a real
- * portrait — see docs/questioni-aperte.md. The `id`s would not change.
+ * Four of the five are a declared catalogue: the design applies only the
+ * eight-lobed one, to the 56×56 portraits of the guests, and so does this site —
+ * `GuestRow`. They are kept for the same reason the five cycle colours are kept
+ * in colors.css: the design chose them, and a comment is cheaper than
+ * rediscovering why they went missing.
  *
  * The `<svg>` is zero-sized and hidden from assistive technology: it defines,
  * it does not draw.
  */
+import { CLIP_SHAPES } from '../lib/shapes.ts';
 ---
 
 <svg width="0" height="0" style="position: absolute" aria-hidden="true" focusable="false">
   <defs>
-    <clipPath id="clip-clover-4" clipPathUnits="objectBoundingBox">
-      <circle cx="0.27" cy="0.27" r="0.27"></circle>
-      <circle cx="0.73" cy="0.27" r="0.27"></circle>
-      <circle cx="0.27" cy="0.73" r="0.27"></circle>
-      <circle cx="0.73" cy="0.73" r="0.27"></circle>
-      <rect x="0.27" y="0.03" width="0.46" height="0.94"></rect>
-      <rect x="0.03" y="0.27" width="0.94" height="0.46"></rect>
-    </clipPath>
-
-    <clipPath id="clip-cookie-6" clipPathUnits="objectBoundingBox">
-      <circle cx="0.5" cy="0.5" r="0.36"></circle>
-      <circle cx="0.5" cy="0.18" r="0.18"></circle>
-      <circle cx="0.5" cy="0.82" r="0.18"></circle>
-      <circle cx="0.22" cy="0.34" r="0.18"></circle>
-      <circle cx="0.78" cy="0.34" r="0.18"></circle>
-      <circle cx="0.22" cy="0.66" r="0.18"></circle>
-      <circle cx="0.78" cy="0.66" r="0.18"></circle>
-    </clipPath>
-
-    <clipPath id="clip-clover-8" clipPathUnits="objectBoundingBox">
-      <circle cx="0.5" cy="0.5" r="0.275"></circle>
-      <circle cx="0.5" cy="0.155" r="0.155"></circle>
-      <circle cx="0.5" cy="0.845" r="0.155"></circle>
-      <circle cx="0.155" cy="0.5" r="0.155"></circle>
-      <circle cx="0.845" cy="0.5" r="0.155"></circle>
-      <circle cx="0.256" cy="0.256" r="0.155"></circle>
-      <circle cx="0.744" cy="0.256" r="0.155"></circle>
-      <circle cx="0.256" cy="0.744" r="0.155"></circle>
-      <circle cx="0.744" cy="0.744" r="0.155"></circle>
-    </clipPath>
-
-    <clipPath id="clip-gem" clipPathUnits="objectBoundingBox">
-      <path
-        d="M 0.6064 0.0704 L 0.7736 0.1496 Q 0.88 0.20 0.908 0.312 L 0.952 0.488 Q 0.98 0.60 0.9072 0.698 L 0.7928 0.852 Q 0.72 0.95 0.6024 0.9584 L 0.4176 0.9716 Q 0.30 0.98 0.2272 0.896 L 0.1128 0.764 Q 0.04 0.68 0.0456 0.5624 L 0.0544 0.3776 Q 0.06 0.26 0.1832 0.1928 L 0.3768 0.0872 Q 0.50 0.02 0.6064 0.0704 Z"
-      ></path>
-    </clipPath>
-
-    <clipPath id="clip-skewed" clipPathUnits="objectBoundingBox">
-      <polygon points="0,0.08 1,0 1,0.92 0,1"></polygon>
-    </clipPath>
+    {
+      CLIP_SHAPES.map((shape) => (
+        <clipPath id={shape.id} clipPathUnits="objectBoundingBox">
+          <path d={shape.path} />
+        </clipPath>
+      ))
+    }
   </defs>
 </svg>

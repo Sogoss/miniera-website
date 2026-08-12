@@ -61,7 +61,7 @@ sostituisce un telefono vero.
 | 3 | Utilità di dominio | `lib-eventi` | fatta |
 | 4 | Accento dai cicli della collection | `accento-dai-cicli` | fatta |
 | 5 | Layout di base e forme di ritaglio | `layout-base` | fatta |
-| 6 | Gli otto componenti del design system | `design-system-astro` | da fare |
+| 6 | Gli otto componenti del design system | `design-system-astro` | fatta |
 | 7 | Lo scroller del programma | `scroller-programma` | da fare |
 | 8 | Timeline e navigazione da tastiera | `timeline` | da fare |
 | 9 | Le pagine delle serate | `pagine-serata` | da fare |
@@ -709,30 +709,122 @@ si chiamano `Bottone`, `Etichetta`, `Scheda`, `Marchio`, `FasciaFirma`,
 `BadgePuntata`, `RigaOspite`, `SchedaEvento`: i nomi qui sono quelli del
 `CLAUDE.md`, perché un componente è codice.
 
+È anche la prima PR che **ritaglia qualcosa davvero**, e quindi quella che
+chiude la questione aperta sulle geometrie delle forme.
+
+Quattro degli otto — `Card`, `SignatureBand`, `EpisodeBadge`, `EventCard` — non
+compaiono in nessuna delle due schermate dell'export: esistono nel design system
+e non li usa nessuno. Si portano lo stesso, ed è la pagina di rassegna l'unico
+posto in cui si vedono.
+
+### Decisioni prese scrivendo la PR
+
+Le tredici per esteso stanno in [decisioni.md](decisioni.md), sotto *Design
+system* e *Forme di ritaglio, la geometria*. In breve:
+
+- **Un componente rende l'elemento giusto**: `Button` è un `<button>`, e un
+  `<a>` quando riceve `href`. Nell'export il bottone è sempre avvolto da chi lo
+  rende cliccabile — `<a><button>…</button></a>` — che è markup non valido e due
+  fermate di tabulazione per una cosa sola
+- **L'effetto premuto è `:active`, e lo stato sparisce**
+- **`Brand` non ha la prop di forma**, e la firma sta nel template invece che in
+  un valore predefinito: un predefinito è qualcosa per cui si può passare altro
+- **La banda porta la firma intera**, «MINIERA CULTURALE IN PERIFERIA»: quella
+  dell'export è la variante breve vietata dalla regola 7 in un altro carattere
+- **Le misure numeriche dell'export diventano custom property** con il default
+  nel componente — `--brand-height`, `--band-size`, `--badge-size`,
+  `--guest-size`
+- **Il ritratto entra in `GuestRow`, come slot**: nell'export misura e forma
+  stanno nel markup della scena, cioè fuori dal componente che le possiede
+- **`EventCard` non ha un indirizzo predefinito**, e le date che entrano in un
+  componente sono stringhe già formattate — mai una `Date`
+- **Le varianti sono attributi `data-*`**, e le attese dei test sono nomi di
+  token, mai colori
+- **La rassegna è pubblicata a `/componenti`, con `noindex`**: lo strato `build`
+  legge `dist/` e nient'altro
+- **Le geometrie di Material si ricostruiscono qui**, con parametri nostri, e la
+  documentazione dice che sono *ispirate* a Material e non le sue
+- **Le forme a lobi si costruiscono con i cerchi**, non arrotondando un poligono
+
 ### Obiettivi
 
-- [ ] Gli otto componenti esistono in `src/components/`, nessuna isola React
-- [ ] `Button` replica l'effetto premuto con `:active`, senza JavaScript
-- [ ] `Brand` **non ha la prop `forma`**: la variante breve non esiste, così
+- [x] Gli otto componenti esistono in `src/components/`, nessuna isola React,
+      nessuna direttiva `client:`
+- [x] `Button` replica l'effetto premuto con `:active`, senza JavaScript, ed è
+      un `<a>` quando riceve `href`
+- [x] `Brand` **non ha la prop `forma`**: la variante breve non esiste, così
       non può essere usata per sbaglio. Nell'export era comunque muta —
       restituiva lo stesso testo dell'estesa
-- [ ] Gli stili stanno nei `<style>` dei componenti e usano i token, non valori
+- [x] Gli stili stanno nei `<style>` dei componenti e usano i token, non valori
       grezzi
-- [ ] Una pagina di rassegna interna mostra tutti i componenti e le loro
-      varianti
+- [x] `GuestRow` ritaglia il ritratto con `clip-clover-8`, e il ritaglio arriva
+      in `dist/`
+- [x] `src/lib/shapes.ts` genera le quattro forme ricostruite: puro, senza
+      import e senza orologio, come `events.ts` e `cycles.ts`
+- [x] `ClipShapes.astro` emette i path generati con gli stessi cinque `id`
+- [x] Una pagina di rassegna interna mostra tutti i componenti e le loro
+      varianti, con un solo `<h1>` e `noindex`
+- [x] La questione delle geometrie è chiusa e la documentazione aggiornata
 
 ### Test automatici
 
-- Dovunque compaia il marchio compare la scritta «in Periferia»
-- Le varianti di `Button` e `Label` rendono i token attesi
-- Nessun valore colore grezzo nei componenti: solo `var(--…)`
-- Nessuna dipendenza React entra nel bundle prodotto
+- Dovunque compaia il marchio compare la scritta «in Periferia» — **guardia**
+  sul pubblicato, che legge il testo *dentro* l'elemento `data-brand` e non gli
+  attributi: una firma messa in un `aria-label` sopra un marchio troncato è il
+  difetto, non il rimedio
+- **Guardia** sul sorgente: `Brand.astro` non offre nessuna prop di forma. È la
+  metà che scatta prima che qualcosa venga pubblicato senza firma
+- Le varianti di `Button` e i toni di `Label` rendono i token attesi, letti dal
+  CSS che quella pagina riceve
+- **Guardia**: nessun valore colore grezzo nei `.astro` — con
+  `rgba(var(--x-rgb), 0.68)` che resta legittimo, perché è la forma che il
+  `CLAUDE.md` prescrive e una guardia che scattasse lì verrebbe spenta
+- **Guardia**: nessuna dipendenza da un framework UI, nessuna direttiva
+  `client:`, e nessun runtime nel pubblicato — tre posti, perché la decisione si
+  può perdere in tre modi diversi
+- Il generatore delle forme provato sui numeri: path chiuso, coordinate dentro
+  `[0, 1]`, un arco per lobo e uno per raccordo, la simmetria che il numero di
+  lobi implica, e il lobo che tocca davvero il bordo — ricostruendo il cerchio
+  dell'arco, perché il punto più esterno di una forma non è mai fra le
+  coordinate scritte nel path
+- **Guardia**: nessun `<clipPath>` senza geometria. Un ritaglio vuoto non viene
+  ignorato, ritaglia *tutto*: pubblica un buco al posto della foto con l'`id`
+  che risolve e ogni altra guardia verde
+- `checkClipShapeReferences` risolve un riferimento vero: la guardia della PR 5
+  esce dal ramo «nessuna pagina ritaglia», e un'asserzione pretende che almeno
+  una pagina chieda una forma — altrimenti la soddisferebbe il silenzio
+- Le guardie delle PR precedenti continuano a passare, e `npm run test:mutate`
+  con loro: **36 su 36**
+
+> **Trovato scrivendo.** Tre cose, tutte dalla stessa parte: un test che
+> falliva su codice giusto. La guardia sui colori cancellava il `var()` per
+> intero e con esso il suo ripiego, quindi `var(--accent, #f26419)` — la forma
+> esatta che l'export scrive — passava senza essere guardata. La guardia sul
+> marchio riconosceva una prop solo a inizio riga, e `type Props = { shape?:
+> 'short' }` scritto su una riga sola le sfuggiva. E il generatore delle forme è
+> stato scritto due volte: la prima come stella con gli angoli arrotondati, che
+> è la costruzione ovvia e non può dare lobi tondi e rientranze profonde
+> insieme. Se ne è accorto il rendering, non un test — motivo per cui il
+> controllo manuale di questa PR non è un ripiego.
+>
+> Un ramo è stato tolto invece che provato: il generatore calcolava per ogni
+> lobo se l'arco superasse il mezzo giro, e non può superarlo — il raccordo cade
+> sempre più esterno del centro del lobo. Un ramo che nessun parametro raggiunge
+> non si distingue da un ramo sbagliato, e ora quella proprietà è un test.
 
 ### Test manuali
 
 - Confronto a schermo con `design-export/sito-miniera.dc.html` aperto in
   locale, componente per componente
 - L'effetto premuto del bottone funziona col mouse e col dito
+- **Le forme ricostruite guardate accanto a quelle dell'export**, grandi e a
+  56×56, che è la misura in cui il design le applica. Fatto rendendo le une e le
+  altre nello stesso foglio: è così che si è visto che la prima costruzione dava
+  una stella al posto di un quadrifoglio
+- Il ritaglio davanti a un ritratto vero: nessun relatore d'esempio ha una foto,
+  quindi si mette una foto in un file di `src/content/relatori/` e si guarda
+  `/componenti` in `npm run dev`
+- Tastiera: `Button` come link e come bottone, fuoco sempre visibile
 
 ---
 

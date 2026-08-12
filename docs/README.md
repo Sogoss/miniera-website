@@ -58,11 +58,14 @@ Fatto:
   dalla collection: `colors.css` non decide più il colore di nessuno
 - Il layout di base: lingua, meta e anteprime social, salta-a, e le cinque forme
   di ritaglio del design — una pagina non si scrive più il documento da sé
+- Gli otto componenti del design system, in `.astro` e senza React, con la loro
+  rassegna a `/componenti`; le forme di ritaglio non sono più copiate ma
+  generate, ispirate a Material 3
 
 Da fare: l'elenco completo dei passi, in ordine e uno per PR, sta in
-[piano.md](piano.md). In sintesi — i componenti del design system, lo scroller
-con la `Timeline`, le pagine delle serate, il CMS, la pubblicazione. La migrazione delle 81 serate storiche resta
-fuori dalla beta, vedi [questioni-aperte.md](questioni-aperte.md).
+[piano.md](piano.md). In sintesi — lo scroller con la `Timeline`, le pagine
+delle serate, il CMS, la pubblicazione. La migrazione delle 81 serate storiche
+resta fuori dalla beta, vedi [questioni-aperte.md](questioni-aperte.md).
 
 `src/pages/index.astro` è una pagina di verifica provvisoria: serve solo a
 dimostrare che token, caratteri e collection funzionano insieme. Va sostituita

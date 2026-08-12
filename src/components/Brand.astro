@@ -1,0 +1,97 @@
+---
+/* The brand: the accent bar, «Miniera Culturale», and the signature under it.
+ *
+ * There is no `shape` prop, and that is the point of the component. Rule 7 says
+ * the brand is always used in full, with «in Periferia», in every size and in
+ * every context, mobile navigation included: if there is not enough room the
+ * height comes down, the signature does not come off. A prop is the way that
+ * rule gets broken by somebody in a hurry, so it is not offered.
+ *
+ * In the export the short variant was half mute anyway — the first line
+ * rendered the same string either way — and what actually changed was that the
+ * text went uppercase and the signature disappeared. So nothing is lost here
+ * beyond the way to get it wrong.
+ *
+ * `height` scales the whole mark: everything else is a fraction of it, exactly
+ * as in the export, only worked out in CSS instead of in JavaScript. The number
+ * arrives as `--brand-height`, whose default lives in the stylesheet below —
+ * without that default the custom property would be declared in no stylesheet
+ * at all, and the token guard would be right to say so.
+ */
+import type { HTMLAttributes } from 'astro/types';
+
+export type BrandTone = 'cream' | 'blue';
+
+interface Props extends HTMLAttributes<'span'> {
+  /** In px, like the export. Everything else scales from it. */
+  height?: number;
+  tone?: BrandTone;
+}
+
+const { height = 48, tone = 'cream', class: className, ...rest } = Astro.props;
+---
+
+<span
+  class:list={['brand', className]}
+  data-brand
+  data-tone={tone}
+  style={`--brand-height: ${height}px`}
+  {...rest}
+>
+  <span class="brand-bar" aria-hidden="true"></span>
+  <span class="brand-lines">
+    <span class="brand-name">Miniera Culturale</span>
+    <span class="brand-signature">in Periferia</span>
+  </span>
+</span>
+
+<style>
+  .brand {
+    --brand-height: 48px;
+
+    display: inline-flex;
+    align-items: stretch;
+    gap: calc(var(--brand-height) * 0.28);
+  }
+
+  .brand[data-tone='cream'] {
+    color: var(--cream-100);
+  }
+
+  .brand[data-tone='blue'] {
+    color: var(--blue-700);
+  }
+
+  /* Never thinner than four pixels: below that the bar reads as a rendering
+     artefact rather than as part of the mark. */
+  .brand-bar {
+    flex: 0 0 auto;
+    width: max(4px, calc(var(--brand-height) * 0.16));
+    background: var(--accent);
+  }
+
+  .brand-lines {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  /* Written out rather than as the `font` shorthand: the sizes are calc()
+     expressions, and a shorthand that has to be parsed around a `/` is the
+     wrong place to find out how a browser resolves that. */
+  .brand-name {
+    font-family: var(--font-display);
+    font-weight: var(--weight-black);
+    font-size: var(--brand-height);
+    line-height: 0.95;
+    letter-spacing: var(--tracking-display);
+  }
+
+  .brand-signature {
+    margin-top: calc(var(--brand-height) * 0.1);
+    font-family: var(--font-display);
+    font-weight: var(--weight-black);
+    font-size: calc(var(--brand-height) * 0.5);
+    line-height: 1.1;
+  }
+</style>

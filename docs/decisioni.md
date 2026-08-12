@@ -747,6 +747,128 @@ modulo sotto i due fusi e i risultati si confrontano fra loro **e** con
 l'attesa: l'uguaglianza da sola passerebbe su due risposte sbagliate allo
 stesso modo. *(PR 3)*
 
+## Design system
+
+*(12 agosto 2026, PR 6)*
+
+**Un componente rende l'elemento che il compito richiede: `Button` è un
+`<button>`, e un `<a>` quando riceve `href`.** Nell'export il bottone è sempre
+avvolto da chi lo rende cliccabile — `<a><button>…</button></a>` per un link,
+`<button><button>…</button></button>` per un'azione — che è markup non valido
+due volte e, davanti a una tastiera, sono due fermate di tabulazione per una
+cosa sola. Non si replica un difetto perché sta nella specifica.
+
+**L'effetto premuto è `:active`, e lo stato sparisce.** Era l'unico componente
+con stato, ed era React per tre righe di CSS: ombra via e due pixel in giù.
+`:active` dice lo stesso, funziona sotto un dito, e non resta premuto quando il
+puntatore esce dall'elemento a metà clic — che nell'export costava un terzo
+gestore di eventi.
+
+**`Brand` non ha la prop di forma.** Regola 7. Nell'export la variante breve era
+per metà muta — la prima riga rendeva lo stesso identico testo — e a cambiare
+erano il maiuscolo e la sparizione di «in Periferia»: togliere la prop non
+toglie niente se non il modo di sbagliare. La firma sta nel template, non in un
+valore predefinito, perché un valore predefinito è qualcosa per cui si può
+passare altro.
+
+**La banda porta la firma intera, «MINIERA CULTURALE IN PERIFERIA».** L'export
+scrive la forma breve, che è la variante vietata dalla regola 7 scritta in un
+altro carattere. Nessuna delle due schermate usa la banda, quindi non c'è un
+layout che la stringa più lunga possa rompere, e l'uso ovvio del componente
+adesso è quello giusto.
+
+**Le misure numeriche dell'export diventano custom property con il default nel
+componente.** `altezza` e `corpo` reggevano proporzioni calcolate in JavaScript
+— la barra del marchio è `altezza * 0.16`, il sottotitolo `altezza * 0.5`. Ora
+sono `--brand-height`, `--band-size`, `--badge-size`, `--guest-size`,
+sovrascrivibili con un `style` in linea. Il default dichiarato nel `<style>` del
+componente non è comodità: senza, la proprietà non sarebbe dichiarata in nessun
+foglio e la guardia sui token avrebbe ragione a dirlo.
+
+**Il ritratto entra in `GuestRow`, come slot.** Nell'export il riquadro 56×56 e
+il suo `clip-path` stanno nel markup della scena, accanto a un `RigaOspite` che
+non ne sa niente: misura e forma vivono fuori dal componente che possiede
+l'ospite, e lo scroller della PR 7 le avrebbe ricopiate. Chi lo usa passa
+un'immagine e ottiene la forma senza doverne sapere l'esistenza.
+
+**`EventCard` non ha un indirizzo predefinito.** Quello dell'export ne aveva
+uno, e i file di design ne portano tre versioni incoerenti. Un componente non è
+la seconda sorgente di dove si riunisce l'associazione: `venue` è obbligatoria e
+viene dalla collection.
+
+**Le date che entrano in un componente sono stringhe già formattate.** Regola
+11: le stringhe le scrive `src/lib/events.ts`, in `Europe/Rome`, e una `Date`
+data a qualcosa che si aspetta testo è un `toString()` che nessuna guardia sulla
+forma della chiamata riconosce. Tipizzare la prop come `string` rende la cosa
+impossibile invece che sconsigliata.
+
+**Le varianti si dichiarano come attributi `data-*`, non come classi.** Le
+classi Astro le lascia leggibili ma le lega a un `data-astro-cid-*`; un
+attributo è ciò che una guardia e un'asserzione possono leggere nel pubblicato
+senza inseguire un hash. E le attese dei test sono **nomi di token**, mai
+colori: un esadecimale scritto in un test diventerebbe rosso il giorno che un
+ciclo viene ritarato nel CMS, indicando un file di test invece del contenuto che
+è cambiato.
+
+**La rassegna dei componenti è una pagina pubblicata, `/componenti`, con
+`noindex`.** Pubblicata perché lo strato `build` legge `dist/` e nient'altro: il
+`CLAUDE.md` dice che per lo stile guardare il sorgente non basta, quindi una
+rassegna viva solo in `npm run dev` lascerebbe le varianti di ogni componente
+verificate da nessuna parte. Fuori dall'indice perché è una pagina di servizio —
+e la sitemap della PR 13 dovrà escluderla. Non `/rassegna`, che è della rassegna
+stampa della PR 11.
+
+## Forme di ritaglio, la geometria
+
+*(12 agosto 2026, PR 6 — chiude la questione aperta della PR 5)*
+
+**Le geometrie di Material 3 si ricostruiscono, e la ricostruzione è nostra.**
+I nomi venivano da Material dalla PR 5; ora ci va anche la forma. Google non
+pubblica né i path né i parametri — le genera a runtime da un poligono
+arrotondato — e nessun pacchetto di forme di terzi entra nel repository, deciso
+alla PR 5. Restava una strada sola: generarle qui, con parametri nostri, scritti
+accanto alla forma in `src/lib/shapes.ts`.
+
+**E si dice quello che sono: ispirate a Material, non le geometrie di Google.**
+Senza parametri pubblicati la taratura si fa a occhio contro le immagini di
+riferimento, e scrivere in `design.md` che sono *le* forme di Material
+prometterebbe una fedeltà che nessuno può verificare. È la mezza verità che
+questo repository passa il tempo a cacciare, e vale anche quando a dirla è la
+documentazione.
+
+**Le forme a lobi si costruiscono con i cerchi, non arrotondando un poligono.**
+Il primo tentativo è stato una stella con gli angoli tagliati da archi tangenti,
+che è la costruzione ovvia ed è quella sbagliata: l'arco a un vertice non può
+essere più largo del vertice stesso, quindi rientranze profonde danno punte
+aguzze e punte tonde danno rientranze piatte. Un quadrifoglio vuole tutt'e due
+insieme, e solo i cerchi danno tutt'e due insieme — l'export lo sapeva, e infatti
+disegna i suoi quadrifogli come cerchi sovrapposti. A cambiare qui è il raccordo:
+un arco concavo dove l'export lascia una cuspide, ed è quasi tutto quello che
+distingue una forma di Material da un fiore.
+
+**`clip-skewed` tiene la geometria dell'export.** Material non ha un
+corrispondente — il suo `slanted` è un quadrato arrotondato su un asse inclinato
+— ed è già deciso alla PR 5. Le ricostruite sono quattro su cinque, e la tabella
+in [design.md](design.md) lo dichiara.
+
+**Gli `id` non cambiano, ed è il collaudo di ciò che la PR 5 aveva promesso.**
+Cambiare geometria tocca il contenuto del componente e niente altro: nessuno di
+chi le referenzia se n'è accorto, e le asserzioni che pretendono le cinque forme
+su ogni pagina sono rimaste verdi senza essere toccate.
+
+**Una forma sbagliata non fa fallire niente, quindi ciò che è aritmetica si
+prova come aritmetica.** Path chiuso, coordinate dentro `[0, 1]`, un arco per
+lobo e uno per raccordo, la simmetria che il numero di lobi implica, e il lobo
+che tocca davvero il bordo del riquadro — ricostruendo il cerchio dell'arco,
+perché il punto più esterno di una forma non è mai fra le coordinate scritte nel
+path. Quello che resta all'occhio è la taratura, che è il controllo manuale.
+
+**Un `<clipPath>` vuoto ha la sua guardia**, perché è il modo in cui questo
+generatore fallisce: rifiuta di disegnare ciò che non sa disegnare e restituisce
+la stringa vuota. Un ritaglio vuoto non viene ignorato — ritaglia *tutto*, cioè
+pubblica un buco al posto della foto, con l'`id` che risolve e ogni altra
+guardia verde.
+
 ## Rimandate
 
 **Il dominio.** Se ne riparla a sito finito. Il design presuppone

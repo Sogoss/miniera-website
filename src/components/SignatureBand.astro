@@ -1,0 +1,56 @@
+---
+/* The full-width band of accent with the name across it.
+ *
+ * The default text is the signature in full — «MINIERA CULTURALE IN PERIFERIA»
+ * — and not the export's «MINIERA CULTURALE», which is the forbidden short
+ * variant written in another typeface. Neither of the two design screens uses
+ * this band, so there is no layout the longer string can break, and the one
+ * obvious use of the component is now the correct one.
+ *
+ * It does not carry `data-brand`: the mark is `Brand`, this is a typographic
+ * band that happens to say the same words by default. Marking it as the brand
+ * would tie the guard to whatever text a caller passes, and a band reading
+ * «GIOVEDÌ SERA» is a legitimate thing to want.
+ */
+import type { HTMLAttributes } from 'astro/types';
+
+interface Props extends HTMLAttributes<'div'> {
+  text?: string;
+  /** In px, like the export: the padding scales from it. */
+  size?: number;
+}
+
+const {
+  text = 'MINIERA CULTURALE IN PERIFERIA',
+  size = 34,
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+<div
+  class:list={['signature-band', className]}
+  style={`--band-size: ${size}px`}
+  {...rest}
+>
+  {text}
+</div>
+
+<style>
+  /* Bottom padding heavier than the top, as drawn: the capitals of Archivo
+     Black sit high in the line box, and equal padding reads as top-heavy. */
+  .signature-band {
+    --band-size: 34px;
+
+    width: 100%;
+    padding: calc(var(--band-size) * 0.24) 0 calc(var(--band-size) * 0.3);
+    background: var(--accent);
+    color: var(--text-on-accent);
+    font-family: var(--font-display);
+    font-weight: var(--weight-black);
+    font-size: var(--band-size);
+    line-height: 1;
+    letter-spacing: var(--tracking-banner);
+    text-align: center;
+  }
+</style>

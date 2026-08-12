@@ -6,6 +6,7 @@
  * carrying something — is caught here and not in a browser.
  */
 import { describe, expect, it } from 'vitest';
+import { checkBrandSignature } from '../guards/brand.ts';
 import {
   checkDocumentBasics,
   checkOpenGraph,
@@ -15,10 +16,10 @@ import {
 import {
   checkClipShapeReferences,
   checkDuplicateClipShapeIds,
-  clipShapeIds,
+  checkEmptyClipShapes,
 } from '../guards/shapes.ts';
-import { publishedPages, readPublishedCss } from '../support/dist.ts';
-import { read } from '../support/paths.ts';
+import { CLIP_SHAPES } from '../../src/lib/shapes.ts';
+import { decodeEntities, publishedPages, readPublishedCss } from '../support/dist.ts';
 import astroConfig from '../../astro.config.mjs';
 
 const pages = publishedPages();
@@ -29,11 +30,14 @@ const pages = publishedPages();
    disarmed by the formatting of a file rather than by its meaning. */
 const withDomain = Boolean((astroConfig as { site?: string }).site);
 
-/** The shapes ClipShapes declares, read from the component with the same
- *  scanner the guard uses — a second regular expression written here would
- *  quietly stop finding a shape the day one is written with its attributes in
- *  another order. */
-const declaredShapes = clipShapeIds(read('src/components/ClipShapes.astro'));
+/** The shapes there are, read from the module that generates them.
+ *
+ *  Read out of the component until PR 6, with the same scanner the guard uses;
+ *  since the geometry is generated, the ids in the component are an expression
+ *  and the source no longer says what they are. Which puts the expectation
+ *  where the other build assertions keep theirs — on the thing that decides,
+ *  not on a copy of it. */
+const declaredShapes = CLIP_SHAPES.map((shape) => shape.id);
 
 describe('every published page', () => {
   it('exists in the first place', () => {
@@ -79,6 +83,16 @@ describe('every published page', () => {
     },
   );
 
+  it.each(pages.map((page) => [page.path, page] as const))(
+    '%s uses the brand in full wherever it uses it',
+    (_path, page) => {
+      // Rule 7, asked of what a reader gets. A page can lose the signature
+      // without touching the component — writing the words by hand, building
+      // its own header — and only the published markup sees that.
+      expect(checkBrandSignature(decodeEntities(page.html), page.path)).toEqual([]);
+    },
+  );
+
   it('publishes a skip link that is hidden until it is focused', () => {
     // The half of the skip link that lives in the CSS, and that no markup guard
     // can see: hidden with nothing to bring it back is worse than not having
@@ -86,6 +100,18 @@ describe('every published page', () => {
     // that is where a lost rule becomes visible.
     expect(checkSkipLinkStyle(readPublishedCss(), 'dist/')).toEqual([]);
   });
+
+  it.each(pages.map((page) => [page.path, page] as const))(
+    '%s defines no clip shape that is empty',
+    (_path, page) => {
+      // An empty <clipPath> clips everything away: the photo is published as a
+      // hole while the id resolves and every other check passes. It is what the
+      // generator produces for parameters it refuses to draw — it returns an
+      // empty string rather than invent a shape — so this is the other half of
+      // that decision, checked where it would land.
+      expect(checkEmptyClipShapes(page.html, page.path)).toEqual([]);
+    },
+  );
 
   it('carries every shape the component declares, on every page', () => {
     // The other half of the reference guard, and the half that can be checked

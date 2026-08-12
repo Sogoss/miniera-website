@@ -9,6 +9,7 @@ import { describe, expect, it } from 'vitest';
 import {
   checkClipShapeReferences,
   checkDuplicateClipShapeIds,
+  checkEmptyClipShapes,
   clipShapeIds,
 } from '../guards/shapes.ts';
 
@@ -126,6 +127,43 @@ describe('checkDuplicateClipShapeIds', () => {
       '<clipPath id="clip-gem" clipPathUnits="objectBoundingBox"></clipPath>';
     expect(checkDuplicateClipShapeIds(reordered)).toHaveLength(1);
     expect(clipShapeIds(reordered)).toEqual(['clip-gem', 'clip-gem']);
+  });
+});
+
+describe('checkEmptyClipShapes', () => {
+  it('accepts shapes that actually draw something', () => {
+    expect(checkEmptyClipShapes(SHAPES, 'dist/index.html')).toEqual([]);
+  });
+
+  it('reports a shape with nothing inside it', () => {
+    // Valid markup, resolving reference, and every photo using it published as
+    // a hole: an empty clip path clips everything away.
+    const violations = checkEmptyClipShapes(
+      '<clipPath id="clip-gem"></clipPath>',
+      'dist/index.html',
+    );
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain('clip-gem');
+    expect(violations[0]!.detail).toContain('dist/index.html');
+  });
+
+  it('reports a path whose geometry is an empty string', () => {
+    // What a generator that refuses to draw produces: `<path d="">` looks like
+    // a shape and is not one.
+    expect(checkEmptyClipShapes('<clipPath id="clip-gem"><path d=""/></clipPath>')).toHaveLength(1);
+  });
+
+  it('accepts the primitives the export drew with', () => {
+    expect(
+      checkEmptyClipShapes('<clipPath id="clip-clover-4"><circle cx="0.5" cy="0.5" r="0.2"/></clipPath>'),
+    ).toEqual([]);
+    expect(
+      checkEmptyClipShapes('<clipPath id="clip-skewed"><polygon points="0,0 1,1 0,1"/></clipPath>'),
+    ).toEqual([]);
+  });
+
+  it('ignores a definition left in a comment', () => {
+    expect(checkEmptyClipShapes('<!-- <clipPath id="clip-gem"></clipPath> -->')).toEqual([]);
   });
 });
 

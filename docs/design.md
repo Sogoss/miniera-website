@@ -147,13 +147,13 @@ I nomi sono quelli di **Material 3**: un `id` è codice, e invece di tradurre
 l'italiano dell'export a orecchio prendono il nome che Google dà alle stesse
 geometrie nella sua libreria di forme.
 
-| Nell'export | Geometria | Material 3 | Il nostro `id` |
-|---|---|---|---|
-| `f-quadrifoglio` | quattro lobi attorno a una croce | 4-leaf clover | `clip-clover-4` |
-| `f-esafoglio` | centro largo, sei lobi | 6-sided cookie | `clip-cookie-6` |
-| `f-ottofoglio` · `m-ottofoglio` | centro stretto, otto lobi | 8-leaf clover | `clip-clover-8` |
-| `f-gemma` | otto lati arrotondati | gem | `clip-gem` |
-| `f-obliqua` | quadrilatero con due lati inclinati | *nessuna* | `clip-skewed` |
+| Nell'export | Geometria | Material 3 | Il nostro `id` | Da dove viene |
+|---|---|---|---|---|
+| `f-quadrifoglio` | quattro lobi attorno a una croce | 4-leaf clover | `clip-clover-4` | generata |
+| `f-esafoglio` | centro largo, sei lobi | 6-sided cookie | `clip-cookie-6` | generata |
+| `f-ottofoglio` · `m-ottofoglio` | centro stretto, otto lobi | 8-leaf clover | `clip-clover-8` | generata |
+| `f-gemma` | otto lati arrotondati | gem | `clip-gem` | generata |
+| `f-obliqua` | quadrilatero con due lati inclinati | *nessuna* | `clip-skewed` | **dall'export** |
 
 L'ultima è l'eccezione, e porta un nome descrittivo di proposito: lo `slanted`
 di Material è un quadrato arrotondato su un asse inclinato, questa è un
@@ -170,15 +170,37 @@ motivo per cui i nomi vengono da Material.
 > fra i raggi, in `spacing.css`.
 
 **Una sola è applicata nell'export**: quella a otto lobi, sui ritratti degli
-ospiti da 56×56. `f-gemma` compare come dato (`formaA`) che nessun elemento
-legge; le altre tre sono definite e mai referenziate. Restano tutte e cinque,
-come catalogo dichiarato — è il trattamento dei cinque colori dei cicli.
+ospiti da 56×56 — e da noi è la stessa, dentro `GuestRow`. `f-gemma` compare
+come dato (`formaA`) che nessun elemento legge; le altre tre sono definite e mai
+referenziate. Restano tutte e cinque, come catalogo dichiarato — è il
+trattamento dei cinque colori dei cicli.
 
-La **geometria** però resta quella del design, e non quella di Material: Google
-genera le sue forme a runtime da un poligono arrotondato e non ne pubblica né i
-path né i parametri, quindi adottarle vorrebbe dire dipendere dalla
-ricostruzione di terzi. La scelta si decide alla PR 6, davanti al primo ritratto
-vero — vedi [questioni-aperte.md](questioni-aperte.md).
+### La geometria: ricostruita, non copiata
+
+Deciso alla PR 6. Quattro forme su cinque sono **generate**, in
+`src/lib/shapes.ts`, e non copiate da nessuna parte: né dall'export né da una
+libreria. Google non pubblica i path delle sue forme — le costruisce a runtime
+da un poligono arrotondato — e alla PR 5 si era già deciso che nessun pacchetto
+di forme di terzi entra nel repository. Restava una strada sola: costruirle qui,
+con parametri nostri, scritti accanto alla forma.
+
+Sono quindi forme **nella maniera di** Material 3, non le forme di Material 3.
+La differenza non è modestia: senza parametri pubblicati la taratura si fa a
+occhio, e promettere una fedeltà che nessuno può verificare sarebbe la stessa
+mezza verità che questo repository passa il tempo a cacciare.
+
+Come sono fatte, in una riga: **un anello di lobi circolari, ognuno raccordato
+al successivo da un arco concavo**. Non una stella con gli angoli arrotondati —
+quella è la costruzione ovvia e non funziona, perché l'arco a un vertice non può
+essere più largo del vertice, quindi o le rientranze sono profonde o le punte
+sono tonde, mai tutt'e due. L'export lo sapeva e disegnava con i cerchi; qui
+cambia il raccordo, che è quasi tutto quello che distingue una forma di Material
+da un fiore.
+
+I parametri di ciascuna — quanti lobi, quanto grandi, quanto raccordati — stanno
+in `CLIP_SHAPES` e sono tarati sui **56×56** in cui il design le applica, che è
+l'unica misura a cui la differenza fra due di queste forme sia una differenza
+che qualcuno vede.
 
 ## I token
 

@@ -99,6 +99,47 @@ export function checkClipShapeReferences(
 }
 
 /**
+ * A shape with an `id` and nothing in it.
+ *
+ * An empty `<clipPath>` is valid, resolves, and clips **everything**: whatever
+ * it is applied to disappears. Every other guard here stays green while it
+ * happens — the id exists, the reference finds it — and the page publishes a
+ * hole where a photo was. The failure this watches for is a generator that
+ * returns an empty string, which is exactly what src/lib/shapes.ts does with
+ * parameters it cannot draw: it refuses rather than invent, and this is the
+ * other half of that decision.
+ */
+export function checkEmptyClipShapes(markup: string, path = 'the page'): Violation[] {
+  const clean = stripMarkupComments(markup);
+  const violations: Violation[] = [];
+  const pattern = /<clipPath\b([^>]*)>([\s\S]*?)<\/clipPath>/gi;
+  let match: RegExpExecArray | null;
+
+  while ((match = pattern.exec(clean)) !== null) {
+    const id = /(?<![-:\w])id\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i.exec(match[1] ?? '');
+    const name = (id?.[1] ?? id?.[2] ?? id?.[3] ?? '').trim();
+    const body = match[2] ?? '';
+
+    /* A shape is drawn by a child element with a geometry: a path with a `d`,
+       or one of the primitives the export used. A `<path d="">` counts as
+       nothing, which is the case worth naming — it is what an empty generator
+       produces, and it looks like a shape in the markup. */
+    const drawn =
+      /<path\b[^>]*\bd\s*=\s*(?:"[^"]+"|'[^']+'|[^\s>"']+)/i.test(body) ||
+      /<(circle|rect|polygon|ellipse|polyline)\b/i.test(body);
+
+    if (drawn) continue;
+
+    violations.push({
+      rule: 'shapes',
+      detail: `${path}: \`<clipPath id="${name}">\` on line ${lineNumber(clean, match.index)} defines no geometry. An empty clip path is not ignored — it clips everything away, so whatever uses it is published as a hole, with the id resolving and every other check passing`,
+    });
+  }
+
+  return violations;
+}
+
+/**
  * Two shapes with the same `id` in one page.
  *
  * The second one does not replace the first and does not complain: it is
