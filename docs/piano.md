@@ -514,6 +514,23 @@ cicli*. In breve:
 > regole che l'accento lo dichiarano davvero, dentro le media query comprese, e
 > ha i due casi in più che lo provano.
 
+> **Lacuna della PR 3, chiusa qui.** Contando le guardie per rispondere a
+> «funzionano tutte?» ne è saltata fuori una senza caso negativo:
+> `checkDateHasOffset`, usata in un posto solo e sui contenuti veri, dove ci si
+> aspetta che non trovi niente — cioè mai vista scattare, che per il
+> `CLAUDE.md` non si distingue da una che non sta guardando. Guardava: scatta su
+> una data senza scostamento, su una data nuda e sul campo mancante, e tace su
+> `+01:00` e su `Z`. Quello che mancava è ciò che la tiene a guardare, e ora sono
+> cinque asserzioni — compreso il ramo che si rifiuta di rispondere su una data
+> arrivata già convertita in `Date`, che è l'unico modo in cui questa guardia
+> potrebbe passare su tutti i file per cui esiste.
+>
+> Il conto è stato poi rifatto **accecando ogni guardia a turno** — sostituendone
+> il corpo con «nessuna violazione» e guardando se la suite se ne accorge —
+> invece che cercandone il nome nei test, che le contava per come sono scritte e
+> non per quello che tengono: **22 su 22**, ognuna sostenuta da un numero di
+> asserzioni che va da due a undici.
+
 ### Test manuali
 
 - Cambiare il colore di un ciclo nel suo file e vedere l'accento cambiare in
