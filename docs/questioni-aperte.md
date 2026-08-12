@@ -42,6 +42,42 @@ reversibile e prima o poi qualcuno vorrà stampare la foto di una serata.
 
 Non è ancora stato deciso dove.
 
+## Da decidere prima della PR 13
+
+### L'immagine delle anteprime social
+
+Il layout emette `og:image` solo se la pagina gliene passa una, e nessuna lo fa:
+oggi un link condiviso su WhatsApp mostra titolo e descrizione, senza figura.
+Le pagine serata della PR 9 avranno la foto tema, ma **il sito ha bisogno anche
+di un'immagine predefinita** per la home e per le pagine istituzionali.
+
+Va scelta, non generata a caso: il marchio su fondo blu è la strada ovvia, nel
+formato 1200×630 che le anteprime si aspettano. È una decisione di contenuto e
+di design, quindi non la prende una guardia — e per questo la suite **non**
+pretende `og:image` quando arriva il dominio: pretenderlo avrebbe aperto la
+PR 13 su un test rosso che si poteva chiudere solo inventando l'immagine.
+Quello che la suite pretende è che, se una pagina ne pubblica una, sia assoluta.
+
+## Da decidere alla PR 6
+
+### Le geometrie delle forme: quelle del design o quelle di Material 3
+
+I nomi delle cinque forme di ritaglio vengono già da Material 3 — `4-leaf
+clover`, `6-sided cookie`, `8-leaf clover`, `gem`, `slanted` — ma la
+**geometria** è quella dell'export di Claude Design, e le due non coincidono.
+
+Adottare quelle di Google costa più di quanto sembri: non sono distribuite come
+path, le genera a runtime da un poligono arrotondato e i parametri non stanno
+nella documentazione. Chi le pubblica come SVG le ha ricostruite per conto suo,
+quindi si dipenderebbe dalla sua interpretazione e dalla sua licenza. Le
+geometrie dell'export, intanto, sono tre righe di cerchi ciascuna e sono tarate
+sull'unico punto in cui il design le applica: un ritratto da 56×56.
+
+**Si decide alla PR 6**, che è la prima a ritagliare qualcosa davvero: con un
+ritratto a schermo la differenza si vede, adesso no. Qualunque sia la risposta,
+cambia il contenuto di `ClipShapes.astro` e nient'altro — gli `id` restano e
+nessuno che li referenzia se ne accorge.
+
 ## Minori
 
 ### Link a mappa per le sedi

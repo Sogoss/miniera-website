@@ -60,7 +60,7 @@ sostituisce un telefono vero.
 | 2 | Igiene: lingua, README, favicon, contenuti | `igiene-lingua-e-contenuti` | fatta |
 | 3 | Utilità di dominio | `lib-eventi` | fatta |
 | 4 | Accento dai cicli della collection | `accento-dai-cicli` | fatta |
-| 5 | Layout di base e forme di ritaglio | `layout-base` | da fare |
+| 5 | Layout di base e forme di ritaglio | `layout-base` | fatta |
 | 6 | Gli otto componenti del design system | `design-system-astro` | da fare |
 | 7 | Lo scroller del programma | `scroller-programma` | da fare |
 | 8 | Timeline e navigazione da tastiera | `timeline` | da fare |
@@ -600,26 +600,102 @@ cicli*. In breve:
 
 **Branch:** `layout-base` · **Dipende da:** 4
 
+Fino a qui l'unica pagina si scriveva da sé `<html>`, `<head>`, la favicon e il
+viewport. Da qui non lo fa più nessuno: il layout possiede il documento, le
+pagine il contenuto.
+
+### Decisioni prese scrivendo la PR
+
+Per esteso in [decisioni.md](decisioni.md), sotto *Layout e forme di ritaglio*.
+In breve:
+
+- **Nel layout ci sta ciò che, dimenticato, non fa fallire niente**: la lingua,
+  i meta, e i due componenti che devono viaggiare con ogni pagina —
+  `CycleAccents` e `ClipShapes`. Un accento rimasto arancio, una foto non
+  ritagliata e una pagina senza lingua sono tre guasti muti
+- **I nomi delle forme vengono da Material 3, la geometria dal design**: gli
+  `id` sono codice, e la libreria di Google ha già un nome per quattro di queste
+  geometrie. La tabella sta in [design.md](design.md)
+- **Ma un nome si prende solo se corrisponde**: l'obliqua si chiama
+  `clip-skewed`, perché lo `slanted` di Material è un quadrato arrotondato e
+  questa è un quadrilatero a spigoli netti — deciso guardando le forme a
+  schermo, nel controllo manuale. E la pill, che qualcuno cercherà fra le forme,
+  non è un ritaglio ma `--radius-pill`: il design la usa così sette volte, e
+  sotto `objectBoundingBox` un raggio si deforma col rapporto d'aspetto
+- **Le forme distinte sono cinque, non sei**: l'ottofoglio è definito due volte
+  nell'export perché quelli sono due design
+- **Le geometrie esatte di Material sono rimandate alla PR 6**, la prima che
+  ritaglia qualcosa davvero: Google non le pubblica come path e la differenza si
+  giudica davanti a un ritratto, non al buio
+- **`og:url` e `og:image` aspettano il dominio**, e la guardia li pretende
+  quando `site` compare in `astro.config.mjs` — leggendolo, non ricordandolo
+
 ### Obiettivi
 
-- [ ] `src/layouts/Base.astro`: `lang="it"`, meta, Open Graph e Twitter,
-      `global.css`, slot
-- [ ] Link «salta al programma», visibile quando riceve la messa a fuoco
-- [ ] `src/components/ClipShapes.astro` con i `<clipPath>` del design, da
-      includere una volta in ogni pagina che li usa
-- [ ] La pagina provvisoria continua a funzionare sopra il nuovo layout
+- [x] `src/layouts/Base.astro`: `lang="it"`, charset, viewport, favicon, meta,
+      Open Graph e Twitter, `global.css`, i due componenti, slot
+- [x] Link «Salta al programma», visibile quando riceve la messa a fuoco, con il
+      `<main>` che prende `tabindex="-1"` perché il salto sposti il fuoco e non
+      solo lo scorrimento
+- [x] `src/components/ClipShapes.astro` con le cinque forme, incluso dal layout:
+      le definizioni valgono solo dentro la pagina che le contiene
+- [x] La pagina provvisoria continua a funzionare, e non possiede più niente del
+      documento
+- [x] Tabella delle forme in `design.md`, scelta rimandata in
+      `questioni-aperte.md`
 
 ### Test automatici
 
-- Ogni pagina prodotta ha `lang="it"` e un solo `<h1>`
-- Ogni `clip-path: url(#…)` presente in una pagina trova il suo `id` nella
-  stessa pagina
-- I meta Open Graph di base ci sono
+- Ogni pagina prodotta dichiara `lang="it"`, il charset, il viewport e ha un
+  solo `<h1>`
+- **Guardia**: ogni `clip-path: url(#…)` di una pagina trova il suo `id` nella
+  stessa pagina. Oggi nessuna pagina ritaglia — le forme le userà `GuestRow`
+  dalla PR 6 — e il test lo dice: a tenerla onesta ci sono i casi negativi
+- **Guardia**: due `<clipPath>` con lo stesso `id`, che è il guasto muto
+  verificabile oggi — il secondo non sostituisce il primo, viene ignorato
+- Ogni pagina porta tutte le forme che il componente dichiara, e nessun `id`
+  italiano dell'export arriva in `dist/`
+- I meta Open Graph di base ci sono, e **`og:url` e `og:image` sono pretesi
+  appena `site` è impostato**: il test si accende da solo alla PR 13
+- Il salta-a è il primo link del `<body>` e punta a un `id` che esiste — non a
+  uno che gli somiglia: `#programma` non è soddisfatto da `id="programma-2"`,
+  ed è il primo difetto che il caso negativo ha trovato nella guardia appena
+  scritta
+- Le guardie della PR 1 continuano a passare, e `npm run test:mutate` con loro
+
+> **Trovato in revisione.** Quindici difetti, e quattordici stavano nelle tre
+> guardie nuove: approssimazioni su stringhe che rispondevano *va bene* proprio
+> al guasto descritto dal loro messaggio, o *è rotto* a markup corretto — che è
+> la metà peggiore, perché una guardia che scatta sul lavoro giusto la si
+> spegne. `data-id` soddisfaceva il bersaglio del salta-a; il viewport veniva
+> cercato e mai letto, quindi `content="width=1024"` passava; `xml:lang` valeva
+> come `lang`; gli `<h1>` dentro uno script venivano contati, e uno script in
+> linea è ciò che la PR 7 porterà; un `<meta content="…" property="og:title">`
+> risultava mancante per il solo ordine degli attributi; i commenti venivano
+> annullati nel markup ma non nel CSS, mentre il commento della funzione
+> dichiarava il contrario; e «il salta-a viene per primo» guardava i soli `<a>`,
+> cioè era cieco alla navigazione del design, che è fatta di `<button>`.
+>
+> Tre erano scoperture più che errori: niente verificava che il bersaglio del
+> salta-a fosse focusabile — `tabindex="-1"`, l'unica cosa che secondo
+> `decisioni.md` lo fa funzionare, si poteva cancellare con la suite verde —
+> niente leggeva il CSS pubblicato del link, che è dove la regola può sparire, e
+> `declaredShapes` pretendeva `id` come primo attributo mentre la guardia
+> gemella accettava qualunque ordine.
+>
+> Due guardavano al futuro e l'avrebbero rotto: `publishedPages()` consegnava
+> alle guardie del documento anche le pagine copiate da `public/`, cioè la
+> PR 12 non avrebbe potuto chiudere verde con la shell di Sveltia in
+> `public/admin/`; e pretendere `og:image` all'arrivo del dominio avrebbe aperto
+> la PR 13 su una suite rossa chiudibile solo inventando un'immagine che nessuno
+> ha scelto. L'immagine è una questione aperta, non un test.
 
 ### Test manuali
 
-- Il link «salta al programma» si raggiunge col primo Tab ed è visibile
-- Le forme di ritaglio rendono come nell'anteprima del design aperta in locale
+- Il link «Salta al programma» si raggiunge col primo Tab, è visibile e porta al
+  programma
+- Le forme rendono come nell'anteprima del design aperta in locale, ritagliando
+  a mano un'immagine di prova: in questa PR non le usa ancora nessuno
 
 ---
 

@@ -54,10 +54,29 @@ export function readPublishedCss(): string {
  * page that has none of them.
  */
 export function publishedPages(): { path: string; html: string; css: string }[] {
-  return filesWithExtension(distDir, ['.html']).map((path) => {
-    const html = read(path);
-    return { path, html, css: [...linkedStylesheets(html, path), ...extractStyleBlocks(html)].join('\n') };
-  });
+  return filesWithExtension(distDir, ['.html'])
+    .filter((path) => !copiedFromPublic(path))
+    .map((path) => {
+      const html = read(path);
+      return {
+        path,
+        html,
+        css: [...linkedStylesheets(html, path), ...extractStyleBlocks(html)].join('\n'),
+      };
+    });
+}
+
+/**
+ * A page Astro copied out of public/ rather than rendered.
+ *
+ * Those are not ours and cannot be held to what the layout guarantees: PR 12
+ * drops the Sveltia CMS shell at `public/admin/index.html`, which has no
+ * `lang`, no Open Graph, no skip link and no clip shapes. Handing it to the
+ * document guards would turn five assertions red at once over a page nobody
+ * here wrote, and CLAUDE.md does not allow switching a test off to get past it.
+ */
+function copiedFromPublic(path: string): boolean {
+  return exists(path.replace(/^dist\//, 'public/'));
 }
 
 /**

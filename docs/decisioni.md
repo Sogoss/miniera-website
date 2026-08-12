@@ -313,6 +313,86 @@ troppo trasforma un turchese in altro — lo esercita un contenuto vero e non so
 una fixture. La serata 83 porta `+01:00`, lo scostamento invernale che i
 contenuti d'esempio non avevano.
 
+## Layout e forme di ritaglio
+
+*(12 agosto 2026, PR 5)*
+
+**Il layout possiede il documento, le pagine possiedono il contenuto.** Lingua,
+charset, viewport, favicon, meta, `global.css`, il salta-a e i due componenti
+che devono viaggiare con ogni pagina — `CycleAccents` e `ClipShapes` — stanno in
+`src/layouts/Base.astro`. Il criterio è preciso: ci sta ciò che, se una pagina
+se lo dimenticasse, non farebbe fallire niente. Un accento che resta arancio,
+una foto che esce non ritagliata, una pagina che perde la lingua per uno screen
+reader: tre guasti muti, e il layout è il posto in cui smettono di dipendere
+dalla memoria di chi scrive la pagina.
+
+**I nomi delle forme vengono da Material 3, la geometria dal design.** Gli `id`
+sono codice, quindi la regola sulla lingua li vuole in inglese; tradurre
+*quadrifoglio* e *ottofoglio* a orecchio avrebbe prodotto un vocabolario
+privato, e la libreria di forme di Google ha già un nome per ognuna di queste
+geometrie — `4-leaf clover`, `6-sided cookie`, `8-leaf clover`, `gem`. La
+tabella con la corrispondenza sta in [design.md](design.md), perché è un
+giudizio sulla forma e non un dato dell'export.
+
+**Ma un nome si prende solo se corrisponde: l'obliqua si chiama `clip-skewed`.**
+Era stata battezzata `clip-slanted`, e lo `slanted` di Material è un quadrato
+arrotondato su un asse inclinato mentre questa è un quadrilatero a spigoli
+netti: il nome prometteva un'altra forma, che è il contrario del motivo per cui
+si va a prenderli da Material. Se una geometria non ha corrispondente, porta un
+nome descrittivo e la tabella lo dichiara. *(PR 5, in revisione)*
+
+**La pill non è una forma di ritaglio, e cercarla fra i `clipPath` non ha
+senso.** Il design la usa sette volte e sempre come
+`border-radius: var(--radius-pill)`. Non potrebbe essere un ritaglio: sotto
+`objectBoundingBox` i raggi sono frazioni di larghezza e altezza, quindi si
+deformano con il rapporto d'aspetto e `rx=.5 ry=.5` dà un'ellisse, non una
+capsula. Sta scritto in [design.md](design.md) accanto alle forme, perché è lì
+che qualcuno andrà a cercarla. *(PR 5, in revisione)*
+
+**Nessun pacchetto di forme di terzi entra nel repository.** Ne è stato valutato
+uno durante la revisione: nessuna licenza dichiarata, nessuna indicazione se le
+forme fossero originali o riprese dalle risorse di Google, e un progetto da
+cinque megabyte per un'app builder. In un repository che tiene le licenze OFL
+accanto ai `.woff2` sarebbe stata l'unica cosa di provenienza sconosciuta — e
+per una forma non serve: le quattro che restano vengono dall'export, che è la
+specifica. *(PR 5, in revisione)*
+
+**Le forme distinte sono cinque, non sei**: l'ottofoglio è definito due volte
+nell'export, una per file, perché quelli sono due design e questo è un sito
+responsive solo.
+
+**Adottare le geometrie *esatte* di Material è rimandato alla PR 6, non
+scartato.** Google le genera a runtime da un poligono arrotondato e non pubblica
+né i path né i parametri, quindi significherebbe dipendere dalla ricostruzione
+di terzi e dalla sua licenza; le geometrie dell'export intanto sono tre righe di
+cerchi ciascuna e sono tarate sull'unico posto in cui il design le applica, un
+ritratto da 56×56. E in questa PR non le usa nessuno: la differenza si giudica
+davanti a un ritratto vero. Cambiarle in seguito tocca solo il contenuto del
+componente — gli `id` restano.
+
+**`og:url` aspetta il dominio, e la guardia se ne accorge da sola.** Deve essere
+assoluto, e finché `site` non è impostato sarebbe un URL relativo: nel markup
+sembra giusto, e l'anteprima esce senza figura. La guardia lo pretende **quando
+`site` c'è** — letto dalla configurazione importata, non cercato nel suo testo:
+una regex avrebbe mancato un `site:` scritto su una riga sola e ne avrebbe
+trovato uno dentro un commento, cioè il tripwire si sarebbe armato o disarmato
+per come è formattato un file invece che per quello che dice.
+
+**`og:image`, invece, non lo pretende, e non è una svista.** Ha bisogno di
+un'immagine, non di un dominio, e il repository non ne ha una: chiederlo insieme
+a `og:url` avrebbe aperto la PR 13 su una suite rossa che si poteva chiudere
+solo inventando un asset che nessuno ha scelto — cioè un test che detta una
+decisione di contenuto. La decisione sta in
+[questioni-aperte.md](questioni-aperte.md); quello che la suite controlla è che
+una pagina che pubblichi un'immagine la pubblichi assoluta, perché un
+`og:image` relativo è la versione silenziosa del non averlo.
+*(PR 5, in revisione)*
+
+**Il salta-a punta al `<main>`, che prende `tabindex="-1"`.** Senza, diversi
+browser scorrono la pagina e lasciano il fuoco dov'era, che è esattamente ciò
+che il link doveva evitare. Usa `:focus` e non `:focus-visible`: deve comparire
+appena prende il fuoco, comunque l'abbia preso.
+
 ## Verifiche
 
 *(11 agosto 2026, PR 1)*
