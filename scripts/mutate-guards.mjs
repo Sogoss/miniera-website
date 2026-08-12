@@ -91,17 +91,46 @@ export function checksIn(source) {
  */
 function runSuite() {
   try {
-    execFileSync('npx', ['vitest', 'run'], {
+    // The installed vitest, run by this node, rather than `npx vitest`: npx
+    // resolves a name against a PATH and a registry, and neither is something
+    // this needs to depend on twenty-two times in a row.
+    execFileSync(process.execPath, [join(repoRoot, 'node_modules/vitest/vitest.mjs'), 'run'], {
       cwd: repoRoot,
       stdio: 'pipe',
+      // Well above what the suite prints. At the 1 MB default an overflow
+      // arrives as a failure with the output truncated — which reads exactly
+      // like a suite that could not run.
+      maxBuffer: 64 * 1024 * 1024,
       env: { ...process.env, REUSE_DIST: '1' },
     });
     return { noticed: false };
   } catch (error) {
     const output = `${error.stdout ?? ''}${error.stderr ?? ''}`;
     const failed = /Tests\s+(\d+) failed/.exec(output);
-    return failed ? { noticed: true, failed: Number(failed[1]) } : { noticed: false, broken: true };
+    if (failed) return { noticed: true, failed: Number(failed[1]) };
+
+    /* No count means the suite did not get as far as reporting one, and that
+       has to arrive with its reason attached. Saying «did not run» and keeping
+       the output is the same silence this script exists to break: it happened
+       on the first CI run of this very script, and the log said nothing that
+       could be acted on. */
+    return {
+      noticed: false,
+      broken: true,
+      why: `${error.code ?? ''} ${error.status === undefined ? '' : `exit ${error.status}`}`.trim(),
+      output,
+    };
   }
+}
+
+/** The tail of a run that failed to report, for the log of whoever has to fix
+ *  it — blank lines dropped, so the useful part fits in a glance. */
+function tail(output, lines = 25) {
+  const kept = output.split('\n').filter((line) => line.trim());
+  return kept
+    .slice(-lines)
+    .map((line) => `      │ ${line}`)
+    .join('\n');
 }
 
 function main() {
@@ -165,7 +194,8 @@ function main() {
       if (result.noticed) {
         console.log(`  seen     ${name.padEnd(34)} ${result.failed} tests red`);
       } else if (result.broken) {
-        console.log(`  UNRUN    ${name.padEnd(34)} the suite did not run`);
+        console.log(`  UNRUN    ${name.padEnd(34)} the suite never reported ${result.why}`);
+        console.log(tail(result.output));
         broken.push(name);
       } else {
         console.log(`  UNSEEN   ${name.padEnd(34)} nothing noticed`);
