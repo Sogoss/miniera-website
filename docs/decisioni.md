@@ -885,6 +885,67 @@ la stringa vuota. Un ritaglio vuoto non viene ignorato — ritaglia *tutto*, cio
 pubblica un buco al posto della foto, con l'`id` che risolve e ogni altra
 guardia verde.
 
+## Lo scroller
+
+*(13 agosto 2026, PR 7)*
+
+**L'apertura sulla prima serata futura è uno script in linea, ed è l'unica cosa
+qui che il CSS non può fare.** Un documento si apre in cima e la posizione di un
+contenitore scorrevole non la imposta un foglio di stile. Sono dieci righe senza
+dipendenze, sincrone e messe dopo il markup che spostano: girano prima della
+prima pittura, quindi il programma viene *disegnato* alla serata giusta invece
+di essere disegnato in cima e saltare. Senza JavaScript si apre dalla serata più
+vecchia e si scorre normalmente: è tutto il degrado che c'è, ed è un test
+manuale.
+
+**La posizione si misura, non si calcola.** `scrollTop = indice × altezza`
+sarebbe la strada dell'export e obbligherebbe lo script a sapere quanto è alta
+una scena; chiedere all'elemento dov'è dà la stessa risposta e continua a darla
+il giorno che una scena cambia altezza. Con `content-visibility` le altezze sono
+quelle intrinseche dichiarate, che è esattamente ciò che rende la misura esatta
+anche su una scena mai renderizzata.
+
+**L'accento è per sezione e statico; quello globale arriva con la Timeline.**
+Nell'export il `data-ciclo` sta sul contenitore radice e cambia a ogni scena,
+cioè l'accento dell'intero sito segue lo scorrimento — e per farlo bisogna
+sapere quale scena è a schermo. Qui ogni sezione porta il proprio `data-cycle` e
+si colora da sola, senza osservatori. Nav e Timeline che virano sono la PR 8,
+che quell'osservatore ce l'ha già per `aria-current`.
+
+**Nessuna scena è a sua volta scorrevole.** L'export lo fa, e
+[vincoli-tecnici.md](vincoli-tecnici.md) dice perché non si copia: con due
+contenitori scorrevoli annidati né una tastiera né uno screen reader sanno a
+chi parlano le frecce, e quello interno si mangia il gesto che doveva portare
+alla serata dopo. Il testo lungo si stringe con la tipografia fluida e, su
+schermo basso, si taglia a tre righe e poi a due — ritagliato, mai scorrevole.
+La guardia conta i contenitori scorrevoli della pagina e ne pretende **uno**:
+scritta sul conteggio e non sul nome della classe, perché una guardia agganciata
+a `.scene` smette di guardare il giorno che qualcuno rinomina.
+
+**Il titolo di pagina si dice, non si mostra.** Il design non ne ha uno — i
+titoli delle serate erano tutti `<h1>` — e qui sono `<h2>` sotto un `<h1>`
+unico, che però nel disegno non ha posto. Sta nel markup con
+`.visually-hidden`, la prima classe di utilità del progetto: `clip-path` e un
+pixel, non `display: none`, che lo toglierebbe anche dall'albero di
+accessibilità.
+
+**Una sola immagine si carica subito, ed è quella della scena di apertura.** Non
+la prima del documento: con il programma che si apre sulla prossima serata, la
+prima è da qualche parte nell'archivio e non la vede nessuno.
+
+**I target di build sono la soglia dei browser, dichiarata.** Vedi
+[vincoli-tecnici.md](vincoli-tecnici.md): senza, il minificatore riscrive
+`max-width` nella sintassi range, che è Safari 16.4 contro una soglia di 15.4 —
+e ogni media query dello scroller smette di applicarsi su iOS 15.4–16.3, con il
+telefono che riceve il layout desktop e il sorgente che ha ragione. Trovato da
+un test che leggeva il CSS pubblicato per un'altra ragione.
+
+**Due locandine segnaposto entrano nei contenuti d'esempio.** Senza immagini la
+colonna della locandina resta vuota, il layout a due colonne è metà lavoro e
+`loading="lazy"` è un test scritto su niente. Sono generate — forme e colori del
+marchio, nessun volto — e dichiarate come segnaposto nel file che le usa. Escono
+quando arrivano le foto vere: [questioni-aperte.md](questioni-aperte.md).
+
 ## Rimandate
 
 **Il dominio.** Se ne riparla a sito finito. Il design presuppone

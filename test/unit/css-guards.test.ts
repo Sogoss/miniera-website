@@ -8,6 +8,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   checkDuplicateDeclarations,
+  checkMediaRangeSyntax,
   checkNoColorMixOrOklch,
   checkRawColourValues,
   checkRgbTriples,
@@ -282,6 +283,38 @@ describe('checkUndefinedCustomProperties', () => {
   it('does not count a declaration that only exists in a comment', () => {
     const css = '/* --accent: #f26419; */\n.b { color: var(--accent); }';
     expect(checkUndefinedCustomProperties(css)).toHaveLength(1);
+  });
+});
+
+describe('checkMediaRangeSyntax', () => {
+  it('accepts the queries as they are written', () => {
+    expect(checkMediaRangeSyntax('@media (max-width: 900px) { .scene { gap: 0; } }')).toEqual([]);
+    expect(checkMediaRangeSyntax('@media (prefers-reduced-motion: reduce) { .a { top: 0; } }')).toEqual(
+      [],
+    );
+  });
+
+  it('reports what the minifier rewrites them into', () => {
+    // Nobody types this: it is `max-width` after a build with no targets set.
+    // Safari understands it from 16.4, and this project's floor is 15.4 — so
+    // between the two the whole query is ignored and an iPhone gets the desktop
+    // layout, with the source saying exactly the right thing.
+    const violations = checkMediaRangeSyntax(
+      '@media (width<=900px){.scene{grid-template-columns:1fr}}',
+      'dist/index.html',
+    );
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain('900px');
+    expect(violations[0]!.detail).toContain('dist/index.html');
+  });
+
+  it('reports the other spellings of it too', () => {
+    expect(checkMediaRangeSyntax('@media (height >= 620px) { .a { top: 0; } }')).toHaveLength(1);
+    expect(checkMediaRangeSyntax('@media (400px < width < 900px) { .a { top: 0; } }')).toHaveLength(1);
+  });
+
+  it('ignores a query left in a comment', () => {
+    expect(checkMediaRangeSyntax('/* @media (width<=900px){} */ .a { top: 0; }')).toEqual([]);
   });
 });
 

@@ -60,6 +60,17 @@ Quello che la suite pretende è che, se una pagina ne pubblica una, sia assoluta
 
 ## Minori
 
+### Le due locandine segnaposto
+
+`src/assets/locandine/` contiene due immagini **generate**, non fotografie:
+servono a far vedere funzionare la colonna della locandina e il caricamento
+pigro, e lo dicono di sé stesse — c'è scritto «immagine segnaposto» sopra. Sono
+assegnate alle serate 78 e 81, con un commento nel frontmatter.
+
+Escono quando arrivano le foto vere dell'associazione, che è parte della
+migrazione dell'archivio qui sopra. Non c'è niente da decidere: c'è da
+ricordarsene.
+
 ### Un ritratto vero da mettere davanti alle forme
 
 Chiusa a metà, e la metà che resta è di contenuto. La geometria delle forme è

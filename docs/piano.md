@@ -62,7 +62,7 @@ sostituisce un telefono vero.
 | 4 | Accento dai cicli della collection | `accento-dai-cicli` | fatta |
 | 5 | Layout di base e forme di ritaglio | `layout-base` | fatta |
 | 6 | Gli otto componenti del design system | `design-system-astro` | fatta |
-| 7 | Lo scroller del programma | `scroller-programma` | da fare |
+| 7 | Lo scroller del programma | `scroller-programma` | fatta |
 | 8 | Timeline e navigazione da tastiera | `timeline` | da fare |
 | 9 | Le pagine delle serate | `pagine-serata` | da fare |
 | 10 | Modale di prenotazione | `modale-prenotazione` | da fare |
@@ -884,27 +884,80 @@ system* e *Forme di ritaglio, la geometria*. In breve:
 
 Sostituisce la pagina provvisoria. Solo le scene: la Timeline è la PR dopo.
 
+### Decisioni prese scrivendo la PR
+
+Per esteso in [decisioni.md](decisioni.md), sotto *Lo scroller*. In breve:
+
+- **L'apertura sulla prima serata futura è uno script in linea**, ed è l'unica
+  cosa qui che il CSS non può fare: un documento si apre in cima. Dieci righe,
+  sincrone, prima della prima pittura — e senza JavaScript il programma si apre
+  dalla serata più vecchia e si scorre normalmente
+- **La posizione si misura, non si calcola**: chiedere all'elemento dov'è dà la
+  stessa risposta di `indice × altezza` e continua a darla il giorno che una
+  scena cambia altezza
+- **L'accento è per sezione e statico**; quello globale che segue lo scorrimento
+  è la PR 8, che l'osservatore ce l'ha già per `aria-current`
+- **Nessuna scena è a sua volta scorrevole**, contro l'export: con due
+  contenitori annidati le frecce non si sa a chi parlano
+- **Il titolo di pagina si dice e non si mostra** — prima classe di utilità del
+  progetto
+- **Una sola immagine si carica subito**, quella della scena di apertura: non la
+  prima del documento, che è in fondo all'archivio e non la vede nessuno
+- **I target di build sono la soglia dei browser**, dichiarati in
+  `astro.config.mjs`
+- **Due locandine segnaposto** entrano nei contenuti d'esempio, dichiarate come
+  tali
+
 ### Obiettivi
 
-- [ ] `/` è lo scroller a scroll-snap, con una sezione alta `--scene-height` per
+- [x] `/` è lo scroller a scroll-snap, con una sezione alta `--scene-height` per
       serata
-- [ ] Si apre sulla prima serata futura
-- [ ] `content-visibility: auto` e `contain-intrinsic-size` sulle sezioni,
-      `loading="lazy"` sulle immagini oltre le prime
-- [ ] L'accento segue il ciclo della serata a schermo
-- [ ] Titoli delle serate in `<h2>`, un solo `<h1>` di pagina
-- [ ] Layout responsive: due colonne su desktop, una su mobile con la foto in
+- [x] Si apre sulla prima serata futura
+- [x] `content-visibility: auto` e `contain-intrinsic-size` sulle sezioni,
+      `loading="lazy"` sulle immagini oltre quella di apertura
+- [x] L'accento segue il ciclo della serata a schermo
+- [x] Titoli delle serate in `<h2>`, un solo `<h1>` di pagina
+- [x] Layout responsive: due colonne su desktop, una su mobile con la foto in
       alto; testo sempre allineato a sinistra
-- [ ] La pagina provvisoria è stata rimossa, non estesa
+- [x] Ogni scena porta `data-number`, `data-state`, `data-cycle`, il suo `id`, e
+      quella di apertura `data-open`
+- [x] I componenti della PR 6 fanno il lavoro che è loro: `Label`, `GuestRow`,
+      `Button`
+- [x] Due serate d'esempio hanno una locandina segnaposto
+- [x] La pagina provvisoria è stata rimossa, non estesa
 
 ### Test automatici
 
-- Tante sezioni quanti sono gli eventi, nell'ordine giusto
-- Un solo `<h1>` nella pagina
+- Tante sezioni quanti sono gli eventi, nell'ordine giusto — ricavato dai
+  contenuti, non scritto nel test
+- Un solo `<h1>` nella pagina, e tanti `<h2>` quante sono le serate
 - Ogni sezione ha `scroll-snap-align` e un'altezza intrinseca dichiarata
 - L'accento di ogni sezione corrisponde al ciclo del suo evento
-- Le immagini oltre la prima sono in `loading="lazy"`
-- Le guardie della PR 1 continuano a passare
+- Le immagini oltre quella della scena di apertura sono in `loading="lazy"`
+- Lo script di apertura è in linea e non un modulo differito: bundlato girerebbe
+  dopo la prima pittura, e il programma verrebbe disegnato in cima e poi
+  salterebbe
+- **Guardia**: la pagina è un solo contenitore scorrevole. Scritta sul conteggio
+  e non sul nome della classe — una guardia agganciata a `.scene` smette di
+  guardare il giorno che qualcuno rinomina
+- **Guardia**: nessuna media query pubblicata in sintassi range
+- Le asserzioni sul fuso continuano a passare sui quattro ancoraggi, che era la
+  promessa scritta nel `CLAUDE.md`
+- Le guardie delle PR precedenti continuano a passare
+
+> **Trovato scrivendo.** Un'asserzione sul CSS pubblicato — scritta per un'altra
+> ragione, cioè per controllare che `content-visibility` arrivasse in `dist/` —
+> ha fatto emergere che il minificatore riscriveva **ogni media query nella
+> sintassi range**: `@media (width <= 900px)` invece di `max-width`. È Safari
+> 16.4 contro una soglia dichiarata di 15.4, quindi su iOS 15.4–16.3 il layout
+> mobile dello scroller non si applicava affatto e un telefono riceveva le due
+> colonne del desktop su 390 px. Nessun errore da nessuna parte, e nel sorgente
+> c'era scritto esattamente quello che doveva esserci: è il ripiego collassato
+> della regola 4 in un altro travestimento. I target di build ora stanno in
+> `astro.config.mjs` e una guardia legge il CSS pubblicato.
+>
+> Ed è la prima PR che pubblica una media query: il difetto esisteva da quando
+> esiste il progetto e non aveva ancora avuto niente da rompere.
 
 ### Test manuali
 

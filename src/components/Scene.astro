@@ -1,0 +1,357 @@
+---
+/* One evening, as one screen of the scroller.
+ *
+ * Everything it shows has already been decided by the domain: the state, the
+ * note under the buttons, the two date strings, the roles of the guests. This
+ * component chooses none of it — it lays it out. That is what keeps the time
+ * zone in one place and the scroller free of `new Date()`.
+ *
+ * Four attributes are not decoration and have to survive any redesign of this
+ * file: `data-number` names the evening, `data-state` says which side of today
+ * it falls on, `data-open` marks the one the programme opens on, and
+ * `data-cycle` is what paints the accent. The first three are what
+ * test/build/published-dates.test.ts reads out of dist/ to prove the build in
+ * UTC still publishes Italian hours; CLAUDE.md promised the scroller would
+ * carry them, and this is that promise. `data-label` carries the short date the
+ * Timeline of PR 8 will put on its ticks — the export keeps it on the section
+ * too, as `data-screen-label`.
+ *
+ * The scene is not itself scrollable, which is a departure from the export:
+ * a scrollable section inside a scrollable scroller makes it ambiguous which
+ * one the arrow keys are talking to, for a keyboard and for a screen reader
+ * alike — docs/vincoli-tecnici.md. Long text is handled by type that shrinks
+ * and, on a short screen, by clamping the description to a few lines.
+ */
+import { Image } from 'astro:assets';
+import Button from './Button.astro';
+import GuestRow from './GuestRow.astro';
+import Label from './Label.astro';
+import { type EventState, stateOf } from '../lib/events.ts';
+import type { Scene } from '../lib/programme.ts';
+
+interface Props {
+  scene: Scene;
+  /** The one the programme opens on. */
+  open?: boolean;
+  /** The only image loaded up front is the one a reader lands on. */
+  eager?: boolean;
+}
+
+const { scene, open = false, eager = false } = Astro.props;
+
+const state: EventState = stateOf(scene, scene.past);
+
+/* Shown only when it says something the note does not: an upcoming evening is
+   already announced by «Ingresso libero, posti limitati» underneath. */
+const STATE_LABEL: Partial<Record<EventState, string>> = {
+  past: 'già svolta',
+  cancelled: 'annullata',
+};
+
+const stateLabel = STATE_LABEL[state];
+const titleId = `titolo-${scene.number}`;
+---
+
+<section
+  id={`serata-${scene.number}`}
+  class="scene"
+  data-scene
+  data-number={scene.number}
+  data-state={state}
+  data-cycle={scene.cycle.number}
+  data-label={scene.shortDate}
+  data-open={open ? 'true' : undefined}
+  aria-labelledby={titleId}
+>
+  <div class="scene-text">
+    <div class="scene-heading">
+      <Label>Ciclo {scene.cycle.name}</Label>
+      <span class="scene-format">{scene.format}</span>
+      {stateLabel && <span class="scene-state">{stateLabel}</span>}
+    </div>
+
+    <h2 class="scene-title" id={titleId}>{scene.title}</h2>
+    {scene.kicker && <p class="scene-kicker">{scene.kicker}</p>}
+    <p class="scene-description">{scene.description}</p>
+
+    {
+      scene.speakers.length > 0 && (
+        <div class="scene-guests">
+          {scene.speakers.map((speaker) => (
+            <GuestRow name={speaker.name} role={speaker.role} size={20}>
+              {speaker.photo && (
+                <Image
+                  slot="portrait"
+                  src={speaker.photo}
+                  alt=""
+                  width={112}
+                  height={112}
+                  loading="lazy"
+                  decoding="async"
+                />
+              )}
+            </GuestRow>
+          ))}
+        </div>
+      )
+    }
+
+    <div class="scene-meta">
+      <p class="scene-fact">
+        <svg class="scene-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+          <rect x="3" y="5" width="18" height="16"></rect>
+          <path d="M3 10h18M8 3v4M16 3v4"></path>
+        </svg>
+        <span class="scene-when">{scene.longDate}</span>
+      </p>
+      <p class="scene-fact">
+        <svg class="scene-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+          <path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"></path>
+          <circle cx="12" cy="10" r="2.6"></circle>
+        </svg>
+        <span>{scene.venue.name}, {scene.venue.address}, {scene.venue.city}</span>
+      </p>
+      {
+        scene.attendance !== undefined && (
+          <p class="scene-fact">
+            <svg class="scene-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+              <circle cx="9" cy="8" r="3.2" />
+              <path d="M3 20c0-3.3 2.7-5.4 6-5.4s6 2.1 6 5.4" />
+              <path d="M16 5.4a3.2 3.2 0 0 1 0 6M17.5 14.9c2.1.7 3.5 2.4 3.5 5.1" />
+            </svg>
+            <span>{scene.attendance} persone in sala</span>
+          </p>
+        )
+      }
+    </div>
+
+    <div class="scene-actions">
+      {
+        scene.materials.map((material) => (
+          <Button href={material.url} target="_blank" rel="noopener">
+            {material.label}
+          </Button>
+        ))
+      }
+      <p class="scene-note">{scene.note}</p>
+    </div>
+  </div>
+
+  <div class="scene-poster">
+    {
+      scene.photo && (
+        <div class="scene-poster-frame">
+          <div class="scene-poster-image">
+            {/* Empty alt on purpose: the poster repeats what the text beside it
+                already says, so a screen reader announcing it would read the
+                evening twice. */}
+            <Image
+              src={scene.photo}
+              alt=""
+              widths={[400, 800, 1200]}
+              sizes="(max-width: 900px) 60vw, 32vw"
+              loading={eager ? 'eager' : 'lazy'}
+              decoding="async"
+            />
+          </div>
+        </div>
+      )
+    }
+  </div>
+</section>
+
+<style>
+  .scene {
+    height: var(--scene-height);
+    box-sizing: border-box;
+    scroll-snap-align: start;
+
+    /* The two halves of «81 evenings in one document stay fast»: the browser
+       skips style, layout and paint of what is off screen, and the declared
+       intrinsic height keeps the snap positions — and the opening jump —
+       exactly where they belong. Below Safari 18 the first line is ignored and
+       nothing else changes. */
+    content-visibility: auto;
+    contain-intrinsic-size: auto var(--scene-height);
+
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: clamp(24px, 4vw, 64px);
+    align-content: safe center;
+    padding: clamp(88px, 12vh, 140px) clamp(24px, 6vw, 104px) clamp(48px, 8vh, 88px);
+    border-bottom: var(--border-width-hairline) solid var(--border-hairline);
+  }
+
+  .scene-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: clamp(8px, 2vh, 20px);
+    min-width: 0;
+  }
+
+  .scene-heading {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  .scene-format,
+  .scene-state {
+    font: var(--type-mono);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+  }
+
+  .scene-format {
+    color: var(--text-secondary);
+  }
+
+  .scene-state {
+    color: var(--text-muted);
+  }
+
+  /* Fluid down to a phone and up to a wide desktop, bounded by both the width
+     and the height: a title that scales on width alone eats the screen when the
+     window is short and wide. */
+  .scene-title {
+    margin: 0;
+    font-size: clamp(28px, min(4.6vw, 7.2vh), 72px);
+    line-height: 0.98;
+    text-wrap: pretty;
+  }
+
+  .scene-kicker {
+    margin: 0;
+    font: var(--type-small);
+    color: var(--text-secondary);
+  }
+
+  .scene-description {
+    margin: 0;
+    max-width: var(--max-content);
+    font: var(--type-body);
+    font-size: clamp(15px, 1.8vh, 21px);
+    color: var(--text-secondary);
+    text-wrap: pretty;
+  }
+
+  .scene-guests {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+
+  .scene-meta {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding-top: var(--space-3);
+    border-top: var(--border-width-hairline) solid var(--border-hairline);
+  }
+
+  .scene-fact {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin: 0;
+    max-width: none;
+    font: var(--type-body);
+    color: var(--text-primary);
+  }
+
+  .scene-when {
+    font-weight: var(--weight-semibold);
+  }
+
+  .scene-icon {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    color: var(--accent);
+  }
+
+  .scene-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
+  .scene-note {
+    margin: 0;
+    font: var(--type-small);
+    color: var(--text-muted);
+  }
+
+  .scene-poster {
+    position: relative;
+    min-height: 0;
+  }
+
+  /* The design turns the poster on its corner and rounds it into a capsule; the
+     inner counter-rotation keeps the picture upright inside the tilted frame. */
+  .scene-poster-frame {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    height: 88%;
+    aspect-ratio: 4 / 5;
+    transform: translate(-50%, -50%) rotate(45deg) scale(0.96);
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+  }
+
+  .scene-poster-image {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-45deg) scale(1.5);
+  }
+
+  .scene-poster-image :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* One column, the poster above the text — and the text still ranged left,
+     which is where this parts company with the mobile design. */
+  @media (max-width: 900px) {
+    .scene {
+      grid-template-columns: minmax(0, 1fr);
+      align-content: safe start;
+      gap: clamp(16px, 3vh, 28px);
+      padding: clamp(72px, 10vh, 96px) var(--gutter-page) clamp(32px, 6vh, 64px);
+    }
+
+    .scene-poster {
+      order: -1;
+      height: 30vh;
+      min-height: 180px;
+    }
+  }
+
+  /* On a short screen the description is the one thing that can give way: three
+     lines, then two. Clipped, never scrollable — a scrollable scene inside a
+     scrollable scroller is what the arrow keys cannot tell apart. */
+  @media (max-height: 760px) {
+    .scene-description {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  }
+
+  @media (max-height: 620px) {
+    .scene-description {
+      -webkit-line-clamp: 2;
+    }
+
+    .scene-note {
+      display: none;
+    }
+  }
+</style>
