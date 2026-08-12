@@ -60,7 +60,7 @@ sostituisce un telefono vero.
 | 2 | Igiene: lingua, README, favicon, contenuti | `igiene-lingua-e-contenuti` | fatta |
 | 3 | Utilità di dominio | `lib-eventi` | fatta |
 | 4 | Accento dai cicli della collection | `accento-dai-cicli` | fatta |
-| 5 | Layout di base e forme di ritaglio | `layout-base` | da fare |
+| 5 | Layout di base e forme di ritaglio | `layout-base` | fatta |
 | 6 | Gli otto componenti del design system | `design-system-astro` | da fare |
 | 7 | Lo scroller del programma | `scroller-programma` | da fare |
 | 8 | Timeline e navigazione da tastiera | `timeline` | da fare |
@@ -600,26 +600,69 @@ cicli*. In breve:
 
 **Branch:** `layout-base` · **Dipende da:** 4
 
+Fino a qui l'unica pagina si scriveva da sé `<html>`, `<head>`, la favicon e il
+viewport. Da qui non lo fa più nessuno: il layout possiede il documento, le
+pagine il contenuto.
+
+### Decisioni prese scrivendo la PR
+
+Per esteso in [decisioni.md](decisioni.md), sotto *Layout e forme di ritaglio*.
+In breve:
+
+- **Nel layout ci sta ciò che, dimenticato, non fa fallire niente**: la lingua,
+  i meta, e i due componenti che devono viaggiare con ogni pagina —
+  `CycleAccents` e `ClipShapes`. Un accento rimasto arancio, una foto non
+  ritagliata e una pagina senza lingua sono tre guasti muti
+- **I nomi delle forme vengono da Material 3, la geometria dal design**: gli
+  `id` sono codice, e la libreria di Google ha già un nome per ognuna di queste
+  geometrie. La tabella sta in [design.md](design.md)
+- **Le forme distinte sono cinque, non sei**: l'ottofoglio è definito due volte
+  nell'export perché quelli sono due design
+- **Le geometrie esatte di Material sono rimandate alla PR 6**, la prima che
+  ritaglia qualcosa davvero: Google non le pubblica come path e la differenza si
+  giudica davanti a un ritratto, non al buio
+- **`og:url` e `og:image` aspettano il dominio**, e la guardia li pretende
+  quando `site` compare in `astro.config.mjs` — leggendolo, non ricordandolo
+
 ### Obiettivi
 
-- [ ] `src/layouts/Base.astro`: `lang="it"`, meta, Open Graph e Twitter,
-      `global.css`, slot
-- [ ] Link «salta al programma», visibile quando riceve la messa a fuoco
-- [ ] `src/components/ClipShapes.astro` con i `<clipPath>` del design, da
-      includere una volta in ogni pagina che li usa
-- [ ] La pagina provvisoria continua a funzionare sopra il nuovo layout
+- [x] `src/layouts/Base.astro`: `lang="it"`, charset, viewport, favicon, meta,
+      Open Graph e Twitter, `global.css`, i due componenti, slot
+- [x] Link «Salta al programma», visibile quando riceve la messa a fuoco, con il
+      `<main>` che prende `tabindex="-1"` perché il salto sposti il fuoco e non
+      solo lo scorrimento
+- [x] `src/components/ClipShapes.astro` con le cinque forme, incluso dal layout:
+      le definizioni valgono solo dentro la pagina che le contiene
+- [x] La pagina provvisoria continua a funzionare, e non possiede più niente del
+      documento
+- [x] Tabella delle forme in `design.md`, scelta rimandata in
+      `questioni-aperte.md`
 
 ### Test automatici
 
-- Ogni pagina prodotta ha `lang="it"` e un solo `<h1>`
-- Ogni `clip-path: url(#…)` presente in una pagina trova il suo `id` nella
-  stessa pagina
-- I meta Open Graph di base ci sono
+- Ogni pagina prodotta dichiara `lang="it"`, il charset, il viewport e ha un
+  solo `<h1>`
+- **Guardia**: ogni `clip-path: url(#…)` di una pagina trova il suo `id` nella
+  stessa pagina. Oggi nessuna pagina ritaglia — le forme le userà `GuestRow`
+  dalla PR 6 — e il test lo dice: a tenerla onesta ci sono i casi negativi
+- **Guardia**: due `<clipPath>` con lo stesso `id`, che è il guasto muto
+  verificabile oggi — il secondo non sostituisce il primo, viene ignorato
+- Ogni pagina porta tutte le forme che il componente dichiara, e nessun `id`
+  italiano dell'export arriva in `dist/`
+- I meta Open Graph di base ci sono, e **`og:url` e `og:image` sono pretesi
+  appena `site` è impostato**: il test si accende da solo alla PR 13
+- Il salta-a è il primo link del `<body>` e punta a un `id` che esiste — non a
+  uno che gli somiglia: `#programma` non è soddisfatto da `id="programma-2"`,
+  ed è il primo difetto che il caso negativo ha trovato nella guardia appena
+  scritta
+- Le guardie della PR 1 continuano a passare, e `npm run test:mutate` con loro
 
 ### Test manuali
 
-- Il link «salta al programma» si raggiunge col primo Tab ed è visibile
-- Le forme di ritaglio rendono come nell'anteprima del design aperta in locale
+- Il link «Salta al programma» si raggiunge col primo Tab, è visibile e porta al
+  programma
+- Le forme rendono come nell'anteprima del design aperta in locale, ritagliando
+  a mano un'immagine di prova: in questa PR non le usa ancora nessuno
 
 ---
 

@@ -161,6 +161,7 @@ docs/              documentazione di progetto
 scripts/           utilità (sincronizzazione dei caratteri)
 src/assets/fonts/  woff2 self-hostati e licenze OFL
 src/components/    i componenti .astro
+src/layouts/       Base.astro: il documento che ogni pagina abita
 src/content/       eventi, cicli, sedi, relatori
 src/content.config.ts   schema Zod delle quattro collection
 src/lib/           il dominio: events.ts e cycles.ts puri, programme.ts legge
@@ -186,11 +187,12 @@ o l'*apertura dello scroller* che questa pagina scrive intorno. Sostituirla
 vuol dire riportare i tre attributi sullo scroller e mostrare le stesse cose,
 non riscrivere le prove sul fuso. Tutto il resto di questa pagina si butta.
 
-Porta anche `<CycleAccents />` nel `<head>` e `data-cycle` su ogni serata, che
-è il quarto attributo e l'unico che ha bisogno di compagnia: finché il layout
-della PR 5 non esiste, le regole dell'accento viaggiano con la pagina che le
-usa. Da lì in poi stanno nel layout e nessuna pagina deve ricordarsene — ma la
-guardia continua a chiederlo a ognuna.
+Porta `data-cycle` su ogni serata, che è il quarto attributo e l'unico che ha
+bisogno di compagnia: le regole dell'accento gliele dà `Base.astro`, che dalla
+PR 5 include `CycleAccents` e `ClipShapes` per ogni pagina. **Una pagina non si
+scrive più `<html>` e `<head>` da sé**: le scrive il layout, e ciò che il layout
+porta — lingua, meta, salta-a, accenti, forme — è guardato pagina per pagina in
+`test/build/published-pages.test.ts`.
 
 ## Comandi
 

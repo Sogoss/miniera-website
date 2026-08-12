@@ -134,10 +134,37 @@ Dal `CLAUDE.md` dell'export del design, e vale sempre:
 ### Forme di ritaglio
 
 Il design ritaglia le foto con `clip-path` che referenziano `<clipPath>` SVG
-inline: `f-quadrifoglio`, `f-esafoglio`, `f-ottofoglio`, `f-gemma`,
-`f-obliqua` sul desktop, `m-ottofoglio` sul mobile. Il riferimento è per `id`,
-quindi le definizioni vanno incluse una volta in ogni pagina che le usa —
-attenzione ora che le viste sono pagine separate.
+inline. Il riferimento è per `id` e vale **solo dentro lo stesso documento**,
+quindi le definizioni stanno in `src/components/ClipShapes.astro` e le include
+il layout: ogni pagina le ha, nessuno deve ricordarsene, e una guardia pretende
+che ogni `url(#…)` pubblicato trovi la sua forma nella stessa pagina.
+
+Le forme distinte sono **cinque**: l'export definisce quella a otto lobi due
+volte, `f-ottofoglio` e `m-ottofoglio`, perché sono due file — un design
+desktop e uno mobile — e noi facciamo un sito solo.
+
+I nomi sono quelli di **Material 3**: un `id` è codice, e invece di tradurre
+l'italiano dell'export a orecchio prendono il nome che Google dà alle stesse
+geometrie nella sua libreria di forme.
+
+| Nell'export | Geometria | Material 3 | Il nostro `id` |
+|---|---|---|---|
+| `f-quadrifoglio` | quattro lobi attorno a una croce | 4-leaf clover | `clip-clover-4` |
+| `f-esafoglio` | centro largo, sei lobi | 6-sided cookie | `clip-cookie-6` |
+| `f-ottofoglio` · `m-ottofoglio` | centro stretto, otto lobi | 8-leaf clover | `clip-clover-8` |
+| `f-gemma` | otto lati arrotondati | gem | `clip-gem` |
+| `f-obliqua` | quadrilatero con due lati inclinati | slanted | `clip-slanted` |
+
+**Una sola è applicata nell'export**: quella a otto lobi, sui ritratti degli
+ospiti da 56×56. `f-gemma` compare come dato (`formaA`) che nessun elemento
+legge; le altre tre sono definite e mai referenziate. Restano tutte e cinque,
+come catalogo dichiarato — è il trattamento dei cinque colori dei cicli.
+
+La **geometria** però resta quella del design, e non quella di Material: Google
+genera le sue forme a runtime da un poligono arrotondato e non ne pubblica né i
+path né i parametri, quindi adottarle vorrebbe dire dipendere dalla
+ricostruzione di terzi. La scelta si decide alla PR 6, davanti al primo ritratto
+vero — vedi [questioni-aperte.md](questioni-aperte.md).
 
 ## I token
 

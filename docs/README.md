@@ -56,11 +56,12 @@ Fatto:
   date in italiano, ruoli, note, scena di apertura
 - L'accento di ogni serata viene dal colore del suo ciclo, emesso alla build
   dalla collection: `colors.css` non decide più il colore di nessuno
+- Il layout di base: lingua, meta e anteprime social, salta-a, e le cinque forme
+  di ritaglio del design — una pagina non si scrive più il documento da sé
 
 Da fare: l'elenco completo dei passi, in ordine e uno per PR, sta in
-[piano.md](piano.md). In sintesi — il layout di base, i componenti del design
-system, lo scroller con la `Timeline`, le pagine delle serate, il CMS, la
-pubblicazione. La migrazione delle 81 serate storiche resta
+[piano.md](piano.md). In sintesi — i componenti del design system, lo scroller
+con la `Timeline`, le pagine delle serate, il CMS, la pubblicazione. La migrazione delle 81 serate storiche resta
 fuori dalla beta, vedi [questioni-aperte.md](questioni-aperte.md).
 
 `src/pages/index.astro` è una pagina di verifica provvisoria: serve solo a

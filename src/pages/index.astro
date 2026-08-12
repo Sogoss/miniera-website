@@ -1,8 +1,12 @@
 ---
-// TEMPORARY PAGE — it only proves the chain holds up: importing the tokens,
-// resolving the font files, loading the collections and the references between
-// them, and now the domain that turns them into what a reader sees. The real
-// scroller replaces it.
+// TEMPORARY PAGE — it only proves the chain holds up: the tokens, the font
+// files, the collections and the references between them, the domain that turns
+// them into what a reader sees, and now the layout that wraps all of it. The
+// real scroller replaces it.
+//
+// Since PR 5 it owns none of the document: the language, the head, the meta,
+// the skip link and the two components that have to travel with every page are
+// Base.astro's. What is left here is the proof itself.
 //
 // It is also the only published evidence the build layer has: the strings
 // below are what test/build/published-dates.test.ts reads out of dist/, built
@@ -13,8 +17,7 @@
 // meant to be thrown away would take it down with the page; anchoring the state
 // to the Italian words would have it read an evening's description looking for
 // «in programma».
-import '../styles/global.css';
-import CycleAccents from '../components/CycleAccents.astro';
+import Base from '../layouts/Base.astro';
 import { loadProgramme } from '../lib/programme.ts';
 import { stateOf, type EventState } from '../lib/events.ts';
 
@@ -30,17 +33,8 @@ const LABEL: Record<EventState, string> = {
 const { scenes, nextIndex } = await loadProgramme();
 ---
 
-<html lang="it">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" href="/favicon.ico" sizes="32x32" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>La Miniera Culturale in Periferia</title>
-    <CycleAccents />
-  </head>
-  <body>
-    <main style="padding: var(--space-7) var(--gutter-page); max-width: var(--max-page); margin: 0 auto;">
+<Base title="La Miniera Culturale in Periferia">
+  <div style="padding: var(--space-7) var(--gutter-page); max-width: var(--max-page); margin: 0 auto;">
       <h1>Verifica della catena</h1>
       <p style="color: var(--text-secondary);">
         Token, caratteri self-hostati, collection e utilità di dominio. Nessun
@@ -79,6 +73,5 @@ const { scenes, nextIndex } = await loadProgramme();
           </article>
         ))
       }
-    </main>
-  </body>
-</html>
+  </div>
+</Base>
