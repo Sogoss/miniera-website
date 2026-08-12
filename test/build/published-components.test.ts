@@ -16,6 +16,7 @@
 import { describe, expect, it } from 'vitest';
 import { checkClipShapeReferences } from '../guards/shapes.ts';
 import { decodeEntities, publishedPages } from '../support/dist.ts';
+import { CLIP_SHAPES } from '../../src/lib/shapes.ts';
 
 const GALLERY = 'dist/componenti/index.html';
 
@@ -109,6 +110,16 @@ describe('the component gallery', () => {
     // at something. A site that clipped nothing would satisfy it in silence.
     const asking = pages.filter((page) => /url\(#clip-/.test(`${page.html}${page.css}`));
     expect(asking.length).toBeGreaterThan(0);
+  });
+
+  it.each(CLIP_SHAPES.map((shape) => shape.id))('uses %s, and does not merely declare it', (id) => {
+    // Four of the five shapes were a catalogue: defined on every page of the
+    // site and referenced by nothing, which means their geometry was published
+    // for two PRs without anybody being able to see it. Shown here, they are
+    // also *checked* here — the reference guard resolves each one against the
+    // definitions in the same page, so a shape that stopped being generated
+    // fails instead of quietly leaving a square photo.
+    expect(gallery!.html).toContain(`url(#${id})`);
   });
 
   it('uses the brand in full, at every size it shows it at', () => {

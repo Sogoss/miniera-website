@@ -25,6 +25,7 @@ import EventCard from '../components/EventCard.astro';
 import GuestRow from '../components/GuestRow.astro';
 import Label from '../components/Label.astro';
 import SignatureBand from '../components/SignatureBand.astro';
+import { CLIP_SHAPES } from '../lib/shapes.ts';
 import { loadProgramme } from '../lib/programme.ts';
 
 const { scenes } = await loadProgramme();
@@ -141,6 +142,31 @@ const guest = scene.speakers[0];
     </section>
 
     <section class="gallery-section">
+      <h2>Forme di ritaglio</h2>
+      <p class="note">
+        Non sono componenti: sono le cinque forme che <code>ClipShapes</code>
+        definisce in ogni pagina, e le usa chi ritaglia una foto. Quattro sono
+        generate — ispirate a Material 3, non le forme di Material —
+        <code>clip-skewed</code> è quella dell'export. Grandi per vedere la
+        geometria, e a 56 pixel perché è la misura in cui il design le applica.
+      </p>
+      <div class="shapes">
+        {
+          CLIP_SHAPES.map((shape) => (
+            <figure class="shape">
+              <span class="shape-big" style={`clip-path: url(#${shape.id})`} />
+              <span class="shape-small" style={`clip-path: url(#${shape.id})`} />
+              <figcaption>
+                <code>{shape.id}</code>
+                <span class="shape-note">{shape.description}</span>
+              </figcaption>
+            </figure>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="gallery-section">
       <h2>EventCard</h2>
       <div class="row row-wide">
         {
@@ -225,6 +251,52 @@ const guest = scene.speakers[0];
   }
 
   .note {
+    font: var(--type-small);
+    color: var(--text-muted);
+  }
+
+  .shapes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-6);
+    margin-top: var(--space-5);
+  }
+
+  .shape {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--space-3);
+    margin: 0;
+  }
+
+  /* Square, both of them: under `objectBoundingBox` the coordinates are
+     fractions of width and height, so a shape shown in a rectangle is a shape
+     stretched — and what is being judged here is the geometry. */
+  .shape-big,
+  .shape-small {
+    display: block;
+    flex: none;
+    background: linear-gradient(150deg, var(--surface-invert), var(--accent));
+  }
+
+  .shape-big {
+    width: 120px;
+    height: 120px;
+  }
+
+  .shape-small {
+    width: 56px;
+    height: 56px;
+  }
+
+  .shape figcaption {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    max-width: 18ch;
+  }
+
+  .shape-note {
     font: var(--type-small);
     color: var(--text-muted);
   }

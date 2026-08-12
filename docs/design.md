@@ -172,8 +172,15 @@ motivo per cui i nomi vengono da Material.
 **Una sola è applicata nell'export**: quella a otto lobi, sui ritratti degli
 ospiti da 56×56 — e da noi è la stessa, dentro `GuestRow`. `f-gemma` compare
 come dato (`formaA`) che nessun elemento legge; le altre tre sono definite e mai
-referenziate. Restano tutte e cinque, come catalogo dichiarato — è il
-trattamento dei cinque colori dei cicli.
+referenziate.
+
+Da noi restano tutte e cinque, ma **non come catalogo cieco**: la rassegna a
+`/componenti` le mostra tutte, grandi e a 56 pixel, e mostrarle vuol dire
+pubblicarle — quindi un'asserzione pretende che ogni forma dichiarata sia
+referenziata da qualche parte, e la guardia della PR 5 la risolve contro le
+definizioni della stessa pagina. Erano state pubblicate per due PR senza che
+nessuno potesse vederle: una geometria sbagliata sarebbe rimasta invisibile fino
+al giorno in cui qualcuno avesse usato quella forma.
 
 ### La geometria: ricostruita, non copiata
 
