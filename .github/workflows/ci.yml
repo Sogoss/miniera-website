@@ -41,3 +41,15 @@ jobs:
       # Runs the guards over both the source and dist/, building once as part
       # of the run — so a broken build fails here too.
       - run: npm test
+
+      # One level above the guards, and the only thing that can answer «are they
+      # still guarding»: each one is blinded in turn — made to return no
+      # violations — and the suite has to notice. Counting the tests that
+      # mention a guard by name does not answer it, because a guard called
+      # through a local helper is named in none of them.
+      #
+      # It reuses the dist/ the step above just built, so the cost is the suite
+      # again, once per guard: a couple of minutes for the one check that keeps
+      # the apparatus from quietly becoming decoration.
+      - name: every guard is held up by a test
+        run: npm run test:mutate

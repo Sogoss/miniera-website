@@ -195,6 +195,8 @@ npm run dev          # sviluppo
 npm run build        # build statica in dist/
 npm run preview      # anteprima della build
 npm test             # guardie e test, con una build dentro
+npm run test:mutate  # acceca ogni guardia a turno e pretende che la suite se
+                     # ne accorga — un minuto abbondante, la gira la CI
 npm run check        # astro check, typecheck
 npm run fonts:sync   # ricopia i caratteri dai pacchetti @fontsource
 npm run favicon:build  # rigenera public/favicon.ico da public/favicon.svg —
@@ -216,3 +218,12 @@ la perdita si vede.
 Quando aggiungi una regola ai vincoli, aggiungi la sua guardia in
 `test/guards/` **e il test che la fa fallire**: una guardia che non è mai stata
 vista scattare non si distingue da una che non sta guardando.
+
+A tenere in piedi quella regola c'è `npm run test:mutate`, che la CI esegue a
+ogni PR: acceca ogni guardia a turno — le fa restituire «nessuna violazione»
+qualunque cosa le si dia — e pretende che la suite se ne accorga. Se una
+guardia si può accecare senza che niente diventi rosso, i suoi test non la
+stanno tenendo. **Cercare il nome di una guardia dentro i test non risponde
+alla stessa domanda**: conta come i test sono scritti, non cosa tengono, e una
+guardia chiamata da una helper locale non compare in nessuno degli `it()` che
+la coprono.

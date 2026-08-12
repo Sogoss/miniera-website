@@ -586,6 +586,29 @@ ricava dalla cartella**, con l'eccezione dichiarata e a sua volta verificata:
 un test pretende che `programme.ts` l'orologio lo legga davvero. *(PR 3, in
 revisione)*
 
+**Le guardie si contano accecandole, non cercandone il nome.** La domanda
+«funzionano tutte?» è stata posta per la prima volta nella PR 4, e il primo
+modo di rispondere — cercare il nome di ogni guardia nei test e vedere chi ha
+un caso che se l'aspetta rossa — ha risposto *21 su 22* e ha accusato due volte
+la guardia sbagliata: conta come i test sono scritti, non cosa tengono, e una
+guardia chiamata da una helper locale non compare in nessuno degli `it()` che
+la coprono. `npm run test:mutate` fa la domanda per davvero: acceca ogni
+guardia a turno — le fa restituire «nessuna violazione» qualunque cosa le si
+dia — e pretende che la suite se ne accorga. Ventidue su ventidue, da due a
+undici asserzioni ciascuna.
+
+Lo gira la CI e non `npm test`: costa la suite intera una volta per guardia, un
+minuto abbondante, che è il prezzo sbagliato da pagare a ogni salvataggio e
+quello giusto per sapere che l'impianto non è diventato decorazione. Modifica i
+sorgenti sul posto e li rimette: gli originali stanno in memoria, il ripristino
+è in un `finally` e su ogni segnale, ogni file accecato porta un marcatore che
+rende riconoscibile una corsa interrotta, e l'ultima cosa che fa è rileggere i
+file e rifiutarsi di finire in silenzio se uno differisce. E ha il suo test,
+perché ha lo stesso modo di fallire che caccia: trovando *meno* guardie di
+quante ce ne sono direbbe «18 su 18», che si legge come una risposta — quindi
+il conto viene fatto due volte, in due modi diversi, e i due devono coincidere.
+*(PR 4)*
+
 **L'indipendenza dal fuso si prova eseguendo, non dichiarando.** `TZ` si legge
 una volta all'avvio del processo, quindi una suite sola prova solo la macchina
 su cui gira: in CI è UTC, su una scrivania a Torino no, ed è esattamente quella

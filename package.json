@@ -14,6 +14,7 @@
     "check": "astro check",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:mutate": "node scripts/mutate-guards.mjs",
     "fonts:sync": "node scripts/sync-fonts.mjs",
     "favicon:build": "node scripts/build-favicon.mjs"
   },

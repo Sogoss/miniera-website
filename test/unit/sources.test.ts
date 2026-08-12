@@ -32,7 +32,7 @@ import {
 } from '../guards/language.ts';
 import { checkDevDepsInLockfile, checkNoTailwind } from '../guards/packages.ts';
 import { collectionEntries, dateOf } from '../support/frontmatter.ts';
-import { filesWithExtension, read, readJson, repoRoot } from '../support/paths.ts';
+import { exists, filesWithExtension, read, readJson, repoRoot } from '../support/paths.ts';
 import { componentCss } from '../support/styles.ts';
 
 const styleFiles = filesWithExtension(join(repoRoot, 'src/styles'), ['.css']);
@@ -352,6 +352,15 @@ describe('package.json', () => {
 
   it('agrees with the lockfile about what is development-only', () => {
     expect(checkDevDepsInLockfile(manifest, readJson('package-lock.json'))).toEqual([]);
+  });
+
+  it('keeps the command that blinds the guards', () => {
+    // The script answers a question nothing else can, and it answers it only
+    // as long as it can be reached: renamed or dropped, the CI step goes red
+    // with a message about npm rather than about the guards.
+    const scripts = (manifest as { scripts?: Record<string, string> }).scripts ?? {};
+    expect(scripts['test:mutate'] ?? '').toContain('mutate-guards.mjs');
+    expect(exists('scripts/mutate-guards.mjs')).toBe(true);
   });
 
   it('builds in UTC, the zone Cloudflare builds in', () => {

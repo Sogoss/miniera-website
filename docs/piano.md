@@ -530,6 +530,14 @@ cicli*. In breve:
 > invece che cercandone il nome nei test, che le contava per come sono scritte e
 > non per quello che tengono: **22 su 22**, ognuna sostenuta da un numero di
 > asserzioni che va da due a undici.
+>
+> Quel conto è diventato un comando, `npm run test:mutate`, e uno step della CI:
+> farlo a mano una volta rispondeva alla domanda di oggi e a nessuna di domani.
+> Non sta in `npm test` perché costa la suite intera una volta per guardia. Ha
+> il suo test, perché ha esattamente il modo di fallire che caccia — trovando
+> meno guardie di quante ce ne sono direbbe «18 su 18», che si legge come una
+> risposta — ed è stato visto scattare mettendogli davanti una guardia che
+> nessun test copre: la nomina ed esce con 1.
 
 ### Test manuali
 
