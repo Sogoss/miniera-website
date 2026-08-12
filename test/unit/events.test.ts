@@ -94,17 +94,15 @@ describe('isPast', () => {
 
 describe('shortDate and longDate', () => {
   it('writes the Timeline tick', () => {
-    expect(shortDate(EVENING)).toBe('24 set 2026');
+    expect(shortDate(EVENING)).toBe('24 set 26');
   });
 
   it('writes the heading of a scene', () => {
-    expect(longDate(EVENING)).toBe('giovedì 24 settembre 2026, ore 21');
+    expect(longDate(EVENING)).toBe('gio 24 set 26, ore 21');
   });
 
   it('shows the minutes only when there are any', () => {
-    expect(longDate(new Date('2026-09-24T21:30:00+02:00'))).toBe(
-      'giovedì 24 settembre 2026, ore 21:30',
-    );
+    expect(longDate(new Date('2026-09-24T21:30:00+02:00'))).toBe('gio 24 set 26, ore 21:30');
   });
 
   it('dates the evening by the day it falls on in Turin', () => {
@@ -114,8 +112,8 @@ describe('shortDate and longDate', () => {
     // no evening of this association ever is: what is asserted here is the
     // date, and the hour is left out of it.
     const afterMidnight = new Date('2026-01-08T00:30:00+01:00');
-    expect(shortDate(afterMidnight)).toBe('8 gen 2026');
-    expect(longDate(afterMidnight)).toContain('giovedì 8 gennaio 2026');
+    expect(shortDate(afterMidnight)).toBe('8 gen 26');
+    expect(longDate(afterMidnight)).toContain('gio 8 gen 26');
   });
 });
 

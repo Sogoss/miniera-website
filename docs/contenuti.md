@@ -33,8 +33,8 @@ almeno una volta.
 | Non c'è | Perché |
 |---|---|
 | passato / futuro | si calcolano da `date` alla build |
-| una data breve ("24 set 2026") | è una formattazione di `date` |
-| la data distesa ("giovedì 24 settembre 2026, ore 21") | idem |
+| una data breve ("24 set 26") | è una formattazione di `date` |
+| la data distesa ("gio 24 set 26, ore 21") | idem |
 | il nome del ciclo | viene dal riferimento al ciclo |
 | `soloAudio` | **eliminato**: nel design era un bottone senza URL, quell'audio non esiste |
 

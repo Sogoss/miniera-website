@@ -148,11 +148,17 @@ e aprire su una scena barrata sarebbe la prima cosa che si vede entrando nel
 sito. Con tutte le serate alle spalle si apre sull'ultima, che è la più
 recente: un indice `-1` diventerebbe una scena vuota.
 
-**Le date portano l'anno, tutte** — `24 set 2026`, `giovedì 24 settembre 2026,
-ore 21`. Nel design non c'era perché il design mostrava sei serate dentro una
-stagione sola, dove *18 giugno* identifica qualcosa; su ottantuno non
-identifica niente. Da guardare a schermo nella PR 8: la tacca della Timeline
-sta in una rotaia stretta e con l'anno cresce di un terzo.
+**Le date portano l'anno, tutte** — `24 set 26`, `gio 24 set 26, ore 21`. Nel
+design non c'era perché il design mostrava sei serate dentro una stagione sola,
+dove *18 giugno* identifica qualcosa; su ottantuno non identifica niente.
+
+**E lo portano a due cifre, in tutte e due le forme.** La rotaia della Timeline
+è stretta e `24 set 2026` se ne prendeva un terzo in più; *giovedì 24 settembre
+2026* era una riga e mezza di un'intestazione il cui lavoro è il titolo. Sono
+la stessa data in due misure — la tacca, e la tacca con davanti il giorno della
+settimana e dietro l'ora — invece di due modi diversi di scrivere una data
+dentro lo stesso sito. Forma chiesta dal committente e guardata a schermo nel
+controllo manuale della PR 3. *(PR 3, in revisione)*
 
 **Il dominio è diviso in due file, e il puro non importa niente.**
 `src/lib/events.ts` descrive strutturalmente le forme che gli servono invece di

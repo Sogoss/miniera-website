@@ -211,15 +211,22 @@ const shortDateFormat = new Intl.DateTimeFormat('it-IT', {
   timeZone: ROME,
   day: 'numeric',
   month: 'short',
-  year: 'numeric',
+  // Two digits, not four: the tick lives in a narrow rail, and `24 set 2026`
+  // took a third more of it than `24 set 26` — which is what the association
+  // asked for and how a date is written short in Italian anyway.
+  year: '2-digit',
 });
 
 const longDateFormat = new Intl.DateTimeFormat('it-IT', {
   timeZone: ROME,
-  weekday: 'long',
+  // The same compact shape as the tick, with the weekday in front of it and
+  // the hour after: `gio 24 set 26, ore 21`. Written out — «giovedì 24
+  // settembre 2026» — it was a line and a half of a heading whose job is the
+  // title, and the two forms then disagreed about how this site writes a date.
+  weekday: 'short',
   day: 'numeric',
-  month: 'long',
-  year: 'numeric',
+  month: 'short',
+  year: '2-digit',
 });
 
 const timeFormat = new Intl.DateTimeFormat('it-IT', {
@@ -229,16 +236,18 @@ const timeFormat = new Intl.DateTimeFormat('it-IT', {
   hourCycle: 'h23',
 });
 
-/** `24 set 2026` — the Timeline tick. */
+/** `24 set 26` — the Timeline tick. */
 export function shortDate(date: Date): string {
   return shortDateFormat.format(date);
 }
 
-/** `giovedì 24 settembre 2026, ore 21` — the heading of a scene.
+/** `gio 24 set 26, ore 21` — the heading of a scene.
  *
  *  The year is there on purpose, and it is not in the design: the design
  *  showed six evenings inside one season, where «18 giugno» identifies
- *  something. Across eighty-one of them it does not.
+ *  something. Across eighty-one of them it does not. Two digits of it, and the
+ *  weekday abbreviated, because the association asked for the short form —
+ *  read out at a glance, this is a heading and not a sentence.
  */
 export function longDate(date: Date): string {
   return `${longDateFormat.format(date)}, ore ${romeTime(date)}`;

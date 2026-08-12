@@ -297,8 +297,8 @@ describe('checkMachineDateText', () => {
     // machine-readable attribute — which is UTC and says so, and means the
     // same instant wherever it is read.
     const html = [
-      `<time datetime="2026-09-24T19:00:00.000Z">giovedì 24 settembre 2026, ore 21</time>`,
-      `<span>24 set 2026</span>`,
+      `<time datetime="2026-09-24T19:00:00.000Z">gio 24 set 26, ore 21</time>`,
+      `<span>24 set 26</span>`,
     ].join('\n');
     expect(checkMachineDateText(html, 'dist/index.html')).toEqual([]);
   });

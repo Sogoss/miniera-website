@@ -39,9 +39,9 @@ export type Scene = {
   format: EventData['format'];
   description: string;
   date: Date;
-  /** `24 set 2026` */
+  /** `24 set 26` */
   shortDate: string;
-  /** `giovedì 24 settembre 2026, ore 21` */
+  /** `gio 24 set 26, ore 21` */
   longDate: string;
   past: boolean;
   cancelled: boolean;

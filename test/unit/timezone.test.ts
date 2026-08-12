@@ -26,8 +26,8 @@ function printedUnder(timeZone: string): unknown {
 /** What Turin says, whoever is asking. */
 const EXPECTED = {
   romeDay: '2026-09-24',
-  shortDate: '24 set 2026',
-  longDate: 'giovedì 24 settembre 2026, ore 21',
+  shortDate: '24 set 26',
+  longDate: 'gio 24 set 26, ore 21',
   pastJustBefore: false,
   pastAtMidnight: true,
 };

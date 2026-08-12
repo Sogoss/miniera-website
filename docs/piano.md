@@ -291,9 +291,8 @@ dominio*. In breve:
 - [x] Passato e futuro calcolati **in `Europe/Rome`**, per confronto fra date
       civili e non per aritmetica sugli offset: una serata diventa già svolta
       alla mezzanotte del giorno successivo, non all'ora di inizio
-- [x] Formattazione italiana delle date: `24 set 2026` per la Timeline,
-      `giovedì 24 settembre 2026, ore 21` per la scena — minuti solo quando
-      ci sono
+- [x] Formattazione italiana delle date: `24 set 26` per la Timeline,
+      `gio 24 set 26, ore 21` per la scena — minuti solo quando ci sono
 - [x] Risoluzione dei riferimenti a ciclo, sede e relatori, con il ruolo
       dell'evento che sovrascrive quello della persona. Un riferimento che non
       risolve ferma la build invece di viaggiare come `undefined`
