@@ -3,7 +3,7 @@ import { buildFaviconIco } from '../../scripts/build-favicon.mjs';
 import { checkDesignRuntimeArtifacts } from '../guards/artifacts.ts';
 import { checkItalianDataAttributes } from '../guards/language.ts';
 import { checkNoReactRuntime } from '../guards/react.ts';
-import { listPublishedFiles, readPublishedFiles } from '../support/dist.ts';
+import { copiedFromPublic, listPublishedFiles, readPublishedFiles } from '../support/dist.ts';
 import { readBytes } from '../support/paths.ts';
 
 describe('what the build publishes', () => {
@@ -27,7 +27,12 @@ describe('what the build publishes', () => {
     // reach dist/ without either — vendored, copied out of the export, dragged
     // in by something else — and the eight components need no JavaScript at
     // all, so anything of the sort is a decision reversed in silence.
-    const files = readPublishedFiles();
+    //
+    // Files copied out of public/ are left out, the way publishedPages() leaves
+    // them out of the document guards: PR 12 puts the compiled Sveltia bundle
+    // at public/admin/, and asking that not to be a framework is asking it not
+    // to be the CMS.
+    const files = readPublishedFiles().filter(({ path }) => !copiedFromPublic(path));
     expect(files.length).toBeGreaterThan(0);
 
     const violations = files.flatMap(({ path, text }) => checkNoReactRuntime(text, path));

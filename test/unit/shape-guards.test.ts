@@ -10,6 +10,7 @@ import {
   checkClipShapeReferences,
   checkDuplicateClipShapeIds,
   checkEmptyClipShapes,
+  checkHandWrittenShapes,
   clipShapeIds,
 } from '../guards/shapes.ts';
 
@@ -162,8 +163,86 @@ describe('checkEmptyClipShapes', () => {
     ).toEqual([]);
   });
 
+  it('reports a primitive that draws nothing', () => {
+    // The export's own way of writing a shape, one attribute short. A circle
+    // with no `r` has radius zero and clips everything away — the same hole as
+    // an empty `<path d="">`, which the guard already caught, reached through
+    // the family it says it supports.
+    expect(
+      checkEmptyClipShapes('<clipPath id="clip-clover-8"><circle cx="0.5" cy="0.5"/></clipPath>'),
+    ).toHaveLength(1);
+    expect(checkEmptyClipShapes('<clipPath id="clip-gem"><rect/></clipPath>')).toHaveLength(1);
+    expect(
+      checkEmptyClipShapes('<clipPath id="clip-skewed"><polygon points=""/></clipPath>'),
+    ).toHaveLength(1);
+  });
+
+  it('reports a dimension written as zero', () => {
+    // `r="0"` is a circle nobody can see, and it reads as a shape in the markup.
+    expect(
+      checkEmptyClipShapes('<clipPath id="clip-gem"><circle cx="0.5" cy="0.5" r="0"/></clipPath>'),
+    ).toHaveLength(1);
+  });
+
   it('ignores a definition left in a comment', () => {
     expect(checkEmptyClipShapes('<!-- <clipPath id="clip-gem"></clipPath> -->')).toEqual([]);
+  });
+});
+
+describe('checkHandWrittenShapes', () => {
+  it('accepts a component that emits what the module generates', () => {
+    const component = '<clipPath id={shape.id} clipPathUnits="objectBoundingBox"><path d={shape.path} /></clipPath>';
+    expect(checkHandWrittenShapes(component, 'ClipShapes.astro')).toEqual([]);
+  });
+
+  it('reports a geometry pasted into the component', () => {
+    // The way rule 13 gets lost: the shape publishes, every other check stays
+    // green, and the module that justifies the constraint is bypassed.
+    const pasted = '<clipPath id="clip-gem"><path d="M 0.6 0.07 L 0.77 0.15 Z" /></clipPath>';
+    const violations = checkHandWrittenShapes(pasted, 'ClipShapes.astro');
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain('ClipShapes.astro');
+  });
+
+  it('accepts the generated entries of the table', () => {
+    const table = `[
+      { id: 'clip-clover-4', description: 'quattro lobi', path: scallopedPath({ lobes: 4 }) },
+      { id: 'clip-gem', description: 'otto lati', path: roundedPolygonPath(gemCorners()) },
+    ]`;
+    expect(checkHandWrittenShapes(table, 'shapes.ts')).toEqual([]);
+  });
+
+  it('reports a written-out path in the table', () => {
+    const table = `[{ id: 'clip-clover-8', description: 'otto lobi', path: 'M 0 0 L 1 1 Z' }]`;
+    const violations = checkHandWrittenShapes(table, 'shapes.ts');
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain('clip-clover-8');
+  });
+
+  it('does not blame an entry for the next one’s written path', () => {
+    // The table has generated entries above the one declared exception, and a
+    // search that ran on past its own entry found `clip-skewed`'s string and
+    // reported the entry above it — a guard firing on correct work, which is
+    // the half that gets deleted.
+    const table = `[
+      { id: 'clip-gem', description: 'otto lati', path: roundedPolygonPath(gemCorners()) },
+      { id: 'clip-skewed', description: 'obliqua', path: 'M 0 0.08 L 1 0 Z' },
+    ]`;
+    expect(checkHandWrittenShapes(table, 'shapes.ts')).toEqual([]);
+  });
+
+  it('lets the declared exception through, and only it', () => {
+    // clip-skewed keeps the export's geometry because Material has nothing to
+    // generate it from. The exception is named in the guard rather than assumed.
+    const skewed = `[{ id: 'clip-skewed', description: 'obliqua', path: 'M 0 0.08 L 1 0 Z' }]`;
+    expect(checkHandWrittenShapes(skewed, 'shapes.ts')).toEqual([]);
+    expect(checkHandWrittenShapes(skewed, 'shapes.ts', [])).toHaveLength(1);
+  });
+
+  it('ignores a geometry left in a comment', () => {
+    expect(
+      checkHandWrittenShapes('<!-- <path d="M 0 0 L 1 1 Z" /> -->', 'ClipShapes.astro'),
+    ).toEqual([]);
   });
 });
 

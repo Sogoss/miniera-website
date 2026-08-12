@@ -89,6 +89,21 @@ describe('checkNoReactRuntime', () => {
     expect(violations[0]!.detail).toContain('client.js');
   });
 
+  it('leaves plain DOM alone', () => {
+    // `document.createElement` is not a framework, and it is what the scroller
+    // of PR 7 will write the first time it ships an inline script. A guard that
+    // fired here would go red over code containing nothing of the sort — and
+    // CLAUDE.md does not allow switching a test off to get past it, so the only
+    // exits would be rewriting correct code or editing this guard.
+    expect(checkNoReactRuntime('const el = document.createElement("section");')).toEqual([]);
+    expect(checkNoReactRuntime('node.ownerDocument.createElement("div")')).toEqual([]);
+  });
+
+  it('leaves a page that merely spells the word alone', () => {
+    // Prose, a class name, an Italian word: `reaction`, `preacher`, `reattore`.
+    expect(checkNoReactRuntime('<p>La sala reagisce, e il preambolo resta.</p>')).toEqual([]);
+  });
+
   it('reports the design export bundle by name', () => {
     // The one that would mean the specification had been shipped instead of
     // translated — which is rule 8 seen from another side.

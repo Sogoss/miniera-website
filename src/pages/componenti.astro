@@ -31,7 +31,17 @@ import { loadProgramme } from '../lib/programme.ts';
 const { scenes } = await loadProgramme();
 
 /* An evening with guests, so that the row has something real to show; the
-   first one otherwise, because a gallery that renders nothing proves nothing. */
+   first one otherwise, because a gallery that renders nothing proves nothing.
+   An empty collection is a content condition, so it is said as one: without
+   this the page dereferences `undefined` and the build dies with a TypeError
+   pointing here instead of at src/content/eventi/, which is the opposite of
+   what programme.ts does with a reference it cannot resolve. */
+if (scenes.length === 0) {
+  throw new Error(
+    'La rassegna dei componenti ha bisogno di almeno una serata in src/content/eventi/: mostra EventCard e GuestRow con dati veri, non inventati.',
+  );
+}
+
 const scene = scenes.find((one) => one.speakers.length > 0) ?? scenes[0]!;
 const guest = scene.speakers[0];
 ---
@@ -132,7 +142,12 @@ const guest = scene.speakers[0];
           )
         }
         {guest && <GuestRow name={guest.name} role={guest.role} />}
-        <GuestRow name="Senza ruolo e senza ritratto" />
+        {/* Con uno `style` passato da fuori, che è il modo in cui lo scroller
+            darà a un componente l'accento della sua serata: quello del
+            chiamante e quello del componente devono convivere in un attributo
+            solo, perché scritti due volte il browser tiene il primo e butta
+            l'altro. */}
+        <GuestRow name="Con uno stile dal chiamante" style="max-width: 22rem" />
       </div>
       <p class="note">
         Il ritratto è un riquadro di prova: nessun relatore d'esempio ha una

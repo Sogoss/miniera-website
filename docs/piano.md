@@ -817,6 +817,51 @@ system* e *Forme di ritaglio, la geometria*. In breve:
 > sempre più esterno del centro del lobo. Un ramo che nessun parametro raggiunge
 > non si distingue da un ramo sbagliato, e ora quella proprietà è un test.
 
+> **Trovato in revisione.** Quindici difetti, e la maggior parte sta nello
+> strato di verifica: è la forma di guasto che questo repository si è dato
+> l'impianto per intercettare, ripetuta dentro l'impianto.
+>
+> Quattro erano nel codice. Una collection `eventi` vuota faceva morire la build
+> con un `TypeError` che indicava la rassegna invece del contenuto — ora è un
+> messaggio che nomina la cartella. Il **3:1 dell'accento** era verificato solo
+> contro il fondo della pagina, mentre `EventCard` e `Card raised` lo disegnano
+> su `--surface-raised`, che è più chiaro: un colore tarato esattamente sulla
+> soglia contro il blu scuro sta a 2.37:1 sul blu chiaro, e la fascia della
+> scheda — l'unità principale del sito — sarebbe stata sotto soglia con la suite
+> verde. Quattro componenti scrivevano il proprio `style` prima di `{...rest}`,
+> quindi lo `style` di chi li usa arrivava nel markup come secondo attributo e il
+> browser lo buttava: è esattamente l'idioma con cui la PR 7 darà a un componente
+> l'accento della sua serata, e `astro check` restava verde perché la prop
+> esisteva. E un link disabilitato portava `aria-disabled` su un `<a>` senza
+> `href`, che non ha ruolo di link: l'attributo non qualificava niente e chi usa
+> uno screen reader non sentiva né che è un link né che è spento.
+>
+> Le altre erano guardie che non guardavano. `declarationsFor` cercava su una
+> copia del CSS senza virgolette e affettava l'originale, sfasata di una
+> posizione per ogni virgoletta precedente — atterrava sulla regola giusta per
+> fortuna. `brandElements` contava i tag di chiusura per trovare la fine di un
+> marchio, quindi un `<img data-brand>` — un logo raster — faceva correre la
+> scansione fino a fine documento e superava il controllo prendendo in prestito
+> la firma della banda più in basso. `checkEmptyClipShapes` accettava le
+> primitive per il solo nome del tag, cioè `<circle cx cy>` senza raggio, che è
+> il modo dell'export di scrivere una forma con un attributo in meno. La guardia
+> sui colori grezzi non leggeva mai il pubblicato, dove un colore scritto come
+> espressione è l'unico posto in cui si vede. `createElement` come sottostringa
+> avrebbe fatto fallire la CI su `document.createElement`, cioè su DOM puro.
+> Niente pretendeva che una pagina portasse davvero un `data-brand`: bastava
+> rinominare l'attributo e la metà pubblicata della regola 7 sarebbe passata su
+> una lista vuota. E la regola 13, aggiunta in questa PR, non aveva guardia per
+> il suo vincolo principale — una forma incollata da una libreria si pubblicava
+> con tutto verde.
+>
+> Due riguardavano ciò che il codice dice di sé: la banda lasciava il testo
+> libero senza che nessuna guardia potesse vederlo — ora porta `data-brand`, e
+> chi vuole una fascia con un altro testo scrive un altro elemento — e un
+> commento certificava che il quadrifoglio generato è quello dell'export con le
+> cuspidi raccordate, mentre è ruotato di 45° e costruito in un altro modo. È la
+> fedeltà non verificabile che la regola 13 vieta, scritta nel modulo a cui la
+> regola punta.
+
 ### Test manuali
 
 - Confronto a schermo con `design-export/sito-miniera.dc.html` aperto in

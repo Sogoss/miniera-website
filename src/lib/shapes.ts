@@ -312,8 +312,16 @@ export function gemCorners(): Corner[] {
  * The parameters are the tuning, and they are the answer to «why 0.25?»: they
  * were moved until the shape read right at 56×56, which is the size the design
  * applies these at and the only size at which the difference between two of them
- * is a difference anybody sees. Four lobes of radius 0.25 is the export's own
- * quatrefoil — four circles of r = 0.27 — with the cusps between them filleted.
+ * is a difference anybody sees.
+ *
+ * A lobe radius of 0.25 is close to the export's r = 0.27, and that is where the
+ * resemblance stops: the export put its four circles on the diagonals and filled
+ * the middle with two crossing rectangles, while these four lobes sit at the top,
+ * right, bottom and left with a fillet between them. The two do not superimpose
+ * in any orientation. This is worth being exact about, because rule 13 exists to
+ * forbid claiming a fidelity nobody can check — and a comment saying «the
+ * export's own quatrefoil, filleted» is that claim, made about a geometry this
+ * PR deleted.
  *
  * `clip-skewed` is not generated. Material has no equivalent — its `slanted` is
  * a rounded square on a tilted axis, this is a hard-edged quadrilateral — so it

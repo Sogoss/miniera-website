@@ -20,6 +20,12 @@ import { type Violation, lineNumber } from './types.ts';
 /** The signature that has to travel with the mark, however it is cased. */
 const SIGNATURE = 'in periferia';
 
+/* Elements that cannot have children, so cannot hold a signature. */
+const VOID_ELEMENTS = new Set([
+  'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta',
+  'param', 'source', 'track', 'wbr',
+]);
+
 /**
  * Every element carrying `data-brand`, with the text inside it.
  *
@@ -36,6 +42,17 @@ export function brandElements(markup: string): { text: string; index: number }[]
   while ((match = opening.exec(markup)) !== null) {
     const [whole, tag = '', attributes = ''] = match;
     if (!/\sdata-brand(?=[\s=>/]|$)/i.test(attributes)) continue;
+
+    /* An element that has no closing tag holds no text, and saying so is the
+       whole of it: counting `</tag>` from a void or self-closed element never
+       gets back to zero, so the scan used to run to the end of the document and
+       call the rest of the page the mark's text. On the gallery that rest
+       contains the signature band, so a mark on `<img data-brand>` — a raster
+       logo — passed the check by borrowing somebody else's words. */
+    if (VOID_ELEMENTS.has(tag.toLowerCase()) || /\/\s*$/.test(attributes)) {
+      found.push({ text: '', index: match.index });
+      continue;
+    }
 
     const from = match.index + whole.length;
     let depth = 1;

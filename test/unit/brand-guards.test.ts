@@ -66,6 +66,22 @@ describe('checkBrandSignature', () => {
     expect(checkBrandSignature('<!-- <span data-brand>Miniera Culturale</span> -->')).toEqual([]);
   });
 
+  it('reports a mark on an element that can hold no text', () => {
+    // A raster logo — `<img data-brand>` — holds no signature and cannot. The
+    // first version counted `</img>` to find the end of it, never got back to
+    // zero, and called the whole rest of the page the mark's text: on this
+    // gallery that rest contains the signature band, so the check passed by
+    // borrowing somebody else's words.
+    const raster = `<img data-brand src="/marchio.svg" alt="La Miniera Culturale">${MARK}`;
+    const violations = checkBrandSignature(raster);
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain('in Periferia');
+  });
+
+  it('reports a self-closed mark the same way', () => {
+    expect(checkBrandSignature('<span data-brand /><p>in Periferia</p>')).toHaveLength(1);
+  });
+
   it('does not mistake another attribute for data-brand', () => {
     // `data-brand-tone` is not the mark, and reading it as one would fire on
     // markup that is perfectly correct.

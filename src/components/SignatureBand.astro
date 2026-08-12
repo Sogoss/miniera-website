@@ -7,32 +7,39 @@
  * this band, so there is no layout the longer string can break, and the one
  * obvious use of the component is now the correct one.
  *
- * It does not carry `data-brand`: the mark is `Brand`, this is a typographic
- * band that happens to say the same words by default. Marking it as the brand
- * would tie the guard to whatever text a caller passes, and a band reading
- * «GIOVEDÌ SERA» is a legitimate thing to want.
+ * It carries `data-brand`, so rule 7's published-page guard reads its text like
+ * any other mark. That was not the first decision here: the band was left
+ * unmarked on the grounds that it is a typographic band and not the mark, and
+ * that a band reading «GIOVEDÌ SERA» is a legitimate thing to want. What that
+ * left behind was a free-form `text` prop able to publish the short mark on
+ * every page carrying a footer, with neither rule-7 guard able to see it — one
+ * keys on this attribute, the other reads only Brand.astro. A band with a
+ * different text is a thing somebody can still write; it is just not this
+ * component, whose whole default is the signature.
  */
 import type { HTMLAttributes } from 'astro/types';
 
-interface Props extends HTMLAttributes<'div'> {
+/* `style` composed rather than spread — see Brand.astro: written twice, the
+   caller's copy is the one a browser throws away. */
+interface Props extends Omit<HTMLAttributes<'div'>, 'style'> {
   text?: string;
   /** In px, like the export: the padding scales from it. */
   size?: number;
+  style?: string;
 }
 
 const {
   text = 'MINIERA CULTURALE IN PERIFERIA',
   size = 34,
   class: className,
+  style,
   ...rest
 } = Astro.props;
+
+const inlineStyle = [`--band-size: ${size}px`, style].filter(Boolean).join('; ');
 ---
 
-<div
-  class:list={['signature-band', className]}
-  style={`--band-size: ${size}px`}
-  {...rest}
->
+<div class:list={['signature-band', className]} data-brand style={inlineStyle} {...rest}>
   {text}
 </div>
 

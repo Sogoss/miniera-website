@@ -68,11 +68,26 @@ export function checkNoClientDirectives(source: string, path = 'the component'):
   return violations;
 }
 
-/* What a React runtime leaves behind in a bundle. `createElement` and
-   `useState` are the two that survive minification as property names on the
-   exported object; `MinieraDS` is the export's own namespace, which would mean
-   the design system bundle had been shipped rather than translated. */
-const RUNTIME_MARKERS = ['createElement', 'useState', 'react-dom', 'MinieraDS'];
+/* What a React runtime leaves behind in a bundle, written narrowly on purpose.
+ *
+ * The obvious marker is `createElement`, and it is the wrong one: `document
+ * .createElement` is plain DOM, so the first inline script the scroller ships
+ * would turn this guard red over code containing no framework — and the
+ * CLAUDE.md forbids switching a test off to get past it, which leaves rewriting
+ * working code or editing the guard. A guard that fires on correct work is the
+ * half that gets deleted, so the trade here is deliberate: a vendored and
+ * heavily minified React might slip through, while nothing legitimate is ever
+ * accused. `MinieraDS` is the design export's own namespace, which would mean
+ * the specification had been shipped rather than translated. */
+const RUNTIME_MARKERS = [
+  /\bReact\.createElement\b/,
+  /\breact-dom\b/,
+  /\breact\/jsx-runtime\b/,
+  /\b__reactProps/,
+  /\bjsxDEV\s*\(/,
+  /\buseState\s*\(/,
+  /\bMinieraDS\b/,
+];
 
 /**
  * The runtime itself, in a published file.
@@ -85,11 +100,11 @@ export function checkNoReactRuntime(text: string, path = 'the published file'): 
   const violations: Violation[] = [];
 
   for (const marker of RUNTIME_MARKERS) {
-    const index = text.indexOf(marker);
-    if (index === -1) continue;
+    const found = marker.exec(text);
+    if (!found) continue;
     violations.push({
       rule: 'rule 9',
-      detail: `\`${marker}\` on line ${lineNumber(text, index)} of ${path}: a UI framework runtime reached the published site. The design system is .astro — nothing of it should need JavaScript in a browser`,
+      detail: `\`${found[0]}\` on line ${lineNumber(text, found.index)} of ${path}: a UI framework runtime reached the published site. The design system is .astro — nothing of it should need JavaScript in a browser`,
     });
   }
 

@@ -22,20 +22,29 @@ import type { HTMLAttributes } from 'astro/types';
 
 export type BrandTone = 'cream' | 'blue';
 
-interface Props extends HTMLAttributes<'span'> {
+/* `style` is narrowed to a string and destructured rather than left in the
+   spread. Written as `style={…} {...rest}` the component emits its own
+   attribute and then a second one from the spread, and a browser keeps the
+   first: a caller's declaration would reach the markup and be dropped. It is
+   the per-element idiom this project already documents for the scroller —
+   `<Brand style={`--accent: ${colour}`} />` — so it has to compose. */
+interface Props extends Omit<HTMLAttributes<'span'>, 'style'> {
   /** In px, like the export. Everything else scales from it. */
   height?: number;
   tone?: BrandTone;
+  style?: string;
 }
 
-const { height = 48, tone = 'cream', class: className, ...rest } = Astro.props;
+const { height = 48, tone = 'cream', class: className, style, ...rest } = Astro.props;
+
+const inlineStyle = [`--brand-height: ${height}px`, style].filter(Boolean).join('; ');
 ---
 
 <span
   class:list={['brand', className]}
   data-brand
   data-tone={tone}
-  style={`--brand-height: ${height}px`}
+  style={inlineStyle}
   {...rest}
 >
   <span class="brand-bar" aria-hidden="true"></span>

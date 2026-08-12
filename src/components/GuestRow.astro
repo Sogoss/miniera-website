@@ -20,18 +20,23 @@ import type { HTMLAttributes } from 'astro/types';
    word first, so the attribute is the one that goes: without the Omit the two
    collide in the types, and somebody writing `role="listitem"` on a GuestRow
    would silently be setting the caption under a name. */
-interface Props extends Omit<HTMLAttributes<'div'>, 'role'> {
+interface Props extends Omit<HTMLAttributes<'div'>, 'role' | 'style'> {
   name: string;
   role?: string;
   /** In px, like the export: the size of the name. */
   size?: number;
+  /* Composed with this component's own, not spread past it — see Brand.astro:
+     written twice, the caller's copy is the one a browser throws away. */
+  style?: string;
 }
 
-const { name, role, size = 34, class: className, ...rest } = Astro.props;
+const { name, role, size = 34, class: className, style, ...rest } = Astro.props;
 const hasPortrait = Astro.slots.has('portrait');
+
+const inlineStyle = [`--guest-size: ${size}px`, style].filter(Boolean).join('; ');
 ---
 
-<div class:list={['guest-row', className]} style={`--guest-size: ${size}px`} {...rest}>
+<div class:list={['guest-row', className]} style={inlineStyle} {...rest}>
   {
     hasPortrait && (
       <span class="guest-portrait">

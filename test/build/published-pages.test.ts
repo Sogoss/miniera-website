@@ -93,6 +93,15 @@ describe('every published page', () => {
     },
   );
 
+  it('publishes at least one mark, so that the rule-7 guard has work to do', () => {
+    // The anti-vacuity half. Rename `data-brand` in Brand.astro — a refactor, a
+    // wrapper, a tidy-up — and every assertion above passes over an empty list
+    // on every page while no mark is watched anywhere. The shape guard and the
+    // cycle guard each got a companion like this; the brand guard had none.
+    const marks = pages.filter((page) => /\sdata-brand(?=[\s=>/])/i.test(page.html));
+    expect(marks.length).toBeGreaterThan(0);
+  });
+
   it('publishes a skip link that is hidden until it is focused', () => {
     // The half of the skip link that lives in the CSS, and that no markup guard
     // can see: hidden with nothing to bring it back is worse than not having

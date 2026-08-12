@@ -333,15 +333,49 @@ export function checkRgbTriples(css: string): Violation[] {
   return violations;
 }
 
+/* --- Reading declarations ------------------------------------------------ */
+
+/**
+ * Every `property: value` pair in a chunk of CSS, with where it starts.
+ *
+ * The one place this file decides what a declaration looks like. It used to be
+ * three: one scanner for the custom properties, one inside the duplicate check,
+ * one for the values — three regular expressions encoding the same notion with
+ * slightly different capture groups. A correction to that notion — `!important`,
+ * a value carrying braces, nesting — had to land in three places, and the guard
+ * whose copy was missed would keep passing while quietly seeing less of the
+ * stylesheet than the others.
+ *
+ * A declaration is recognised after `{`, `;` or the start of the text, which is
+ * what keeps a selector or an at-rule from being read as one.
+ */
+export function declarations(css: string): {
+  property: string;
+  value: string;
+  index: number;
+}[] {
+  const found: { property: string; value: string; index: number }[] = [];
+  const pattern = /(?:^|[;{])\s*(--[a-z0-9-]+|[a-z-]+)\s*:\s*([^;{}]*)/gi;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(css)) !== null) {
+    found.push({
+      property: match[1]!,
+      value: match[2] ?? '',
+      index: match.index,
+    });
+  }
+  return found;
+}
+
 /* --- Every var() finds its declaration ---------------------------------- */
 
 /** Every custom property *declared* in a chunk of CSS. */
 function declaredProperties(css: string): Set<string> {
-  const declared = new Set<string>();
-  const pattern = /(?:^|[;{])\s*(--[a-z0-9-]+)\s*:/gi;
-  let match: RegExpExecArray | null;
-  while ((match = pattern.exec(css)) !== null) declared.add(match[1]!);
-  return declared;
+  return new Set(
+    declarations(css)
+      .map(({ property }) => property)
+      .filter((property) => property.startsWith('--')),
+  );
 }
 
 /**
@@ -455,17 +489,6 @@ function withoutIndirection(value: string): string {
   return out;
 }
 
-/** Every `property: value` pair of a chunk of CSS, values only. */
-function declaredValues(css: string): { value: string; index: number }[] {
-  const found: { value: string; index: number }[] = [];
-  const pattern = /(?:^|[;{])\s*(?:--)?[a-z][a-z0-9-]*\s*:\s*([^;{}]*)/gi;
-  let match: RegExpExecArray | null;
-  while ((match = pattern.exec(css)) !== null) {
-    found.push({ value: match[1] ?? '', index: match.index });
-  }
-  return found;
-}
-
 /* The colour words this design system could plausibly reach for. Not a
    dictionary of the 148 CSS names: the ones left out are the ones nobody types
    by accident, and a longer list buys nothing while costing a false positive on
@@ -508,7 +531,7 @@ export function checkRawColourValues(css: string, path = 'the component'): Viola
     });
   };
 
-  for (const { value, index } of declaredValues(clean)) {
+  for (const { value, index } of declarations(clean)) {
     const bare = withoutIndirection(value);
 
     const hex = /#[0-9a-fA-F]{3,8}\b/g;
@@ -542,11 +565,9 @@ export function checkDuplicateDeclarations(css: string): Violation[] {
 
   for (const { body, index } of innermostBlocks(clean)) {
     const seen = new Map<string, number>();
-    const pattern = /(^|[;{])\s*(--[a-z0-9-]+|[a-z-]+)\s*:/gi;
-    let match: RegExpExecArray | null;
-    while ((match = pattern.exec(body)) !== null) {
-      const property = match[2]!.toLowerCase();
-      seen.set(property, (seen.get(property) ?? 0) + 1);
+    for (const { property } of declarations(body)) {
+      const name = property.toLowerCase();
+      seen.set(name, (seen.get(name) ?? 0) + 1);
     }
 
     for (const [property, count] of seen) {

@@ -34,6 +34,7 @@ import {
 } from '../guards/language.ts';
 import { checkDevDepsInLockfile, checkNoTailwind } from '../guards/packages.ts';
 import { checkNoClientDirectives, checkNoUiFramework } from '../guards/react.ts';
+import { checkHandWrittenShapes } from '../guards/shapes.ts';
 import { collectionEntries, dateOf } from '../support/frontmatter.ts';
 import { exists, filesWithExtension, read, readJson, repoRoot } from '../support/paths.ts';
 import { componentCss } from '../support/styles.ts';
@@ -309,23 +310,44 @@ describe('src/content', () => {
     expect(() => cycleAccentCss(cycleEntries)).not.toThrow();
   });
 
-  it.each(cycleEntries.map((cycle) => [cycle.id, cycle] as const))(
-    '%s has an accent that can be read on the ground of the site',
-    (_id, cycle) => {
-      // What the five hand-written rules used to guarantee by construction: an
-      // accent could only be one of the tuned tokens. Now it comes from a
-      // content file, and a valid hex can still be invisible on the blue. The
-      // ground is read from the tokens rather than written here, so retuning
-      // the surface moves this check with it.
-      const ground = /--blue-700\s*:\s*(#[0-9a-fA-F]{6})/.exec(
-        read('src/styles/tokens/colors.css'),
-      )?.[1];
-      expect(ground, 'colors.css no longer declares --blue-700').toBeTruthy();
-      expect(
-        checkAccentContrast(cycle, ground!, `src/content/cicli/${cycle.id}.md`),
-      ).toEqual([]);
-    },
-  );
+  /* Every surface an accent is actually painted on.
+   *
+   * `--blue-700` is the page; `--blue-600` is `--surface-raised`, which is what
+   * an EventCard and a raised Card sit on — and the accent stripe along their
+   * top edge is drawn straight onto it. Asked of the page ground alone, this
+   * check certified a contrast the site does not have where its main listing
+   * unit draws the colour: a cycle at exactly 3.00:1 against the page is at
+   * 2.37:1 against the raised surface, and nothing would have said so.
+   *
+   * Both are read from the tokens rather than written here, so retuning a
+   * surface moves the check with it. */
+  const grounds = ['blue-700', 'blue-600'].map((token) => {
+    const hex = new RegExp(`--${token}\\s*:\\s*(#[0-9a-fA-F]{6})`).exec(
+      read('src/styles/tokens/colors.css'),
+    )?.[1];
+    return [token, hex] as const;
+  });
+
+  it('reads both grounds out of the tokens', () => {
+    // Without this the loop below would pass over `undefined` grounds the day
+    // a token is renamed, which is a check that stops checking in silence.
+    for (const [token, hex] of grounds) {
+      expect(hex, `colors.css no longer declares --${token}`).toBeTruthy();
+    }
+  });
+
+  it.each(
+    cycleEntries.flatMap((cycle) =>
+      grounds.map(([token, hex]) => [cycle.id, token, cycle, hex] as const),
+    ),
+  )('%s has an accent that can be read on --%s', (_id, _token, cycle, hex) => {
+    // What the five hand-written rules used to guarantee by construction: an
+    // accent could only be one of the tuned tokens. Now it comes from a content
+    // file, and a valid hex can still be invisible on the blue.
+    expect(
+      checkAccentContrast(cycle, hex!, `src/content/cicli/${cycle.id}.md`),
+    ).toEqual([]);
+  });
 
   it('keeps a sample of a role overridden on the event', () => {
     // The `speakers[].role ?? person.role` branch has no other coverage: no
@@ -373,6 +395,20 @@ describe('src/content', () => {
       expect(checkKickerRepeatsCycle(event.data, name, event.path)).toEqual([]);
     },
   );
+});
+
+describe('the clip shapes', () => {
+  const component = 'src/components/ClipShapes.astro';
+  const module = 'src/lib/shapes.ts';
+
+  it.each([component, module])('%s writes no geometry by hand', (path) => {
+    // Rule 13's headline, which had no guard while its corollary about empty
+    // clip paths did: somebody pastes a path out of a library, the shape
+    // publishes, every other check stays green, and the constraint the whole of
+    // shapes.ts exists for is gone. `clip-skewed` is the declared exception —
+    // Material has no equivalent to generate it from.
+    expect(checkHandWrittenShapes(read(path), path)).toEqual([]);
+  });
 });
 
 describe('src/components/Brand.astro', () => {
