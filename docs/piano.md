@@ -961,13 +961,28 @@ Per esteso in [decisioni.md](decisioni.md), sotto *Lo scroller*. In breve:
 
 ### Test manuali
 
+- Con *movimento ridotto* attivo lo scroller diventa una lista che si scorre
+  normalmente
+- Con JavaScript disattivato la pagina si apre dalla prima serata e si scorre
+  fino in fondo: il degrado dichiarato è quello che succede davvero
+- Sotto i 900 px il layout passa a una colonna con la locandina in alto, e il
+  testo resta allineato a sinistra; su finestra bassa la descrizione si taglia e
+  la scena non trabocca
 - **Su un iPhone vero**: lo snap non salta quando la barra degli indirizzi di
   Safari si ritrae; la posizione di apertura è esatta
 - Su Android, stesso giro
-- Con *movimento ridotto* attivo lo scroller diventa una lista che si scorre
-  normalmente
 - Con un contenuto finto da 81 serate, la pagina resta fluida su un telefono di
   qualche anno fa — è la misura rimandata in `vincoli-tecnici.md`
+
+> **I tre test su telefono sono rimandati alla PR 13**, dove il sito ha un URL
+> stabile che apre chiunque. Non è una spunta data per buona: chi lavora al
+> progetto non ha un iPhone, e provarlo adesso vorrebbe dire un tunnel verso il
+> server di sviluppo o un device remoto — più attenzione di quanta ne valga
+> finché non c'è un indirizzo vero. Il rischio nel frattempo è retto per
+> costruzione, non per fiducia: `--scene-height` è `svh` con il ripiego in
+> `@supports`, e ogni scena dichiara la propria altezza intrinseca, che è ciò
+> che tiene ferme le posizioni di snap. Il debito è scritto in
+> [questioni-aperte.md](questioni-aperte.md), sotto *Da fare alla PR 13*.
 
 ---
 
@@ -1137,3 +1152,8 @@ scroller ha comunque accesso completo ai contenuti.
 - Il rebuild notturno scatta e sposta davvero una serata da *in programma* a
   *già svolta*
 - Anteprima di un link con il dominio vero
+- **Le prove su telefono rimandate dalla PR 7 e dalla PR 8**, che adesso hanno
+  un URL che apre chiunque: su iPhone lo snap non salta quando la barra di
+  Safari si ritrae e l'apertura cade sulla prima serata futura; su Android lo
+  stesso giro; e lo scorrimento morbido della Timeline arriva a destinazione
+  senza essere interrotto dallo snap

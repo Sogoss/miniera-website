@@ -42,6 +42,29 @@ reversibile e prima o poi qualcuno vorrà stampare la foto di una serata.
 
 Non è ancora stato deciso dove.
 
+## Da fare alla PR 13
+
+### La prova su un telefono vero
+
+Rimandata dalla PR 7, e non perché non conti: è la prova che regge la decisione
+`svh` invece di `dvh`, cioè che lo snap non salti quando la barra degli
+indirizzi di Safari si ritrae. Chi lavora al progetto non ha un iPhone, e i due
+modi di provarlo adesso — un tunnel verso il server di sviluppo, un servizio con
+device remoti — costano più attenzione di quanta ne valga finché non c'è un URL
+stabile: alla PR 13 il sito è pubblicato e lo apre chiunque, da qualunque
+telefono.
+
+Quello che intanto regge il rischio è costruttivo e non una speranza: l'altezza
+delle scene è `--scene-height`, cioè `svh` con il ripiego a `vh` in `@supports`,
+e ogni scena dichiara la propria altezza intrinseca — che è ciò che tiene ferme
+le posizioni di snap e rende esatto il salto di apertura. Il residuo è che la
+posizione iniziale cada di poco fuori posto, che è visibile e correggibile.
+
+Da provare, in ordine: che lo snap non salti mentre la barra si ritrae; che
+l'apertura cada esattamente sulla prima serata futura; che lo scorrimento
+morbido della Timeline arrivi a destinazione senza essere interrotto — quello è
+della PR 8.
+
 ## Da decidere prima della PR 13
 
 ### L'immagine delle anteprime social
