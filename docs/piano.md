@@ -62,13 +62,14 @@ sostituisce un telefono vero.
 | 4 | Accento dai cicli della collection | `accento-dai-cicli` | fatta |
 | 5 | Layout di base e forme di ritaglio | `layout-base` | fatta |
 | 6 | Gli otto componenti del design system | `design-system-astro` | fatta |
-| 7 | Lo scroller del programma | `scroller-programma` | da fare |
+| 7 | Lo scroller del programma | `scroller-programma` | fatta |
 | 8 | Timeline e navigazione da tastiera | `timeline` | da fare |
 | 9 | Le pagine delle serate | `pagine-serata` | da fare |
-| 10 | Modale di prenotazione | `modale-prenotazione` | da fare |
+| 10 | La prenotazione dentro il modale | `modale-prenotazione` | da fare |
 | 11 | Chi siamo, contatti, rassegna disabilitata | `pagine-istituzionali` | da fare |
 | 12 | Sveltia CMS | `cms-sveltia` | da fare |
 | 13 | Pubblicazione | `pubblicazione` | da fare |
+| 14 | Proporzioni su schermo piccolo | `proporzioni-mobile` | da fare |
 
 Fuori dalla beta, bloccate da [questioni-aperte.md](questioni-aperte.md):
 migrazione delle foto e caricamento delle 81 serate storiche.
@@ -884,37 +885,219 @@ system* e *Forme di ritaglio, la geometria*. In breve:
 
 Sostituisce la pagina provvisoria. Solo le scene: la Timeline è la PR dopo.
 
+### Decisioni prese scrivendo la PR
+
+Per esteso in [decisioni.md](decisioni.md), sotto *Lo scroller*. In breve:
+
+- **L'apertura sulla prima serata futura è uno script in linea**, ed è l'unica
+  cosa qui che il CSS non può fare: un documento si apre in cima. Dieci righe,
+  sincrone, prima della prima pittura — e senza JavaScript il programma si apre
+  dalla serata più vecchia e si scorre normalmente
+- **La posizione si misura, non si calcola**: chiedere all'elemento dov'è dà la
+  stessa risposta di `indice × altezza` e continua a darla il giorno che una
+  scena cambia altezza
+- **L'accento è per sezione e statico**; quello globale che segue lo scorrimento
+  è la PR 8, che l'osservatore ce l'ha già per `aria-current`
+- **Nessuna scena è a sua volta scorrevole**, contro l'export: con due
+  contenitori annidati le frecce non si sa a chi parlano
+- **Il titolo di pagina si dice e non si mostra** — prima classe di utilità del
+  progetto
+- **Una sola immagine si carica subito**, quella della scena di apertura: non la
+  prima del documento, che è in fondo all'archivio e non la vede nessuno
+- **I target di build sono la soglia dei browser**, dichiarati in
+  `astro.config.mjs`
+- **Due immagini segnaposto** entrano nei contenuti d'esempio, dichiarate come
+  tali
+
 ### Obiettivi
 
-- [ ] `/` è lo scroller a scroll-snap, con una sezione alta `--scene-height` per
+- [x] `/` è lo scroller a scroll-snap, con una sezione alta `--scene-height` per
       serata
-- [ ] Si apre sulla prima serata futura
-- [ ] `content-visibility: auto` e `contain-intrinsic-size` sulle sezioni,
-      `loading="lazy"` sulle immagini oltre le prime
-- [ ] L'accento segue il ciclo della serata a schermo
-- [ ] Titoli delle serate in `<h2>`, un solo `<h1>` di pagina
-- [ ] Layout responsive: due colonne su desktop, una su mobile con la foto in
+- [x] Si apre sulla prima serata futura
+- [x] `content-visibility: auto` e `contain-intrinsic-size` sulle sezioni,
+      `loading="lazy"` sulle immagini oltre quella di apertura
+- [x] L'accento segue il ciclo della serata a schermo
+- [x] Titoli delle serate in `<h2>`, un solo `<h1>` di pagina
+- [x] Layout responsive: due colonne su desktop, una su mobile con la foto in
       alto; testo sempre allineato a sinistra
-- [ ] La pagina provvisoria è stata rimossa, non estesa
+- [x] Ogni scena porta `data-number`, `data-state`, `data-cycle`, il suo `id`, e
+      quella di apertura `data-open`
+- [x] I componenti della PR 6 fanno il lavoro che è loro: `Label`, `GuestRow`,
+      `Button`
+- [x] Una scena ha **un bottone solo**, che apre il modale: i materiali dietro
+      «Rivedi la serata», la prenotazione dietro «Prenota il posto»
+- [x] **Un solo `<dialog>` per pagina**, riusato da tutti i bottoni, riempito
+      clonando markup che è già nella pagina
+- [x] Con gli script spenti i link agli interventi restano link veri e visibili:
+      la classe `no-js` sul documento decide quale delle due forme si vede
+- [x] Due serate d'esempio hanno un'immagine segnaposto
+- [x] La pagina provvisoria è stata rimossa, non estesa
 
 ### Test automatici
 
-- Tante sezioni quanti sono gli eventi, nell'ordine giusto
-- Un solo `<h1>` nella pagina
+- Tante sezioni quanti sono gli eventi, nell'ordine giusto — ricavato dai
+  contenuti, non scritto nel test
+- Un solo `<h1>` nella pagina, e tanti `<h2>` quante sono le serate
 - Ogni sezione ha `scroll-snap-align` e un'altezza intrinseca dichiarata
 - L'accento di ogni sezione corrisponde al ciclo del suo evento
-- Le immagini oltre la prima sono in `loading="lazy"`
-- Le guardie della PR 1 continuano a passare
+- Le immagini oltre quella della scena di apertura sono in `loading="lazy"`
+- Lo script di apertura è in linea e non un modulo differito: bundlato girerebbe
+  dopo la prima pittura, e il programma verrebbe disegnato in cima e poi
+  salterebbe
+- **Guardia**: la pagina è un solo contenitore scorrevole. Scritta sul conteggio
+  e non sul nome della classe — una guardia agganciata a `.scene` smette di
+  guardare il giorno che qualcuno rinomina. L'unica eccezione è ciò che sta
+  dentro un `<dialog>`, e va **scritta nel selettore**: dal CSS non si vede che
+  un `.modal-panel` è dentro un modale
+- **Guardia**: ogni bottone che apre il modale trova il suo bersaglio nella
+  stessa pagina, e di modali ce n'è uno solo. Un bersaglio che non risolve è un
+  tocco che non fa niente — sul telefono, indistinguibile da un tocco non
+  registrato. I bersagli si contano dove `getElementById` li troverebbe: un
+  `id` scritto **dentro** un `<template>` non conta, perché quel contenuto è un
+  documento inerte a parte — l'`id` *sul* template invece sì, ed è come si
+  riempie il modale con il testo della prenotazione
+- **Guardia**: i link agli interventi non stanno solo dentro un `<template>`.
+  Lì sarebbero invisibili a chi non ha script, a un crawler e a Ctrl+F
+- Una scena pubblica al massimo un bottone
+- **Guardia**: nessuna media query pubblicata in sintassi range
+- Le asserzioni sul fuso continuano a passare sui quattro ancoraggi, che era la
+  promessa scritta nel `CLAUDE.md`
+- Le guardie delle PR precedenti continuano a passare
+
+> **Trovato scrivendo.** Un'asserzione sul CSS pubblicato — scritta per un'altra
+> ragione, cioè per controllare che `content-visibility` arrivasse in `dist/` —
+> ha fatto emergere che il minificatore riscriveva **ogni media query nella
+> sintassi range**: `@media (width <= 900px)` invece di `max-width`. È Safari
+> 16.4 contro una soglia dichiarata di 15.4, quindi su iOS 15.4–16.3 il layout
+> mobile dello scroller non si applicava affatto e un telefono riceveva le due
+> colonne del desktop su 390 px. Nessun errore da nessuna parte, e nel sorgente
+> c'era scritto esattamente quello che doveva esserci: è il ripiego collassato
+> della regola 4 in un altro travestimento. I target di build ora stanno in
+> `astro.config.mjs` e una guardia legge il CSS pubblicato.
+>
+> Ed è la prima PR che pubblica una media query: il difetto esisteva da quando
+> esiste il progetto e non aveva ancora avuto niente da rompere.
+
+> **Trovato nel controllo manuale.** A 390×800 i bottoni dei materiali della
+> serata 78 finivano sotto il bordo dello schermo, cioè irraggiungibili — la
+> scena non è scorrevole per scelta, quindi quello che esce è perso. La causa
+> era l'immagine della serata: `30vh` fissi, presi prima che il testo chiedesse
+> il suo. Ora
+> è una riga di griglia che prende quel che resta, e sotto certe altezze la
+> scena cede in un ordine dichiarato — descrizione, immagine, presenze — senza
+> mai toccare titolo, data, luogo, bottoni e nota. Le soglie sono due serie
+> separate per i due layout: impilato si stringe presto, affiancato no, perché
+> un portatile a 1440×900 ha spazio e tagliare lì avrebbe accorciato una
+> descrizione che ci sta.
+>
+> **E l'immagine restava comunque minuscola**, perché il contenuto di una
+> scena piena — due ospiti, due bottoni, presenze — non ci sta in una schermata
+> per quanto lo si stringa. Da qui il **modale**, chiesto dal committente e
+> anticipato dalla PR 10: una scena ha un bottone solo, e i link agli interventi
+> stanno dietro di esso. La PR 10 è stata riscritta di conseguenza — le resta il
+> contenuto vero della prenotazione, che è la parte che dipende da una questione
+> aperta.
+>
+> Il caso senza JavaScript è stato discusso e non aggirato: i link restano
+> `<a href>` veri nel markup e la classe `no-js` decide quale forma si vede, così
+> non c'è contenuto che esista solo per chi ha gli script. Costava meno di
+> anticipare la rotta `/78` e non perde niente rispetto a oggi.
+
+> **Trovato nella revisione.** Otto difetti, e sono tutti la stessa specie: il
+> sorgente dice una cosa e `dist/` ne pubblica un'altra, senza che niente
+> diventi rosso.
+>
+> - `Astro.slots.has('portrait')` risponde sulla **presenza dello slot**, non su
+>   ciò che disegna. Chi lo riempie scrive `{speaker.photo && <Image
+>   slot="portrait" …/>}`, che quando la foto non c'è è uno slot che rende la
+>   stringa vuota — e `has()` dice sì lo stesso. In `dist/` c'erano quattro
+>   cornici da 56×56 vuote, una davanti a ogni nome, con il loro `gap`. Ora lo
+>   slot si rende prima e la cornice si disegna solo se ne è uscito qualcosa
+> - `.scene-photo` si pubblicava **anche senza locandina**. Su telefono è la riga
+>   di griglia che prende quel che resta, con un fondo di `26vh`: le serate senza
+>   immagine — quasi tutto l'archivio — si aprivano con un quarto di schermo
+>   bianco sopra il proprio titolo e il testo schiacciato in fondo
+> - Il clone che riempie il modale si portava dietro la classe `no-js-only`, che
+>   è **la classe che lo nasconde**: il corpo si vedeva perché
+>   `html:not(.no-js) .no-js-only` e la regola del modale pareggiano di
+>   specificità, e a decidere era l'ordine con cui Astro linka due fogli. E si
+>   portava dietro il proprio `id`, duplicato nel documento per tutto il tempo
+>   che il modale resta aperto. Ora il clone li perde entrambi
+> - Il ramo «`showModal` non c'è» **usciva senza rimettere `no-js`**, cioè
+>   lasciava la pagina nella forma «gli script funzionano»: un bottone che non fa
+>   niente sopra una lista di link nascosti. Su un browser sotto la soglia dei
+>   15.4, che è esattamente quello per cui il meccanismo `no-js` esiste
+> - Lo script di apertura **saltava sopra un `#serata-N` in arrivo** — i link che
+>   la Timeline della PR 8 distribuisce — e correva contro lo scorrimento che il
+>   browser fa da sé sul frammento, con esiti diversi da un motore all'altro. E
+>   stava scritto dopo `</Base>`, quindi pubblicato **dopo `</html>`**: i browser
+>   lo recuperano spostandolo nel body, ma è un errore di parsing e basta un
+>   post-processore che tratti come scartabile ciò che sta lì
+> - `<meta charset>` **non era più la prima cosa nella testa**, perché lo script
+>   `no-js` gli era passato davanti. Innocuo finché quello script è ASCII, cioè
+>   fino al giorno che qualcosa sopra la dichiarazione porta un accento — in un
+>   progetto la cui regola sulla lingua è *accenti scritti per intero*
+>
+> Due erano **nei test**, che è la metà peggiore. L'asserzione «continua a
+> funzionare con quello script spento» cercava `display: none` con lo spazio in
+> un CSS minificato: non poteva diventare rossa mai, e riscritta con lo spazio
+> avrebbe pescato le regole legittime di `.scene-description` e compagne. E
+> `checkModalTargets` raccoglieva gli `id` anche dentro i `<template>`, dove
+> `getElementById` non arriva: la guardia sarebbe rimasta verde proprio sul
+> rifacimento che `checkLinksOutsideTemplates` esiste per vietare — bottone morto
+> a runtime, suite verde.
+>
+> **Lo scroller ha preso `tabindex="0"`.** Il documento è alto una schermata sola
+> e non scorre; il salta-a porta su `<main>`, il cui antenato scorrevole più
+> vicino è quel documento fermo. Chi naviga da tastiera non aveva niente da
+> premere — frecce, spazio e Page Down su nulla — finché il Tab non capitava su
+> un link dentro una scena. Chrome e Firefox rendono focalizzabile un contenitore
+> scorrevole da sé; Safari, cioè il browser per cui la soglia è scritta, no.
+>
+> **Tre sono rimaste aperte, di proposito.** Che una serata futura con materiali
+> pubblichi due bottoni non è impedito nel componente: lo prende il test sul
+> conteggio, che però diventa rosso indicando il file del contenuto invece del
+> punto dove si decide — costa una regola editoriale, non una correzione. Il
+> `max-height: 80vh` del pannello passa alla PR 14, che è dove le proporzioni su
+> schermo piccolo si tarano una volta sola. E lo **stile della serata annullata**
+> non è stato scritto: `data-state="cancelled"` si pubblica e nessuna regola lo
+> legge. La barratura passa alla PR 9, dove una serata annullata ha già fra gli
+> obiettivi di mostrare il suo stato e dove la si scrive una volta per la scena e
+> per la pagina; il commento di `stateOf` in `src/lib/events.ts` e la decisione
+> in [decisioni.md](decisioni.md) promettevano questa PR e adesso dicono quella.
+> Una promessa lasciata nel codice a scadenza passata è la mezza verità che
+> questo repository passa il tempo a cacciare.
+>
+> Resta una trappola, scritta qui perché la prossima persona non la ritrovi da
+> sola: `checkSingleModal` conta le occorrenze di `<dialog` nel markup
+> pubblicato, e `stripMarkupComments` toglie i commenti HTML, non quelli
+> JavaScript. Scrivere quella parola in un commento **dentro** lo script in linea
+> del modale fa scattare la guardia su un secondo modale che non esiste.
 
 ### Test manuali
 
+- Con *movimento ridotto* attivo lo scroller diventa una lista che si scorre
+  normalmente
+- Con JavaScript disattivato la pagina si apre dalla prima serata e si scorre
+  fino in fondo: il degrado dichiarato è quello che succede davvero
+- Sotto i 900 px il layout passa a una colonna con la locandina in alto, e il
+  testo resta allineato a sinistra; su finestra bassa la descrizione si taglia e
+  la scena non trabocca
 - **Su un iPhone vero**: lo snap non salta quando la barra degli indirizzi di
   Safari si ritrae; la posizione di apertura è esatta
 - Su Android, stesso giro
-- Con *movimento ridotto* attivo lo scroller diventa una lista che si scorre
-  normalmente
 - Con un contenuto finto da 81 serate, la pagina resta fluida su un telefono di
   qualche anno fa — è la misura rimandata in `vincoli-tecnici.md`
+
+> **I tre test su telefono sono rimandati alla PR 13**, dove il sito ha un URL
+> stabile che apre chiunque. Non è una spunta data per buona: chi lavora al
+> progetto non ha un iPhone, e provarlo adesso vorrebbe dire un tunnel verso il
+> server di sviluppo o un device remoto — più attenzione di quanta ne valga
+> finché non c'è un indirizzo vero. Il rischio nel frattempo è retto per
+> costruzione, non per fiducia: `--scene-height` è `svh` con il ripiego in
+> `@supports`, e ogni scena dichiara la propria altezza intrinseca, che è ciò
+> che tiene ferme le posizioni di snap. Il debito è scritto in
+> [questioni-aperte.md](questioni-aperte.md), sotto *Da fare alla PR 13*.
 
 ---
 
@@ -962,6 +1145,12 @@ scroller ha comunque accesso completo ai contenuti.
 - [ ] Meta Open Graph con la foto tema — è il motivo per cui queste pagine
       esistono
 - [ ] Una serata annullata conserva pagina e numero, e mostra il suo stato
+- [ ] **La barratura si aggancia a `data-state="cancelled"`**, nella scena dello
+      scroller come nella pagina della serata: l'attributo lo pubblica la PR 7 e
+      oggi non lo legge nessuna regola. Nessuna serata d'esempio è annullata,
+      quindi in `dist/` quel ramo non si vede — il test può solo pretendere che
+      la regola esista nel CSS pubblicato, ed è il motivo per cui `stateOf` è una
+      funzione pura con il suo test
 - [ ] Dallo scroller si arriva alla pagina della serata
 
 ### Test automatici
@@ -978,31 +1167,43 @@ scroller ha comunque accesso completo ai contenuti.
 
 ---
 
-## PR 10 — Modale di prenotazione
+## PR 10 — La prenotazione dentro il modale
 
 **Branch:** `modale-prenotazione` · **Dipende da:** 9
 
+**Riscritta alla PR 7.** Il modale è arrivato lì, chiesto dal committente e
+imposto dal layout: una scena con un bottone per registrazione non stava in una
+schermata. Quello che resta qui è la parte che alla PR 7 non poteva esserci —
+l'informazione vera della prenotazione e il numero a cui scrivere, che è una
+questione aperta e non una riga di codice.
+
+Il modale, e quindi già fatto: uno solo nel DOM riusato da tutte le serate; si
+chiude con Esc e con un clic fuori, la messa a fuoco resta dentro e torna al
+bottone che l'ha aperto — è `<dialog>` con `showModal()`, non codice nostro;
+presente su entrambe le larghezze.
+
 ### Obiettivi
 
-- [ ] **Un solo** modale nel DOM, riusato da tutte le serate future dello
-      scroller — non uno per serata
-- [ ] Contiene l'informazione reale: sessanta posti, si scrive su WhatsApp con
-      nome e numero di persone, risposta entro sera
-- [ ] Link `wa.me` al numero configurato in un posto solo
-- [ ] Si chiude con Esc e con un clic fuori; la messa a fuoco resta dentro e
-      torna al bottone che l'ha aperto
-- [ ] Presente su entrambe le larghezze, come deciso
+- [ ] Il testo della prenotazione dice l'informazione reale: sessanta posti, si
+      scrive con nome e numero di persone, risposta entro sera
+- [ ] Link `wa.me` al numero vero, configurato **in un posto solo**
+- [ ] Con gli script spenti il bottone «Prenota il posto» è un link diretto a
+      WhatsApp invece di un bottone morto: è il fallback che alla PR 7 non
+      esisteva perché non esisteva il numero
+- [ ] Il numero esce da [questioni-aperte.md](questioni-aperte.md)
 
 ### Test automatici
 
-- Il modale è unico nel documento
-- Compare solo se esiste almeno una serata futura
 - Il link punta al numero configurato e non a un valore scritto a mano
+- Il segnaposto del design — `+39 300 000 0000` — non compare in `dist/`
+- Il bottone della prenotazione compare solo sulle serate che si possono ancora
+  prenotare, e il suo bersaglio nel modale esiste (guardia della PR 7)
 
 ### Test manuali
 
-- Esc, clic fuori, e ritorno della messa a fuoco
+- Esc, clic fuori, e ritorno della messa a fuoco al bottone
 - Sul telefono, il link apre davvero WhatsApp con il messaggio precompilato
+- Con gli script spenti, il bottone porta comunque a WhatsApp
 
 ---
 
@@ -1084,3 +1285,70 @@ scroller ha comunque accesso completo ai contenuti.
 - Il rebuild notturno scatta e sposta davvero una serata da *in programma* a
   *già svolta*
 - Anteprima di un link con il dominio vero
+- **Le prove su telefono rimandate dalla PR 7 e dalla PR 8**, che adesso hanno
+  un URL che apre chiunque: su iPhone lo snap non salta quando la barra di
+  Safari si ritrae e l'apertura cade sulla prima serata futura; su Android lo
+  stesso giro; e lo scorrimento morbido della Timeline arriva a destinazione
+  senza essere interrotto dallo snap
+
+---
+
+## PR 14 — Proporzioni su schermo piccolo
+
+**Branch:** `proporzioni-mobile` · **Dipende da:** 8, 11
+
+Non è rifinitura rimandata per pigrizia: è **la stessa taratura fatta una volta
+sola invece che tre**. Su un telefono la scena divide l'altezza con due cose che
+alla PR 7 non esistevano ancora — la Timeline orizzontale in basso (PR 8) e la
+navigazione a pillola in alto (PR 11) — e ogni misura decisa prima che ci siano
+va rifatta quando arrivano.
+
+Quello che alla PR 7 doveva essere giusto, ed è giusto, è la **struttura**:
+niente contenuto che esce dallo schermo e nessuna scena scorrevole. Le
+proporzioni fra le parti sono un'altra cosa e si guardano quando lo schermo è
+pieno di tutto ciò che ci andrà.
+
+Va fatta **su un telefono vero**, non in emulazione, insieme alle prove
+rimandate in [questioni-aperte.md](questioni-aperte.md).
+
+### Obiettivi
+
+- [ ] **I `clamp()` tipografici hanno i limiti in `rem`, non in px.** È l'unico
+      punto in cui oggi il sito viola davvero una buona pratica: `font-size:
+      clamp(28px, min(4.6vw, 7.2vh), 72px)` non dipende in nessuno dei suoi tre
+      termini dalla dimensione del carattere di base, quindi chi ingrandisce il
+      testo dal browser o dal sistema non ottiene niente. I token `--text-*`
+      sono già in `rem`; i px sono rientrati nelle scene, copiati dal design. Per
+      un pubblico di cinquanta e sessant'anni è la differenza che conta più di
+      tutte le altre
+- [ ] L'immagine della serata ha una dimensione che si legge, con Timeline e
+      navigazione a schermo — la sua forma inclinata è del marchio e non si
+      toglie per far spazio
+- [ ] L'ordine in cui la scena cede su schermo basso è ancora quello giusto ora
+      che gli ingombri sono tutti presenti
+- [ ] Il testo del titolo e della descrizione sono tarati sulle larghezze vere
+      dei telefoni comuni, non su una scala scelta a tavolino
+- [ ] Le tacche della Timeline e la pillola della navigazione non coprono niente
+      di ciò che una scena deve mostrare
+- [ ] **Il pannello del modale sta dentro lo schermo che c'è.** Oggi è
+      `max-height: 80vh`, cioè misurato sul viewport grande: su iOS con la barra
+      degli indirizzi visibile può essere più alto di quel che si vede, e il
+      `max-height` del `<dialog>` non lo taglia perché `.modal` è `overflow:
+      visible` — il fondo di un testo lungo finisce fuori senza una barra che ci
+      porti. È la stessa questione `svh` contro `vh` delle scene, rimandata qui
+      perché cambiare quel numero cambia le proporzioni del modale, e le
+      proporzioni si guardano su un telefono vero
+
+### Test automatici
+
+- Le guardie esistenti continuano a passare: una scena non diventa scorrevole e
+  la pagina resta un solo contenitore scorrevole
+- Nessuna media query in sintassi range nel CSS pubblicato
+
+### Test manuali
+
+- Su un telefono vero, con tutte le serate: la scena si legge senza che niente
+  esca dallo schermo, in verticale e in orizzontale
+- **Con il testo del sistema ingrandito**, che è il controllo per cui esiste il
+  primo obiettivo: portarlo al 200% e vedere che il sito cresce invece di
+  restare fermo. È un pubblico di cinquanta e sessant'anni

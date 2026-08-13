@@ -434,6 +434,44 @@ export function checkUndefinedCustomProperties(css: string): Violation[] {
   return violations;
 }
 
+/* --- The browser floor, in the published file --------------------------- */
+
+/**
+ * A media query written in the range syntax — `(width <= 900px)`.
+ *
+ * Not something anybody types here: it is what the minifier *rewrites*
+ * `(max-width: 900px)` into when it is not told which browsers to keep. The
+ * range syntax is Safari 16.4, and the floor of this project is 15.4 — where
+ * `svh` arrives — so between those two versions every media query of the
+ * scroller is ignored: an iPhone gets the two-column desktop layout on a 390px
+ * screen, the source says exactly the right thing, and nothing fails.
+ *
+ * It is the collapsed `@supports` fallback of rule 4 in another disguise, and
+ * it is why this reads the published CSS rather than the source: at the source
+ * there is nothing to see.
+ */
+export function checkMediaRangeSyntax(
+  css: string,
+  path = 'the published CSS',
+): Violation[] {
+  const clean = stripComments(css);
+  const violations: Violation[] = [];
+
+  const queries = /@media([^{]*)\{/gi;
+  let match: RegExpExecArray | null;
+
+  while ((match = queries.exec(clean)) !== null) {
+    const condition = match[1] ?? '';
+    if (!/[<>]=?/.test(condition)) continue;
+    violations.push({
+      rule: 'browser floor',
+      detail: `\`@media${condition.trimEnd()}\` on line ${lineNumber(clean, match.index)} of ${path} uses the range syntax, which browsers understand from Safari 16.4 — the floor of this project is 15.4, so between the two the query simply does not apply. Nobody writes this by hand: it is the minifier rewriting \`max-width\`, and it means the build targets are not set`,
+    });
+  }
+
+  return violations;
+}
+
 /* --- Rule 2, in the components: no raw colour values --------------------- */
 
 /**

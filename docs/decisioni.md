@@ -199,10 +199,11 @@ markup.** `stateOf` sta in `events.ts` accanto a `noteOf`, e mette
 la pagina che chiedeva `past ? … : …` la pubblicava come una delle due con
 sotto la nota che diceva che era stata annullata. Nessuna serata d'esempio è
 annullata, quindi quel ramo in `dist/` non si vede: è proprio per questo che è
-una funzione con il suo test invece che una riga dentro una pagina. La
-pubblicano l'attributo `data-state`, lo scroller della PR 7 per la scena
-barrata e la PR 9 per la pagina della serata — tutti e tre devono fare la
-stessa domanda. *(PR 3, in revisione)*
+una funzione con il suo test invece che una riga dentro una pagina. L'attributo
+`data-state` lo pubblica lo scroller della PR 7 su ogni scena, e la barratura la
+aggancia lì la PR 9 — nella scena come nella pagina della serata — perché tutti
+devono fare la stessa domanda. *(PR 3, in revisione; la barratura spostata alla
+PR 9 in revisione alla PR 7)*
 
 **L'orologio si legge una volta per build, non una per chiamata.** Stava nel
 valore predefinito del parametro — `loadProgramme(now = new Date())` — che si
@@ -884,6 +885,168 @@ generatore fallisce: rifiuta di disegnare ciò che non sa disegnare e restituisc
 la stringa vuota. Un ritaglio vuoto non viene ignorato — ritaglia *tutto*, cioè
 pubblica un buco al posto della foto, con l'`id` che risolve e ogni altra
 guardia verde.
+
+## Lo scroller
+
+*(13 agosto 2026, PR 7)*
+
+**L'apertura sulla prima serata futura è uno script in linea, ed è l'unica cosa
+qui che il CSS non può fare.** Un documento si apre in cima e la posizione di un
+contenitore scorrevole non la imposta un foglio di stile. Sono dieci righe senza
+dipendenze, sincrone e messe dopo il markup che spostano: girano prima della
+prima pittura, quindi il programma viene *disegnato* alla serata giusta invece
+di essere disegnato in cima e saltare. Senza JavaScript si apre dalla serata più
+vecchia e si scorre normalmente: è tutto il degrado che c'è, ed è un test
+manuale.
+
+**La posizione si misura, non si calcola.** `scrollTop = indice × altezza`
+sarebbe la strada dell'export e obbligherebbe lo script a sapere quanto è alta
+una scena; chiedere all'elemento dov'è dà la stessa risposta e continua a darla
+il giorno che una scena cambia altezza. Con `content-visibility` le altezze sono
+quelle intrinseche dichiarate, che è esattamente ciò che rende la misura esatta
+anche su una scena mai renderizzata.
+
+**L'accento è per sezione e statico; quello globale arriva con la Timeline.**
+Nell'export il `data-ciclo` sta sul contenitore radice e cambia a ogni scena,
+cioè l'accento dell'intero sito segue lo scorrimento — e per farlo bisogna
+sapere quale scena è a schermo. Qui ogni sezione porta il proprio `data-cycle` e
+si colora da sola, senza osservatori. Nav e Timeline che virano sono la PR 8,
+che quell'osservatore ce l'ha già per `aria-current`.
+
+**Nessuna scena è a sua volta scorrevole.** L'export lo fa, e
+[vincoli-tecnici.md](vincoli-tecnici.md) dice perché non si copia: con due
+contenitori scorrevoli annidati né una tastiera né uno screen reader sanno a
+chi parlano le frecce, e quello interno si mangia il gesto che doveva portare
+alla serata dopo. Il testo lungo si stringe con la tipografia fluida e, su
+schermo basso, si taglia a tre righe e poi a due — ritagliato, mai scorrevole.
+La guardia conta i contenitori scorrevoli della pagina e ne pretende **uno**:
+scritta sul conteggio e non sul nome della classe, perché una guardia agganciata
+a `.scene` smette di guardare il giorno che qualcuno rinomina.
+
+**Su schermo basso una scena cede in un ordine dichiarato, e non a caso.**
+Trovato provando: a 390×800 la locandina si prendeva `30vh` fissi mentre il
+testo voleva ancora tutto il suo, e i bottoni dei materiali finivano sotto il
+bordo — irraggiungibili, perché la scena non è scorrevole. Adesso la locandina è
+una riga di griglia che prende **quel che resta** invece di una quota del
+viewport, e sotto certe altezze si perde, nell'ordine: la descrizione (tre
+righe, due, via), poi la locandina, poi le presenze. Titolo, data, luogo,
+bottoni e nota non si toccano mai — sono ciò che rende una scena leggibile a
+colpo d'occhio e utilizzabile.
+
+È difendibile per una ragione strutturale e non per gusto: dalla PR 9 ogni
+serata è anche una pagina sua, con tutto. Lo scroller è la vetrina, non
+l'archivio. Le soglie sono due serie separate, perché i due layout non
+finiscono lo spazio alla stessa altezza: impilato, la foto sta sopra il testo e
+lo stringe presto; affiancato, il testo ha la sua colonna e un portatile a
+1440×900 ha aria da vendere — tagliare lì avrebbe accorciato una descrizione che
+ci sta.
+
+**Una scena ha un bottone solo, e apre un modale.** Prima ne aveva uno per
+registrazione, e su 390×800 il secondo finiva sotto il bordo — con la scena non
+scorrevole per scelta, quello è contenuto che nessuno può raggiungere. Ora i
+materiali stanno dietro un «Rivedi la serata» e la prenotazione dietro «Prenota
+il posto», e tutt'e due aprono **lo stesso** `<dialog>`: uno per pagina, come la
+PR 10 aveva già deciso, perché con ottantuno serate un modale ciascuna sarebbero
+ottantuno copie della stessa cornice nel DOM.
+
+**Il modale si riempie clonando markup che è già nella pagina, mai costruendolo
+dai dati.** I link agli interventi di una serata sono `<a href>` veri dentro la
+scena, nascosti dal CSS *solo dopo* che lo script è partito: con gli script
+spenti sono semplicemente lì, in una lista, e non si perde niente. Una sola
+fonte, per giunta — una lista più una copia in un `<template>` divergerebbero il
+giorno che qualcuno ne modifica una. Una guardia pretende che quei link stiano
+fuori dai template, perché dentro sarebbero invisibili a chi non ha script, a un
+crawler e a Ctrl+F.
+
+**La classe `no-js` sul documento, tolta dal primo script della testa.** È
+l'unica cosa che permette a una pagina di portarsi dietro entrambe le forme —
+il bottone e la lista — e di mostrare quella che funzionerà davvero, senza un
+lampo dell'altra. Costa due regole CSS e nessuna rotta anticipata.
+
+**Il testo della prenotazione sta in un `<template>`, e lì va bene**: è scritto
+per il modale e non ha un posto nella pagina finché non lo si chiede, a
+differenza dei link di una serata, che sono contenuto. Il numero a cui scrivere
+non c'è ancora — è quello del presidente, il design aveva un segnaposto, e
+pubblicarne uno sbagliato è peggio che non pubblicarne. Arriva con la PR 10, e
+con lui il link diretto che dà a quel bottone qualcosa da fare anche senza
+script.
+
+**`<dialog>` e `showModal()` invece di un modale scritto a mano.** Fanno gratis
+ciò che sarebbero cento righe: il fuoco entra e non esce, Esc chiude, il resto
+della pagina diventa inerte, e il fuoco torna al bottone che l'ha aperto. Safari
+li ha dalla 15.4 — la stessa versione di `svh`, cioè esattamente la soglia che
+questo progetto si è già dato.
+
+**Un contenitore scorrevole dentro un dialog è l'eccezione alla regola dello
+scroller unico, e va scritta nel selettore.** Mentre un modale è aperto il resto
+della pagina è inerte, quindi non c'è ambiguità su quale scatola stia scorrendo.
+La guardia legge il CSS e non può sapere che un `.modal-panel` sta dentro un
+dialog: perciò l'eccezione la si dichiara scrivendo `dialog.modal .modal-panel`,
+e chi scrive `.modal-panel` e basta viene segnalato — giustamente.
+
+**Il titolo di pagina si dice, non si mostra.** Il design non ne ha uno — i
+titoli delle serate erano tutti `<h1>` — e qui sono `<h2>` sotto un `<h1>`
+unico, che però nel disegno non ha posto. Sta nel markup con
+`.visually-hidden`, la prima classe di utilità del progetto: `clip-path` e un
+pixel, non `display: none`, che lo toglierebbe anche dall'albero di
+accessibilità.
+
+**Una sola immagine si carica subito, ed è quella della scena di apertura.** Non
+la prima del documento: con il programma che si apre sulla prossima serata, la
+prima è da qualche parte nell'archivio e non la vede nessuno.
+
+**I target di build sono la soglia dei browser, dichiarata.** Vedi
+[vincoli-tecnici.md](vincoli-tecnici.md): senza, il minificatore riscrive
+`max-width` nella sintassi range, che è Safari 16.4 contro una soglia di 15.4 —
+e ogni media query dello scroller smette di applicarsi su iOS 15.4–16.3, con il
+telefono che riceve il layout desktop e il sorgente che ha ragione. Trovato da
+un test che leggeva il CSS pubblicato per un'altra ragione.
+
+**Due locandine segnaposto entrano nei contenuti d'esempio.** Senza immagini la
+colonna della locandina resta vuota, il layout a due colonne è metà lavoro e
+`loading="lazy"` è un test scritto su niente. Sono generate — forme e colori del
+marchio, nessun volto — e dichiarate come segnaposto nel file che le usa. Escono
+quando arrivano le foto vere: [questioni-aperte.md](questioni-aperte.md).
+
+**Le proporzioni su schermo piccolo si tarano una volta sola, alla PR 14.** Su
+un telefono la scena divide l'altezza con la Timeline in basso e la navigazione
+in alto, che alla PR 7 non esistono: ogni misura decisa prima va rifatta quando
+arrivano. Quello che alla PR 7 doveva essere giusto è la struttura — niente
+contenuto irraggiungibile, nessuna scena scorrevole — e quello lo è.
+
+**L'immagine della serata tiene la sua forma inclinata anche sul telefono: è
+del marchio, non decorazione.** Era stata sdraiata per far spazio, e sbagliando:
+la capsula girata sull'angolo è una firma visiva come la barra arancione del
+marchio, e le firme non si tolgono quando sono scomode. Quello che si tocca è lo
+spazio che ha — un quarto dello schermo garantito — e l'altezza del riquadro,
+che la geometria limita: un rettangolo ruotato di 45° occupa `(w + h) / √2` in
+*entrambe* le direzioni, quindi in una fascia larga 342 non può superare i 200
+di altezza senza che gli angoli escano, e niente li ritaglia.
+
+**E non è una locandina.** Il nome era sbagliato in tutto il codice: una
+locandina è un manifesto che annuncia, questa è un'immagine che accompagna il
+racconto della serata — passata o futura che sia. Il campo dello schema si
+chiamava già `photo`; adesso combaciano anche la cartella, le classi e le
+didascalie dei segnaposto.
+
+**I link dentro il modale sono crema con la sottolineatura nel colore del
+ciclo, non testo colorato.** L'arancione predefinito era il colore del ciclo 1 e
+su ogni altra serata si leggeva come uno sbaglio. Ma il colore pieno del ciclo
+non può fare il testo: la garanzia che il progetto si è dato è **3:1**, la
+soglia di un bordo o di un'icona, mentre un testo ne vuole 4,5 — e due cicli su
+sei non ci arrivano sulla superficie rialzata, il verde a 3,82 e il turchese a
+3,89. Il colore va quindi dove 3:1 è la soglia giusta, cioè la riga sotto la
+parola, e la parola resta al contrasto del testo normale.
+
+**Le dimensioni scalano per `clamp()` con limiti fissi, non per percentuale
+pura.** Una percentuale vera dipende dal contenitore e per le altezze non ha un
+riferimento; le unità viewport da sole diventano assurde sui ventisette pollici
+e illeggibili sui 320 px. Quello che invece va corretto — ed è la PR 14 — sono i
+**limiti in px** dei `clamp` tipografici: nessuno dei tre termini dipende dalla
+dimensione del carattere di base, quindi chi ingrandisce il testo dal sistema
+non ottiene niente. La scala degli spazi a passi di 4 px resta com'è: scalare
+tutto col viewport rompe le proporzioni fra ciò che scala e ciò che non può, a
+partire da un bordo di un pixel.
 
 ## Rimandate
 

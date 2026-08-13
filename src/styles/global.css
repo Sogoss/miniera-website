@@ -82,6 +82,35 @@ svg {
   max-width: 100%;
 }
 
+/* The two halves of progressive enhancement.
+   The document starts as `no-js` and the first inline script of the head takes
+   the class off, so a page can carry both forms of a thing and show the one
+   that will work: the button that opens a modal, or the plain list of links
+   that needs no script. Both are in the markup — the modal is filled by cloning
+   the list, so there is one source and nothing is lost with scripting off. */
+.no-js .only-js,
+html:not(.no-js) .no-js-only {
+  display: none;
+}
+
+/* Said, not shown.
+   The scroller needs a page-level <h1> that the design has no place for: the
+   titles of the evenings are <h2> — 81 <h1>s would be one per evening — and
+   the page itself still has to say what it is to a screen reader and to a
+   crawler. `clip-path` and one pixel rather than `display: none`, which would
+   take it out of the accessibility tree along with the layout. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* Sober and short: those who would rather not move, do not move.
    Compared with the design export this also switches off smooth scrolling and
    scroll-snap: those were exactly the two things the export left on, and they

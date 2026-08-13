@@ -64,10 +64,22 @@ const preview = Astro.site && image ? new URL(image, Astro.site).href : undefine
 ---
 
 <!doctype html>
-<html lang="it">
+<html lang="it" class="no-js">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    {/* Removed before anything is painted, so that the page can be styled for
+        «the script is running» without a flash of the other version. What that
+        buys is the one thing progressive enhancement needs and CSS cannot ask:
+        a page that shows a button where a modal will open, and the plain links
+        where it will not.
+
+        Under the charset and not over it: the encoding declaration has to be
+        the first thing in the head — a parser that meets bytes before it is
+        told how to read them is guessing, and the day this script or anything
+        above it carries an accent the guess is what decides. */}
+    <script is:inline>document.documentElement.classList.remove('no-js');</script>
     <title>{title}</title>
     <meta name="description" content={description} />
     {noindex && <meta name="robots" content="noindex, follow" />}

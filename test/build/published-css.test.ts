@@ -6,6 +6,7 @@
  */
 import { beforeAll, describe, expect, it } from 'vitest';
 import {
+  checkMediaRangeSyntax,
   checkNoColorMixOrOklch,
   checkRgbTriples,
   checkSceneHeightFallback,
@@ -22,6 +23,17 @@ beforeAll(() => {
 });
 
 describe('the CSS that actually ships', () => {
+  it('keeps its media queries inside the browser floor', () => {
+    // Left to itself the minifier rewrites `(max-width: 900px)` as
+    // `(width <= 900px)`, which browsers understand from Safari 16.4 while this
+    // project's floor is 15.4 — so every media query of the scroller would be
+    // ignored between those versions and an iPhone would get the two-column
+    // desktop layout, with the source saying exactly the right thing. The build
+    // targets in astro.config.mjs are what prevents it; this is what notices if
+    // they are ever dropped.
+    expect(checkMediaRangeSyntax(css, 'dist/')).toEqual([]);
+  });
+
   it('is not empty', () => {
     // Every assertion below would pass on an empty string. This one makes the
     // rest mean something.

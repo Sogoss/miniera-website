@@ -207,26 +207,49 @@ test/unit/         i loro test, positivi e negativi
 test/build/        le asserzioni su ciò che finisce in dist/
 ```
 
-`src/pages/index.astro` è una **pagina di verifica provvisoria**: dimostra che
-token, caratteri, collection e utilità di dominio funzionano insieme. Va
-sostituita dallo scroller vero, non estesa — con un'eccezione dichiarata, che
-vale la pena conoscere prima della PR 7.
+`src/pages/index.astro` è **lo scroller del programma**, dalla PR 7: una scena
+per serata, alta `--scene-height`, che si apre sulla prima serata futura. La
+pagina di verifica provvisoria che stava qui prima è stata rimossa, come era
+scritto che sarebbe successo.
 
-È anche **l'unica prova pubblicata che lo strato `build` può leggere**, e per
-questo porta su ogni serata tre ancoraggi che non sono decorazione:
-`data-number`, `data-state` e `data-open` sulla scena di apertura. Le
-asserzioni di `test/build/published-dates.test.ts` cercano quelli e i contenuti
-— il nome del ciclo, quello della sede, la nota del dominio — mai il `#78 · `
-o l'*apertura dello scroller* che questa pagina scrive intorno. Sostituirla
-vuol dire riportare i tre attributi sullo scroller e mostrare le stesse cose,
-non riscrivere le prove sul fuso. Tutto il resto di questa pagina si butta.
+Ogni scena porta quattro attributi che non sono decorazione: `data-number` nomina
+la serata, `data-state` dice da che parte di oggi cade, `data-open` marca quella
+su cui il programma si apre — è ciò su cui salta lo script — e `data-cycle`
+decide l'accento. I primi tre sono quelli che
+`test/build/published-dates.test.ts` legge in `dist/` per provare che una build
+in UTC pubblica le ore italiane: **se rifai la scena, riportali**. `data-label`
+porta la data breve che la Timeline userà per le tacche.
 
-Porta `data-cycle` su ogni serata, che è il quarto attributo e l'unico che ha
-bisogno di compagnia: le regole dell'accento gliele dà `Base.astro`, che dalla
-PR 5 include `CycleAccents` e `ClipShapes` per ogni pagina. **Una pagina non si
-scrive più `<html>` e `<head>` da sé**: le scrive il layout, e ciò che il layout
-porta — lingua, meta, salta-a, accenti, forme — è guardato pagina per pagina in
-`test/build/published-pages.test.ts`.
+`data-cycle` è l'unico che ha bisogno di compagnia: le regole dell'accento gliele
+dà `Base.astro`, che dalla PR 5 include `CycleAccents` e `ClipShapes` per ogni
+pagina. **Una pagina non si scrive più `<html>` e `<head>` da sé**: le scrive il
+layout, e ciò che il layout porta — lingua, meta, salta-a, accenti, forme — è
+guardato pagina per pagina in `test/build/published-pages.test.ts`.
+
+**Il modale è uno solo per pagina, e si riempie clonando ciò che è già nel
+markup.** I link agli interventi di una serata sono `<a href>` veri dentro la
+scena: il CSS li nasconde solo dopo che lo script è partito — è la classe
+`no-js` sul documento, tolta dal primo script della testa — così con gli script
+spenti non si perde niente. **Non spostarli in un `<template>`**: lì sarebbero
+invisibili a chi non ha script, a un crawler e a Ctrl+F, e una guardia lo dice.
+Tre guardie in `test/guards/modal.ts`: il bersaglio di ogni bottone esiste nella
+pagina, di `<dialog>` ce n'è uno, i link stanno fuori dai template.
+
+**Lo scroller è un solo contenitore scorrevole.** L'export rende scorrevole anche
+ogni scena, e non si copia: con due contenitori annidati né una tastiera né uno
+screen reader sanno a chi parlano le frecce. Il testo lungo si ritaglia, non si
+scorre — `checkSingleScroller` in `test/guards/scroller.ts` conta i contenitori
+scorrevoli della pagina e ne pretende uno. L'unica eccezione è ciò che sta
+dentro un `<dialog>` — mentre è aperto il resto è inerte — e **va scritta nel
+selettore**: `dialog.modal .modal-panel`, perché dal CSS non si vede che un
+`.modal-panel` sta dentro un modale.
+
+**I target di build sono la soglia dei browser.** Stanno in `astro.config.mjs` e
+non sono un dettaglio di configurazione: senza, il minificatore riscrive
+`@media (max-width: 900px)` nella sintassi range, che è Safari 16.4 contro la
+soglia dichiarata di 15.4 — e su iOS 15.4–16.3 ogni media query dello scroller
+smette di applicarsi, con il telefono che riceve il layout desktop e il sorgente
+che ha ragione. `checkMediaRangeSyntax` legge il CSS pubblicato.
 
 `src/pages/componenti.astro` è invece **una pagina che resta**: la rassegna
 degli otto componenti, con tutte le loro varianti. È pubblicata e `noindex`, e

@@ -57,6 +57,28 @@ Va scritto così:
 **Vale per ogni ripiego, non solo per questo.** Ed è verificato: è successo
 davvero durante l'implementazione dei token.
 
+## ⚠️ La soglia va detta anche al minificatore
+
+Scoperto alla PR 7, e il difetto è della stessa famiglia del ripiego collassato:
+il sorgente è giusto e il file pubblicato no.
+
+Senza target di build dichiarati, il minificatore riscrive
+
+```css
+@media (max-width: 900px) { … }
+```
+
+come `@media (width <= 900px)` — la **sintassi range**, che i browser capiscono
+da **Safari 16.4**. La soglia di questo progetto è 15.4, quella di `svh`: fra le
+due versioni la media query non si applica affatto, quindi un iPhone riceve il
+layout desktop a due colonne su uno schermo da 390 px. Nessun errore da nessuna
+parte, e nel sorgente c'è scritto esattamente quello che deve esserci.
+
+I target stanno in `astro.config.mjs`, `vite.build.cssTarget` e
+`vite.build.target`, e la guardia `checkMediaRangeSyntax` legge il CSS
+pubblicato: se qualcuno toglie i target, se ne accorge la suite e non un
+visitatore con un telefono del 2022.
+
 ## `svh`, non `dvh`
 
 Il design usa `100dvh`. Non va replicato.

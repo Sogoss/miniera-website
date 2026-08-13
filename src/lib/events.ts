@@ -288,10 +288,10 @@ export function speakerRole(
  * evening called off is neither upcoming nor simply past, and a page that asks
  * `past ? … : …` publishes it as one of the two with the note underneath saying
  * it was called off. It lives here, in the domain, rather than in whatever page
- * happens to need it: the temporary page publishes it as `data-state`, PR 7
- * will key the struck-through styling off the same attribute and PR 9 the
- * evening's own page, and the pairing with `noteOf` below only holds if all
- * three ask the same question. No sample evening is cancelled, so the branch
+ * happens to need it: the scroller publishes it as `data-state` on every scene,
+ * PR 9 keys the struck-through styling off that same attribute — in the scene
+ * as on the evening's own page — and the pairing with `noteOf` below only holds
+ * if they ask the same question. No sample evening is cancelled, so the branch
  * cannot be seen in dist/ — which is exactly why it is a pure function with its
  * own test rather than a ternary in the markup.
  */

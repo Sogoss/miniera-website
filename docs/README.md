@@ -61,12 +61,15 @@ Fatto:
 - Gli otto componenti del design system, in `.astro` e senza React, con la loro
   rassegna a `/componenti`; le forme di ritaglio non sono più copiate ma
   generate, ispirate a Material 3
+- Lo scroller del programma: una scena per serata, che si apre sulla prima
+  ancora da fare — la pagina di verifica provvisoria non c'è più
 
 Da fare: l'elenco completo dei passi, in ordine e uno per PR, sta in
-[piano.md](piano.md). In sintesi — lo scroller con la `Timeline`, le pagine
-delle serate, il CMS, la pubblicazione. La migrazione delle 81 serate storiche
+[piano.md](piano.md). In sintesi — la `Timeline` con la navigazione da tastiera,
+le pagine delle serate, il modale, le pagine istituzionali, il CMS, la
+pubblicazione. La migrazione delle 81 serate storiche
 resta fuori dalla beta, vedi [questioni-aperte.md](questioni-aperte.md).
 
-`src/pages/index.astro` è una pagina di verifica provvisoria: serve solo a
-dimostrare che token, caratteri e collection funzionano insieme. Va sostituita
-dallo scroller vero.
+`src/pages/index.astro` è lo scroller del programma. Ogni scena porta quattro
+attributi che i test leggono in `dist/` — `data-number`, `data-state`,
+`data-open`, `data-cycle` — e che vanno riportati se la scena viene rifatta.

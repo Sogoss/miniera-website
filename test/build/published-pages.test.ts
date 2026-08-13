@@ -7,6 +7,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { checkBrandSignature } from '../guards/brand.ts';
+import { checkModalTargets, checkSingleModal } from '../guards/modal.ts';
 import {
   checkDocumentBasics,
   checkOpenGraph,
@@ -90,6 +91,16 @@ describe('every published page', () => {
       // without touching the component — writing the words by hand, building
       // its own header — and only the published markup sees that.
       expect(checkBrandSignature(decodeEntities(page.html), page.path)).toEqual([]);
+    },
+  );
+
+  it.each(pages.map((page) => [page.path, page] as const))(
+    '%s opens no modal that is not there',
+    (_path, page) => {
+      // The same silence as a clip path that resolves to nothing: the button is
+      // pressed and the page stays as it was.
+      expect(checkModalTargets(page.html, page.path)).toEqual([]);
+      expect(checkSingleModal(page.html, page.path)).toEqual([]);
     },
   );
 
