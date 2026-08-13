@@ -922,6 +922,24 @@ La guardia conta i contenitori scorrevoli della pagina e ne pretende **uno**:
 scritta sul conteggio e non sul nome della classe, perché una guardia agganciata
 a `.scene` smette di guardare il giorno che qualcuno rinomina.
 
+**Su schermo basso una scena cede in un ordine dichiarato, e non a caso.**
+Trovato provando: a 390×800 la locandina si prendeva `30vh` fissi mentre il
+testo voleva ancora tutto il suo, e i bottoni dei materiali finivano sotto il
+bordo — irraggiungibili, perché la scena non è scorrevole. Adesso la locandina è
+una riga di griglia che prende **quel che resta** invece di una quota del
+viewport, e sotto certe altezze si perde, nell'ordine: la descrizione (tre
+righe, due, via), poi la locandina, poi le presenze. Titolo, data, luogo,
+bottoni e nota non si toccano mai — sono ciò che rende una scena leggibile a
+colpo d'occhio e utilizzabile.
+
+È difendibile per una ragione strutturale e non per gusto: dalla PR 9 ogni
+serata è anche una pagina sua, con tutto. Lo scroller è la vetrina, non
+l'archivio. Le soglie sono due serie separate, perché i due layout non
+finiscono lo spazio alla stessa altezza: impilato, la foto sta sopra il testo e
+lo stringe presto; affiancato, il testo ha la sua colonna e un portatile a
+1440×900 ha aria da vendere — tagliare lì avrebbe accorciato una descrizione che
+ci sta.
+
 **Il titolo di pagina si dice, non si mostra.** Il design non ne ha uno — i
 titoli delle serate erano tutti `<h1>` — e qui sono `<h2>` sotto un `<h1>`
 unico, che però nel disegno non ha posto. Sta nel markup con

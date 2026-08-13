@@ -113,7 +113,7 @@ const titleId = `titolo-${scene.number}`;
       </p>
       {
         scene.attendance !== undefined && (
-          <p class="scene-fact">
+          <p class="scene-fact scene-attendance">
             <svg class="scene-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
               <circle cx="9" cy="8" r="3.2" />
               <path d="M3 20c0-3.3 2.7-5.4 6-5.4s6 2.1 6 5.4" />
@@ -317,26 +317,45 @@ const titleId = `titolo-${scene.number}`;
   }
 
   /* One column, the poster above the text — and the text still ranged left,
-     which is where this parts company with the mobile design. */
+     which is where this parts company with the mobile design.
+
+     The poster takes what is left rather than a fixed share of the viewport:
+     `30vh` was the design's, and on a 390×800 screen it claimed 240px while the
+     text still needed all of its own — which is how the buttons ended up under
+     the bottom edge. As a grid row of `1fr` next to a text row of `auto`, the
+     text asks first and the picture gets the remainder. */
   @media (max-width: 900px) {
     .scene {
       grid-template-columns: minmax(0, 1fr);
-      align-content: safe start;
-      gap: clamp(16px, 3vh, 28px);
-      padding: clamp(72px, 10vh, 96px) var(--gutter-page) clamp(32px, 6vh, 64px);
+      grid-template-rows: minmax(0, 1fr) auto;
+      align-content: stretch;
+      gap: clamp(12px, 2.5vh, 28px);
+      padding: clamp(64px, 9vh, 96px) var(--gutter-page) clamp(24px, 5vh, 64px);
     }
 
     .scene-poster {
       order: -1;
-      height: 30vh;
-      min-height: 180px;
+      min-height: 0;
     }
   }
 
-  /* On a short screen the description is the one thing that can give way: three
-     lines, then two. Clipped, never scrollable — a scrollable scene inside a
-     scrollable scroller is what the arrow keys cannot tell apart. */
-  @media (max-height: 760px) {
+  /* What gives way as the screen gets shorter, in order.
+   *
+   * Nothing here is lost to a reader: from PR 9 every evening is also a page of
+   * its own, with all of it. What a scene must keep is what makes it useful at
+   * a glance and actionable — the title, the date, the place, the buttons and
+   * the note. So the description goes first (it is the longest, and the one
+   * thing repeated in full elsewhere), then the picture, then the attendance.
+   *
+   * Clipped, never scrollable: a scrollable scene inside a scrollable scroller
+   * is the thing the arrow keys cannot tell apart.
+   *
+   * Two sets of thresholds, because the two layouts do not run out of room at
+   * the same height: stacked, the picture sits above the text and eats into it,
+   * so the squeeze starts early; side by side, the text has its own column and
+   * a laptop at 1440×900 has room to spare — clamping there would cut a
+   * description that fits. */
+  @media (max-width: 900px) and (max-height: 900px) {
     .scene-description {
       display: -webkit-box;
       -webkit-line-clamp: 3;
@@ -345,12 +364,45 @@ const titleId = `titolo-${scene.number}`;
     }
   }
 
-  @media (max-height: 620px) {
+  @media (max-width: 900px) and (max-height: 780px) {
+    .scene-description {
+      -webkit-line-clamp: 2;
+    }
+  }
+
+  @media (max-width: 900px) and (max-height: 680px) {
+    .scene-description {
+      display: none;
+    }
+  }
+
+  @media (max-width: 900px) and (max-height: 620px) {
+    .scene-poster {
+      display: none;
+    }
+  }
+
+  @media (max-width: 900px) and (max-height: 560px) {
+    .scene-attendance {
+      display: none;
+    }
+  }
+
+  @media (min-width: 901px) and (max-height: 800px) {
+    .scene-description {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  }
+
+  @media (min-width: 901px) and (max-height: 640px) {
     .scene-description {
       -webkit-line-clamp: 2;
     }
 
-    .scene-note {
+    .scene-attendance {
       display: none;
     }
   }

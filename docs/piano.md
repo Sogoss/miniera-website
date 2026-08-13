@@ -959,6 +959,17 @@ Per esteso in [decisioni.md](decisioni.md), sotto *Lo scroller*. In breve:
 > Ed è la prima PR che pubblica una media query: il difetto esisteva da quando
 > esiste il progetto e non aveva ancora avuto niente da rompere.
 
+> **Trovato nel controllo manuale.** A 390×800 i bottoni dei materiali della
+> serata 78 finivano sotto il bordo dello schermo, cioè irraggiungibili — la
+> scena non è scorrevole per scelta, quindi quello che esce è perso. La causa
+> era la locandina: `30vh` fissi, presi prima che il testo chiedesse il suo. Ora
+> è una riga di griglia che prende quel che resta, e sotto certe altezze la
+> scena cede in un ordine dichiarato — descrizione, locandina, presenze — senza
+> mai toccare titolo, data, luogo, bottoni e nota. Le soglie sono due serie
+> separate per i due layout: impilato si stringe presto, affiancato no, perché
+> un portatile a 1440×900 ha spazio e tagliare lì avrebbe accorciato una
+> descrizione che ci sta.
+
 ### Test manuali
 
 - Con *movimento ridotto* attivo lo scroller diventa una lista che si scorre
