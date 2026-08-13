@@ -1061,8 +1061,12 @@ Per esteso in [decisioni.md](decisioni.md), sotto *Lo scroller*. In breve:
 > `max-height: 80vh` del pannello passa alla PR 14, che è dove le proporzioni su
 > schermo piccolo si tarano una volta sola. E lo **stile della serata annullata**
 > non è stato scritto: `data-state="cancelled"` si pubblica e nessuna regola lo
-> legge, mentre il commento di `stateOf` in `src/lib/events.ts` dice ancora che
-> la barratura la porta questa PR.
+> legge. La barratura passa alla PR 9, dove una serata annullata ha già fra gli
+> obiettivi di mostrare il suo stato e dove la si scrive una volta per la scena e
+> per la pagina; il commento di `stateOf` in `src/lib/events.ts` e la decisione
+> in [decisioni.md](decisioni.md) promettevano questa PR e adesso dicono quella.
+> Una promessa lasciata nel codice a scadenza passata è la mezza verità che
+> questo repository passa il tempo a cacciare.
 >
 > Resta una trappola, scritta qui perché la prossima persona non la ritrovi da
 > sola: `checkSingleModal` conta le occorrenze di `<dialog` nel markup
@@ -1141,6 +1145,12 @@ scroller ha comunque accesso completo ai contenuti.
 - [ ] Meta Open Graph con la foto tema — è il motivo per cui queste pagine
       esistono
 - [ ] Una serata annullata conserva pagina e numero, e mostra il suo stato
+- [ ] **La barratura si aggancia a `data-state="cancelled"`**, nella scena dello
+      scroller come nella pagina della serata: l'attributo lo pubblica la PR 7 e
+      oggi non lo legge nessuna regola. Nessuna serata d'esempio è annullata,
+      quindi in `dist/` quel ramo non si vede — il test può solo pretendere che
+      la regola esista nel CSS pubblicato, ed è il motivo per cui `stateOf` è una
+      funzione pura con il suo test
 - [ ] Dallo scroller si arriva alla pagina della serata
 
 ### Test automatici

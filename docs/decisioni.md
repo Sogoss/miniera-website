@@ -199,10 +199,11 @@ markup.** `stateOf` sta in `events.ts` accanto a `noteOf`, e mette
 la pagina che chiedeva `past ? … : …` la pubblicava come una delle due con
 sotto la nota che diceva che era stata annullata. Nessuna serata d'esempio è
 annullata, quindi quel ramo in `dist/` non si vede: è proprio per questo che è
-una funzione con il suo test invece che una riga dentro una pagina. La
-pubblicano l'attributo `data-state`, lo scroller della PR 7 per la scena
-barrata e la PR 9 per la pagina della serata — tutti e tre devono fare la
-stessa domanda. *(PR 3, in revisione)*
+una funzione con il suo test invece che una riga dentro una pagina. L'attributo
+`data-state` lo pubblica lo scroller della PR 7 su ogni scena, e la barratura la
+aggancia lì la PR 9 — nella scena come nella pagina della serata — perché tutti
+devono fare la stessa domanda. *(PR 3, in revisione; la barratura spostata alla
+PR 9 in revisione alla PR 7)*
 
 **L'orologio si legge una volta per build, non una per chiamata.** Stava nel
 valore predefinito del parametro — `loadProgramme(now = new Date())` — che si
