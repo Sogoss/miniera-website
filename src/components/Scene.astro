@@ -145,7 +145,18 @@ const titleId = `titolo-${scene.number}`;
               {scene.materials.map((material) => (
                 <li>
                   <a href={material.url} target="_blank" rel="noopener">
-                    {material.label}
+                    <svg class="material-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                      <circle cx="12" cy="12" r="9.2" />
+                      <path d="M10 8.6l6 3.4-6 3.4z" fill="currentColor" stroke="none" />
+                    </svg>
+                    <span class="material-label">{material.label}</span>
+                    {/* Said, not drawn: an arrow means «this opens elsewhere» to
+                        someone who can see it and nothing at all to someone who
+                        cannot. */}
+                    <span class="visually-hidden">— si apre in una nuova scheda</span>
+                    <svg class="material-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                      <path d="M5 12h13M12.5 6l6 6-6 6" />
+                    </svg>
                   </a>
                 </li>
               ))}
@@ -315,24 +326,76 @@ const titleId = `titolo-${scene.number}`;
     color: var(--text-muted);
   }
 
-  /* Only ever seen with scripting off, where it is the whole of what the modal
-     would have shown — so it is dressed like the modal's own list: the accent
-     under the word, never as the word. */
-  .scene-materials a {
-    color: var(--text-primary);
-    text-decoration-color: var(--accent);
-    text-decoration-thickness: 2px;
-    text-underline-offset: 4px;
-  }
+  /* These are the rows the modal shows, and the same markup is what a reader
+     with no scripting gets in the scene — the modal clones it, and the scoped
+     styles come along with it, so this is written once.
 
+     Made to look pressable rather than to look like text: a play mark on the
+     left, the label, an arrow on the right, a surface and an edge. The accent
+     goes on the edge and on the play mark and never on the words, which is
+     where the 3:1 the cycles guarantee is the right threshold. */
   .scene-materials {
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
+    width: 100%;
+    max-width: 34rem;
     margin: 0;
     padding: 0;
     list-style: none;
-    font: var(--type-small);
+  }
+
+  .scene-materials a {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    background: var(--surface-sunken);
+    border: var(--border-width-hairline) solid var(--border-hairline);
+    border-left: var(--border-width-accent) solid var(--accent);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font: var(--type-body);
+    font-weight: var(--weight-semibold);
+    text-decoration: none;
+    transition:
+      transform var(--dur-fast) var(--ease-out),
+      background var(--dur-fast) var(--ease-out);
+  }
+
+  .scene-materials a:hover {
+    background: var(--surface-page);
+  }
+
+  /* The same two pixels down as a Button: the site has one gesture for «this
+     was pressed» and it is worth being the same everywhere. */
+  .scene-materials a:active {
+    transform: translateY(2px);
+  }
+
+  .material-play {
+    flex: none;
+    width: 26px;
+    height: 26px;
+    color: var(--accent);
+  }
+
+  .material-label {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .material-arrow {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    color: var(--text-muted);
+    transition: transform var(--dur-fast) var(--ease-out);
+  }
+
+  .scene-materials a:hover .material-arrow {
+    transform: translateX(3px);
+    color: var(--text-primary);
   }
 
   .scene-photo {

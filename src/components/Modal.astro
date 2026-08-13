@@ -158,7 +158,11 @@
     color: var(--text-secondary);
   }
 
-  /* Cream text with the cycle's colour underneath it, and not the cycle's
+  /* A link inside a paragraph — the booking text of PR 10 will have one. The
+     rows of recordings are not this: they arrive from a scene dressed as
+     pressable rows, and bring their own styles with them.
+
+     Cream text with the cycle's colour underneath it, and not the cycle's
      colour as the text.
      The accent is guaranteed 3:1 against the ground — the threshold for a
      border or an icon — while text wants 4.5:1, and two of the six cycles do
@@ -167,7 +171,7 @@
      under the word, and the word itself stays at the contrast of ordinary text.
      What it must not stay is the default orange: that is cycle 1's colour, and
      on any other evening it reads as a mistake. */
-  .modal-body :global(a) {
+  .modal-body :global(p a) {
     font: var(--type-body);
     font-weight: var(--weight-semibold);
     color: var(--text-primary);
@@ -176,8 +180,8 @@
     text-underline-offset: 4px;
   }
 
-  .modal-body :global(a:hover),
-  .modal-body :global(a:focus-visible) {
+  .modal-body :global(p a:hover),
+  .modal-body :global(p a:focus-visible) {
     text-decoration-thickness: 4px;
   }
 </style>
