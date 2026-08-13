@@ -4,7 +4,7 @@ Il sito si costruisce per passi numerati, uno per PR. Questo documento è
 l'elenco dei passi, in ordine, con quello che ciascuno deve dimostrare prima di
 poter essere chiuso.
 
-Aggiornato al 12 agosto 2026.
+Aggiornato al 13 agosto 2026.
 
 ## Come si lavora
 
@@ -65,11 +65,12 @@ sostituisce un telefono vero.
 | 7 | Lo scroller del programma | `scroller-programma` | fatta |
 | 8 | Timeline e navigazione da tastiera | `timeline` | fatta |
 | 9 | Le pagine delle serate | `pagine-serata` | fatta |
-| 10 | La prenotazione dentro il modale | `modale-prenotazione` | da fare |
-| 11 | Chi siamo, contatti, rassegna disabilitata | `pagine-istituzionali` | da fare |
-| 12 | Sveltia CMS | `cms-sveltia` | da fare |
-| 13 | Pubblicazione | `pubblicazione` | da fare |
-| 14 | Proporzioni su schermo piccolo | `proporzioni-mobile` | da fare |
+| 10 | La Timeline raggiunge l'archivio | `timeline-archivio` | da fare |
+| 11 | La prenotazione dentro il modale | `modale-prenotazione` | da fare |
+| 12 | Chi siamo, contatti, rassegna disabilitata | `pagine-istituzionali` | da fare |
+| 13 | Sveltia CMS | `cms-sveltia` | da fare |
+| 14 | Pubblicazione | `pubblicazione` | da fare |
+| 15 | Proporzioni su schermo piccolo | `proporzioni-mobile` | da fare |
 
 Fuori dalla beta, bloccate da [questioni-aperte.md](questioni-aperte.md):
 migrazione delle foto e caricamento delle 81 serate storiche.
@@ -657,7 +658,7 @@ In breve:
 - Ogni pagina porta tutte le forme che il componente dichiara, e nessun `id`
   italiano dell'export arriva in `dist/`
 - I meta Open Graph di base ci sono, e **`og:url` e `og:image` sono pretesi
-  appena `site` è impostato**: il test si accende da solo alla PR 13
+  appena `site` è impostato**: il test si accende da solo alla PR 14
 - Il salta-a è il primo link del `<body>` e punta a un `id` che esiste — non a
   uno che gli somiglia: `#programma` non è soddisfatto da `id="programma-2"`,
   ed è il primo difetto che il caso negativo ha trovato nella guardia appena
@@ -686,9 +687,9 @@ In breve:
 >
 > Due guardavano al futuro e l'avrebbero rotto: `publishedPages()` consegnava
 > alle guardie del documento anche le pagine copiate da `public/`, cioè la
-> PR 12 non avrebbe potuto chiudere verde con la shell di Sveltia in
+> PR 13 non avrebbe potuto chiudere verde con la shell di Sveltia in
 > `public/admin/`; e pretendere `og:image` all'arrivo del dominio avrebbe aperto
-> la PR 13 su una suite rossa chiudibile solo inventando un'immagine che nessuno
+> la PR 14 su una suite rossa chiudibile solo inventando un'immagine che nessuno
 > ha scelto. L'immagine è una questione aperta, non un test.
 
 ### Test manuali
@@ -993,8 +994,8 @@ Per esteso in [decisioni.md](decisioni.md), sotto *Lo scroller*. In breve:
 > **E l'immagine restava comunque minuscola**, perché il contenuto di una
 > scena piena — due ospiti, due bottoni, presenze — non ci sta in una schermata
 > per quanto lo si stringa. Da qui il **modale**, chiesto dal committente e
-> anticipato dalla PR 10: una scena ha un bottone solo, e i link agli interventi
-> stanno dietro di esso. La PR 10 è stata riscritta di conseguenza — le resta il
+> anticipato dalla PR 11: una scena ha un bottone solo, e i link agli interventi
+> stanno dietro di esso. La PR 11 è stata riscritta di conseguenza — le resta il
 > contenuto vero della prenotazione, che è la parte che dipende da una questione
 > aperta.
 >
@@ -1058,7 +1059,7 @@ Per esteso in [decisioni.md](decisioni.md), sotto *Lo scroller*. In breve:
 > pubblichi due bottoni non è impedito nel componente: lo prende il test sul
 > conteggio, che però diventa rosso indicando il file del contenuto invece del
 > punto dove si decide — costa una regola editoriale, non una correzione. Il
-> `max-height: 80vh` del pannello passa alla PR 14, che è dove le proporzioni su
+> `max-height: 80vh` del pannello passa alla PR 15, che è dove le proporzioni su
 > schermo piccolo si tarano una volta sola. E lo **stile della serata annullata**
 > non è stato scritto: `data-state="cancelled"` si pubblica e nessuna regola lo
 > legge. La barratura passa alla PR 9, dove una serata annullata ha già fra gli
@@ -1089,7 +1090,7 @@ Per esteso in [decisioni.md](decisioni.md), sotto *Lo scroller*. In breve:
 - Con un contenuto finto da 81 serate, la pagina resta fluida su un telefono di
   qualche anno fa — è la misura rimandata in `vincoli-tecnici.md`
 
-> **I tre test su telefono sono rimandati alla PR 13**, dove il sito ha un URL
+> **I tre test su telefono sono rimandati alla PR 14**, dove il sito ha un URL
 > stabile che apre chiunque. Non è una spunta data per buona: chi lavora al
 > progetto non ha un iPhone, e provarlo adesso vorrebbe dire un tunnel verso il
 > server di sviluppo o un device remoto — più attenzione di quanta ne valga
@@ -1097,7 +1098,7 @@ Per esteso in [decisioni.md](decisioni.md), sotto *Lo scroller*. In breve:
 > costruzione, non per fiducia: `--scene-height` è `svh` con il ripiego in
 > `@supports`, e ogni scena dichiara la propria altezza intrinseca, che è ciò
 > che tiene ferme le posizioni di snap. Il debito è scritto in
-> [questioni-aperte.md](questioni-aperte.md), sotto *Da fare alla PR 13*.
+> [questioni-aperte.md](questioni-aperte.md), sotto *Da fare alla PR 14*.
 
 ---
 
@@ -1252,7 +1253,7 @@ Per esteso in [decisioni.md](decisioni.md), sotto *La Timeline*. In breve:
 > **Due prove restano da fare, dichiarate e non date per buone.** Su un iPhone
 > vero: toccare una tacca lontana e verificare che lo scorrimento morbido arrivi
 > a destinazione senza essere interrotto dallo snap.
-> [questioni-aperte.md](questioni-aperte.md) la colloca già alla PR 13, per
+> [questioni-aperte.md](questioni-aperte.md) la colloca già alla PR 14, per
 > nome, e per lo stesso motivo della PR 7 — prima non c'è un URL stabile e chi
 > lavora al progetto non ha un iPhone. Nel frattempo il rischio è retto dal
 > fatto che il salto è quello nativo del browser sul frammento e non uno
@@ -1323,7 +1324,7 @@ breve:
 - Ogni rotta pubblica titolo e descrizione della sua serata, non del sito, e
   `og:description` dice la stessa cosa del meta
 - **Quando `site` è impostato**, ogni rotta con una foto pubblica `og:image`
-  assoluto: scritto ora, si accende alla PR 13
+  assoluto: scritto ora, si accende alla PR 14
 - Gli `<h1>` di due rotte sono diversi, e quello della radice non nomina nessuna
   serata
 - **Guardia** `checkEveningRoutes`: ogni `data-number` pubblicato trova la sua
@@ -1389,7 +1390,7 @@ breve:
 > Adesso è memoizzata, **ma solo durante una build**: in `astro dev` il modulo
 > sopravvive al salvataggio di chi scrive, e un programma in cache continuerebbe
 > a servire le serate com'erano all'avvio del server. Non mostrare la modifica è
-> l'unica cosa che un'anteprima non può fare, e dalla PR 12 quei file li scrive
+> l'unica cosa che un'anteprima non può fare, e dalla PR 13 quei file li scrive
 > il CMS. Con 81 serate la build passa da 3,8 a 3,1 secondi, ma il numero che
 > conta è l'esponente.
 >
@@ -1403,14 +1404,14 @@ breve:
 > **l'immagine da anteprima si generava anche senza dominio**, cioè un JPEG per
 > serata che nessuna pagina referenziava. Con l'archivio pieno sono ottantuno
 > ridimensionamenti e ottantuno file morti in ogni deployment. Generarla solo
-> quando c'è il dominio non toglie niente alla promessa che alla PR 13 non ci
+> quando c'è il dominio non toglie niente alla promessa che alla PR 14 non ci
 > sia niente da ricordarsi: arriva il dominio e arrivano le immagini.
 >
 > **Due sono rimaste aperte, di proposito.** Il `<title>` di una serata non
 > nomina l'associazione, mentre quello della radice sì: è una scelta di testo
 > italiano e la si fa guardandola, non correggendola di nascosto. E `og:type`
 > resta `website` anche sulle rotte delle serate: cambiarlo è una decisione sul
-> layout condiviso, e il posto dove si prende è la PR 13, insieme al resto dei
+> layout condiviso, e il posto dove si prende è la PR 14, insieme al resto dei
 > meta.
 
 ### Test manuali
@@ -1428,7 +1429,7 @@ breve:
   20–25 KB di [vincoli-tecnici.md](vincoli-tecnici.md) — e 109 file in tutto,
   contro i 20.000 che Cloudflare Pages concede per deployment
 
-> **Rimandata alla PR 13**: l'anteprima di un link su WhatsApp e su Facebook.
+> **Rimandata alla PR 14**: l'anteprima di un link su WhatsApp e su Facebook.
 > Senza dominio non c'è niente da incollare in una chat e `og:image` non viene
 > emesso — il layout lo omette apposta, perché un URL relativo lì dentro
 > «sembra giusto nel markup e l'anteprima esce senza figura». Il test è scritto
@@ -1436,7 +1437,84 @@ breve:
 
 ---
 
-## PR 10 — La prenotazione dentro il modale
+## PR 10 — La Timeline raggiunge l'archivio
+
+**Branch:** `timeline-archivio` · **Dipende da:** 8
+
+La Timeline mostra undici tacche sul desktop e tre sulla barra del telefono. Con
+quattro serate d'esempio si vedono tutte; con ottantuno si raggiungono solo le
+vicine — sul telefono la precedente e la successiva. Per arrivare alla
+dodicesima si scorrono settanta schermate.
+
+Cioè la rotaia non fa la cosa per cui esiste, che è saltare. È un difetto della
+PR 8: il suo obiettivo diceva «la finestra di tacche regge 81 serate senza
+sfondare la schermata», e lo fa — al prezzo di renderle irraggiungibili, che
+nessuno aveva scritto. L'export ha lo stesso limite e non ci è mai arrivato,
+perché nei file di design le serate sono sei.
+
+**Va fatta prima della 14**, la pubblicazione: pubblicare una rotaia che non
+raggiunge l'archivio è pubblicare il difetto.
+
+### Decisioni prese scrivendo il piano
+
+- **Un quarto rango: il marchio nudo.** Le tacche fuori dalla finestra
+  etichettata non spariscono più, restano come trattino senza data. Ottantuno
+  trattini stanno in circa 650px su una colonna alta 900, quindi l'archivio
+  intero diventa presente e toccabile e le date restano leggibili dove si sta.
+  Non aggiunge un meccanismo: aggiunge un valore a una scala che c'è già, e la
+  tacca porta **già** la distanza vera invece di un rango tagliato a due — è la
+  decisione della PR 8 che paga adesso
+- **Sul telefono la barra scorre in orizzontale.** Ottantuno trattini ci
+  starebbero anche lì, ma un bersaglio da quattro pixel per un dito non è un
+  bersaglio. La barra scorrevole è come funziona ogni selettore di date su un
+  telefono, e tiene le pillole con la loro data
+- **E l'eccezione si scrive nel selettore.** `checkSingleScroller` pretende un
+  solo contenitore scorrevole per pagina, e il motivo scritto è l'annidamento:
+  due scroller verticali uno dentro l'altro rendono ambigue le frecce. Una barra
+  fissa che scorre in orizzontale, fuori dallo scroller, non crea
+  quell'ambiguità — ma dal CSS non si vede che `.timeline-strip` è una barra e
+  non una scena, quindi l'eccezione va **nominata**, come
+  `dialog.modal .modal-panel`
+- **La posizione iniziale della barra la dà uno script, e senza si perde.**
+  `scrollLeft` non lo imposta nessun foglio di stile: un lettore senza script
+  vedrebbe le pillole della prima serata mentre `aria-current` sta su una fuori
+  schermo. È una degradazione **nuova** — oggi la barra è giusta anche senza
+  script — e si accetta perché una barra vive per essere toccata, e un bersaglio
+  che un dito non prende non serve a nessuno. L'alternativa scartata era i
+  marchi nudi anche sul telefono: niente si degrada, e il bersaglio torna a
+  quattro pixel
+
+### Obiettivi
+
+- [ ] Ogni serata ha la sua tacca **visibile**, su tutte e due le larghezze
+- [ ] Sul desktop le tacche fuori dalla finestra sono marchi senza data
+- [ ] Sul telefono la barra scorre in orizzontale, e la tacca corrente resta in
+      vista mentre si legge
+- [ ] L'eccezione a `checkSingleScroller` è scritta nel selettore e argomentata
+- [ ] Il bersaglio da toccare resta ragionevole su tutte e due le larghezze
+- [ ] Quello che si degrada senza script è dichiarato
+
+### Test automatici
+
+- Tante tacche **visibili** quanti sono gli eventi: è l'asserzione che oggi
+  manca, ed è quella che avrebbe preso questo difetto alla PR 8
+- La finestra etichettata resta quella, e i marchi nudi non portano date
+- **Guardia**: `checkSingleScroller` continua a passare con la barra come
+  seconda eccezione nominata, e il suo caso negativo prova che una `.scene`
+  scorrevole viene ancora segnalata
+- Con un contenuto finto da 81 serate la rotaia non sfonda la schermata
+- Le guardie precedenti continuano a passare, e `npm run test:mutate` con loro
+
+### Test manuali
+
+- Con 81 serate finte: dalla rotaia si arriva alla dodicesima in un tocco, sul
+  desktop e sul telefono
+- Il bersaglio si prende con un dito, non con un puntatore
+- Con gli script spenti, quello che succede è quello che è scritto
+
+---
+
+## PR 11 — La prenotazione dentro il modale
 
 **Branch:** `modale-prenotazione` · **Dipende da:** 9
 
@@ -1476,7 +1554,7 @@ presente su entrambe le larghezze.
 
 ---
 
-## PR 11 — Chi siamo, contatti, rassegna disabilitata
+## PR 12 — Chi siamo, contatti, rassegna disabilitata
 
 **Branch:** `pagine-istituzionali` · **Dipende da:** 6
 
@@ -1502,7 +1580,7 @@ presente su entrambe le larghezze.
 
 ---
 
-## PR 12 — Sveltia CMS
+## PR 13 — Sveltia CMS
 
 **Branch:** `cms-sveltia` · **Dipende da:** 9
 
@@ -1530,9 +1608,9 @@ presente su entrambe le larghezze.
 
 ---
 
-## PR 13 — Pubblicazione
+## PR 14 — Pubblicazione
 
-**Branch:** `pubblicazione` · **Dipende da:** 12
+**Branch:** `pubblicazione` · **Dipende da:** 13
 
 ### Obiettivi
 
@@ -1562,14 +1640,14 @@ presente su entrambe le larghezze.
 
 ---
 
-## PR 14 — Proporzioni su schermo piccolo
+## PR 15 — Proporzioni su schermo piccolo
 
-**Branch:** `proporzioni-mobile` · **Dipende da:** 8, 11
+**Branch:** `proporzioni-mobile` · **Dipende da:** 8, 12
 
 Non è rifinitura rimandata per pigrizia: è **la stessa taratura fatta una volta
 sola invece che tre**. Su un telefono la scena divide l'altezza con due cose che
 alla PR 7 non esistevano ancora — la Timeline orizzontale in basso (PR 8) e la
-navigazione a pillola in alto (PR 11) — e ogni misura decisa prima che ci siano
+navigazione a pillola in alto (PR 12) — e ogni misura decisa prima che ci siano
 va rifatta quando arrivano.
 
 Quello che alla PR 7 doveva essere giusto, ed è giusto, è la **struttura**:

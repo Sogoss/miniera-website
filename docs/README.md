@@ -70,8 +70,9 @@ Fatto:
   serata e ne porta i meta per le anteprime; l'indirizzo segue chi scorre
 
 Da fare: l'elenco completo dei passi, in ordine e uno per PR, sta in
-[piano.md](piano.md). In sintesi — la prenotazione dentro il modale, le pagine
-istituzionali, il CMS, la pubblicazione. La migrazione delle 81 serate storiche
+[piano.md](piano.md). In sintesi — la Timeline che raggiunge l'archivio, la
+prenotazione dentro il modale, le pagine istituzionali, il CMS, la
+pubblicazione. La migrazione delle 81 serate storiche
 resta fuori dalla beta, vedi [questioni-aperte.md](questioni-aperte.md).
 
 Lo scroller del programma è `src/components/Programme.astro`, e le rotte che lo

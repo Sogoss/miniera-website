@@ -324,7 +324,7 @@ la ragione per cui è pubblicata è la stessa per cui esiste lo strato `build` �
 per lo stile il sorgente non basta, quindi una rassegna viva solo in `npm run
 dev` lascerebbe le varianti di ogni componente verificate da nessuna parte.
 Prende i dati veri dal dominio: un `data-cycle` inventato lì farebbe scattare la
-guardia della PR 4. **Alla PR 13 va tenuta fuori dalla sitemap.**
+guardia della PR 4. **Alla PR 14 va tenuta fuori dalla sitemap.**
 
 ## Comandi
 
