@@ -179,23 +179,38 @@ non una preferenza.
     e una parola ne vuole 4,5 — è la decisione che `Modal.astro` aveva già
     scritto per il link dentro il pannello.
 
-15. **Lo scorrimento morbido si dichiara come proprietà, mai come argomento.**
-    `scroll-behavior: smooth` sul contenitore, e ogni salto fatto da script
-    chiama `scrollIntoView()` **senza argomenti**, che risolve sul valore
-    calcolato della proprietà. Un `{ behavior: 'smooth' }` passato a mano batte
-    il `scroll-behavior: auto !important` che `global.css` mette sotto
-    `prefers-reduced-motion` — l'argomento vince sulla proprietà, per specifica
-    e in ogni motore — quindi l'unico comando che ha chi soffre di motion
-    sickness smette di rispondere, senza niente da vedere in `dist/` e senza
-    che niente fallisca. `checkSmoothScrollArgument` in
-    `test/guards/scroller.ts` legge il sorgente e lascia stare il foglio di
-    stile, che è la forma giusta: a distinguerli sono le virgolette.
-    **E la proprietà l'accende lo script, sull'evento `load`**: assegnare
-    `scrollTop` obbedisce a `scroll-behavior`, quindi dichiararla nel foglio
-    avrebbe fatto scendere l'apertura in animazione da cima all'archivio — e
-    accenderla subito dopo quel salto lascia scoperto l'altro scorrimento che il
-    browser fa mentre la pagina arriva, quello sul frammento di chi entra da
-    `/#serata-3`.
+15. **Lo scroller non anima i salti, e se l'animazione tornasse tornerebbe come
+    proprietà — mai come argomento.** `scroll-behavior` raggiunge solo gli
+    scorrimenti che chiede uno script, e qui sono tutti salti a una serata: un
+    salto animato è interrompibile, e un secondo salto partito mentre il primo è
+    in volo il motore lo lascia cadere. La pagina resta sulla prima destinazione
+    mentre rotaia, accento e indirizzo dicono la seconda — due tacche toccate a
+    due decimi di distanza bastano, e quello che resta è un sito che si
+    contraddice senza niente da vedere. La PR 8 l'aveva spedito e aveva
+    archiviato il sintomo come una misura sbagliata; la PR 9 l'ha riprodotto e
+    tolto la proprietà. Adesso i salti atterrano subito, il che risponde anche a
+    `prefers-reduced-motion` per costruzione invece che con una regola che deve
+    continuare a vincere. **`checkSmoothScrollArgument` in
+    `test/guards/scroller.ts` resta e conta di più**: un `{ behavior: 'smooth' }`
+    passato a mano rimetterebbe l'animazione dove nessun foglio di stile la
+    raggiunge, e ogni salto fatto da script continua a chiamare
+    `scrollIntoView()` **senza argomenti**. La guardia legge il sorgente e lascia
+    stare il foglio di stile: a distinguerli sono le virgolette.
+
+16. **L'indirizzo segue la serata a schermo, e si sostituisce — non si
+    impila.** Ogni serata è una rotta e le tacche restano frammenti, perché
+    puntarle a `/N` farebbe scaricare duecento kilobyte di documento per fare il
+    lavoro di uno scorrimento. A tenere allineato l'indirizzo è
+    `history.replaceState` dentro l'osservatore. Con `pushState` sarebbe una
+    voce di cronologia per ogni serata attraversata, e il tasto indietro
+    smetterebbe di uscire dal sito per mettersi a risalire l'archivio: è la
+    differenza di una parola e non si vede in nessun modo.
+    `checkHistoryPush` in `test/guards/routes.ts`. **E si aggiorna al cambio,
+    non all'apertura**: riscrivere `/` in `/81` appena la pagina si apre
+    consegnerebbe a chi mette un segnalibro sulla radice un indirizzo che
+    invecchia. `/` è l'unico che non invecchia. **E ogni numero pubblicato deve
+    avere la sua rotta** — `checkEveningRoutes`, sul pubblicato: un numero senza
+    pagina è un 404 che compare solo quando qualcuno ricarica o condivide.
 
 ## Lingua
 
@@ -246,10 +261,14 @@ test/unit/         i loro test, positivi e negativi
 test/build/        le asserzioni su ciò che finisce in dist/
 ```
 
-`src/pages/index.astro` è **lo scroller del programma**, dalla PR 7: una scena
-per serata, alta `--scene-height`, che si apre sulla prima serata futura. La
-pagina di verifica provvisoria che stava qui prima è stata rimossa, come era
-scritto che sarebbe successo.
+**Lo scroller del programma è `src/components/Programme.astro`, e le rotte che
+lo usano sono due**: `src/pages/index.astro`, che si apre sulla prima serata
+futura, e `src/pages/[number].astro`, che si apre su quella del suo numero e ne
+porta i meta. `/81` non è una pagina diversa dal programma — è il programma
+aperto sull'ottantunesima, ed è per questo che quell'indirizzo esiste: un link
+incollato in chat mostra titolo e figura per i meta Open Graph di quella rotta.
+Copiare lo scroller nella seconda pagina sarebbe due sorgenti per una schermata
+sola.
 
 Ogni scena porta quattro attributi che non sono decorazione: `data-number` nomina
 la serata, `data-state` dice da che parte di oggi cade, `data-open` marca quella

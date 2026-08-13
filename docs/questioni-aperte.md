@@ -44,6 +44,17 @@ Non è ancora stato deciso dove.
 
 ## Da fare alla PR 13
 
+### L'anteprima di un link su WhatsApp e su Facebook
+
+Rimandata dalla PR 9, che è la PR in cui gli indirizzi delle serate esistono e i
+meta li portano. Senza dominio non c'è niente da incollare in una chat, e
+`og:image` il layout non lo emette affatto: deve essere assoluto, e assoluto lo
+può essere solo con `site` in configurazione. Il test è già scritto e si arma da
+solo quando quella riga compare.
+
+Da provare, allora: che l'anteprima esca con titolo, descrizione e figura, e che
+la figura sia quella della serata e non la stessa per tutte.
+
 ### La prova su un telefono vero
 
 Rimandata dalla PR 7, e non perché non conti: è la prova che regge la decisione
@@ -105,6 +116,22 @@ riquadro di prova e su una foto messa in locale, non su un ritratto del vero
 archivio. Non blocca niente: il campo `photo` è nello schema da sempre, e la
 prima foto che arriva dal CMS passa dal ritaglio senza che si tocchi nulla.
 Vale la pena riguardare le forme quando ci saranno i ritratti veri.
+
+### Il `<title>` di una serata, e `og:type`
+
+Due mezze scelte sui meta, rimandate insieme perché si guardano meglio con dei
+contenuti veri davanti.
+
+Il titolo di una rotta serata è `Serata 81 — Chi tiene aperto il quartiere`,
+mentre quello della radice porta anche il nome dell'associazione. Nei risultati
+di ricerca è il posto dove quel nome lavorerebbe di più; in una linguetta,
+ripetuto su ottantuno pagine, è rumore. **Deciso di rivederlo quando si
+inseriscono i contenuti veri**, che è quando si vede come suonano ottantuno
+titoli di fila.
+
+`og:type` resta `website` anche sulle rotte delle serate, che sono
+semanticamente degli eventi. Sta in `Base.astro`, cioè nel layout condiviso, e
+il posto dove si tocca è la PR 13 insieme al resto dei meta.
 
 ### Link a mappa per le sedi
 

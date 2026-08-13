@@ -64,7 +64,7 @@ sostituisce un telefono vero.
 | 6 | Gli otto componenti del design system | `design-system-astro` | fatta |
 | 7 | Lo scroller del programma | `scroller-programma` | fatta |
 | 8 | Timeline e navigazione da tastiera | `timeline` | fatta |
-| 9 | Le pagine delle serate | `pagine-serata` | da fare |
+| 9 | Le pagine delle serate | `pagine-serata` | fatta |
 | 10 | La prenotazione dentro il modale | `modale-prenotazione` | da fare |
 | 11 | Chi siamo, contatti, rassegna disabilitata | `pagine-istituzionali` | da fare |
 | 12 | Sveltia CMS | `cms-sveltia` | da fare |
@@ -1209,68 +1209,28 @@ Per esteso in [decisioni.md](decisioni.md), sotto *La Timeline*. In breve:
 > schermo. La misura nuova è misurata e non copiata: 115px è quel che chiede la
 > riga della tacca corrente, e il resto è il padding del design.
 
-> **Un falso allarme, tenuto qui perché costa mezz'ora ritrovarlo.** Provando
-> dalla console, `scrollIntoView()` sullo scroller sembrava non fare niente
-> quando `scroll-behavior: smooth` è attivo — che avrebbe voluto dire snap
-> mandatory contro scorrimento morbido, cioè il difetto che
-> [vincoli-tecnici.md](vincoli-tecnici.md) attribuisce a Safari, in Chrome. Non
-> era la pagina: erano due scroll sovrapposti nella stessa prova, uno dei quali
-> assegnava `scrollTop` mentre l'animazione dell'altro era in volo. Con
-> interazioni vere — tasto, clic, anche due frecce in rapida successione —
-> frecce e tacche arrivano dove devono.
-
-> **Trovato in revisione.** Quindici difetti, e il filo che li lega è che quasi
-> tutti stanno dove il rendering è corretto: si vedono contando, non guardando.
+> **Non era un falso allarme, ed è stato corretto alla PR 9.** Questa nota
+> diceva che `scrollIntoView()` che non muove niente era colpa della prova e non
+> della pagina — due scorrimenti sovrapposti in un test scritto male. Sbagliato:
+> il difetto era vero, e la prova ne coglieva solo il caso più facile da
+> confondere con un errore di misura.
 >
-> Quattro sul contrasto e sulla messa a fuoco. **L'accento era sulla data della
-> tacca corrente**, cioè il colore del ciclo su una parola a 15px, mentre quello
-> che i cicli garantiscono è 3:1 — tre dei cinque colori tarati non arrivano al
-> 4,5 che una parola vuole. `Modal.astro` aveva già scritto questa decisione per
-> il link dentro il pannello, e la rotaia la contraddiceva. **Il colore delle
-> tacche lontane** stava a 2,66:1, sotto qualunque altra cosa il sito spedisca.
-> **L'anello di messa a fuoco sulla barra del telefono era ritagliato via
-> interamente** — il margine interno della barra era esattamente lo scostamento
-> dell'anello, e la barra ritaglia. **E `--timeline-bar` era un numero letto a
-> schermo**, non la somma delle parti da cui la barra è fatta: alzare il
-> bersaglio da toccare l'avrebbe fatta crescere sotto una scena che aveva
-> riservato l'altezza vecchia.
+> Riprodotto alla PR 9 con un'azione qualunque: **due tacche toccate a due
+> decimi di secondo di distanza**. Il secondo salto parte mentre il primo è in
+> volo, il motore lo lascia cadere, e il programma resta sulla prima
+> destinazione mentre rotaia, accento e indirizzo dicono la seconda — un sito
+> che si contraddice, senza niente da vedere e senza niente che fallisca. Con
+> `scroll-behavior: smooth` acceso lo stesso valeva per le frecce.
 >
-> Tre nello script. Un Ctrl-clic su una tacca — quello che apre in una scheda
-> nuova — spostava `aria-current`, l'accento e la finestra su una serata che non
-> era a schermo, e poi assordava l'osservatore per 1200 ms. `aim()` armava quel
-> timer anche quando la destinazione era già la corrente, e niente poteva più
-> disarmarlo perché nessuna scena avrebbe attraversato la linea di mezzo. E il
-> tasto Shift non era nell'elenco dei modificatori da lasciar stare, quindi
-> Shift+Freccia — cioè selezionare del testo — saltava alla serata dopo.
+> La correzione sta nella PR 9 e ha tolto la proprietà: `scroll-behavior`
+> raggiunge solo gli scorrimenti chiesti da uno script, qui sono tutti salti a
+> una serata, e animarli comprava un'animazione al prezzo dell'unica cosa che
+> quei salti devono fare. La regola 15 del `CLAUDE.md` dice adesso quello, e
+> `checkSmoothScrollArgument` conta di più di prima.
 >
-> Tre nelle verifiche, che è la metà peggiore. `checkSmoothScrollArgument` non
-> vedeva una chiave fra virgolette — `{ 'behavior': 'smooth' }`, la forma che si
-> scrive per far tacere un linter — e non la vedeva due volte: il motivo per cui
-> la regola 15 esiste, con la guardia che risponde «nessuna violazione». Il test
-> sulla finestra pretendeva che i ranghi presenti fossero giusti e mai che gli
-> altri non ci fossero, quindi una build che avesse marcato tutte e ottantuno le
-> tacche lo passava intero pubblicando l'archivio giù per il fianco della
-> pagina. E `test/build/` si era riscritto in casa sia il modo di trovare le
-> tacche sia `attributeOf` — il secondo senza il lookbehind che
-> `test/guards/document.ts` documenta come la sua unica ragione di esistere,
-> cioè `data-href` letto come `href`.
->
-> **La rotaia stava dopo il programma nel documento.** È fissa, quindi a schermo
-> non cambia niente e per una tastiera cambia tutto: le tacche venivano dopo
-> ogni bottone di ogni serata.
->
-> Due erano nell'involucro delle tacche, e una risolve l'altra. Ogni tacca
-> stava in un `<li>` che restava anche quando la tacca no: settanta elementi
-> vuoti nell'albero dell'accessibilità — «elenco, 81 elementi» per una rotaia
-> che ne mostra undici — ed è lo stesso `<li>` che aveva causato i mille pixel
-> di `gap` vuoto trovati nel controllo manuale. Tolta la lista, `gap` torna
-> corretto da sé, perché un figlio in `display: none` non è un elemento flex.
->
-> E l'ultima riguarda l'altro scorrimento che il browser fa mentre la pagina
-> arriva: `data-smooth` si accendeva subito dopo il salto di apertura, ma chi
-> entra da `/#serata-3` lascia il frammento al motore, e un motore che ci torna
-> sopra a caricamento finito avrebbe trovato la proprietà già accesa. Adesso si
-> accende sull'evento `load`.
+> Resta la lezione che questa nota aveva mancato: **una prova che non
+> riproduce non è una prova che assolve.** Archiviare un sintomo come artefatto
+> della misura è il modo in cui un difetto vero sopravvive a chi lo ha visto.
 
 ### Test manuali
 
@@ -1306,36 +1266,173 @@ Per esteso in [decisioni.md](decisioni.md), sotto *La Timeline*. In breve:
 
 ## PR 9 — Le pagine delle serate
 
-**Branch:** `pagine-serata` · **Dipende da:** 6
+**Branch:** `pagine-serata` · **Dipende da:** 7 e 8
 
-Sono la mitigazione strutturale dello scroll-snap: chi non riesce a usare lo
-scroller ha comunque accesso completo ai contenuti.
+Il piano diceva «una pagina per serata» e lasciava intendere un documento
+diverso dallo scroller. Non lo è: **è lo stesso scroller, servito a ottantuno
+indirizzi**, che si apre su una serata diversa e porta i meta di quella. `/81`
+non è una pagina della serata 81 — è il programma aperto sulla serata 81.
+
+È ciò che rende vero il motivo per cui quegli URL esistono: il numero nudo serve
+alle anteprime su WhatsApp e Facebook, che vengono dai meta Open Graph e non
+dallo slug.
+
+### Decisioni prese scrivendo la PR
+
+Per esteso in [decisioni.md](decisioni.md), sotto *Le rotte delle serate*. In
+breve:
+
+- **Lo scroller diventa un componente**, `Programme.astro`, e le due rotte lo
+  usano: copiarlo nella seconda pagina sarebbe due sorgenti per una schermata
+- **L'indirizzo segue la serata a schermo**, con `history.replaceState` — mai
+  `pushState`, che lascerebbe una voce di cronologia per ogni serata
+  attraversata — e **si aggiorna al cambio, non all'apertura**: `/` riscritto in
+  `/81` appena la pagina si apre darebbe a un segnalibro sulla radice un
+  indirizzo che invecchia
+- **L'`<h1>` di ogni rotta nomina la sua serata**, invisibile come prima: è la
+  sola cosa dentro il corpo che distingue ottantuno documenti uguali per chi li
+  indicizza
+- **La foto tema diventa un'immagine da anteprima 1200×630**, ritagliata da
+  `astro:assets` e generata solo quando c'è il dominio, perché è solo allora che
+  il layout la pubblica
+- **Una serata annullata entra nei contenuti d'esempio**, prima di quella di
+  apertura, perché il ramo `cancelled` non si vedeva in `dist/` e il test poteva
+  solo pretendere che la regola esistesse
+- **La barratura si aggancia a `data-state="cancelled"`** e sta in `Scene.astro`,
+  che è l'unico posto: la rotta `/80` è quella stessa scena, aperta su di lei
 
 ### Obiettivi
 
-- [ ] Rotta `/[number]`, una pagina per serata, con il titolo in `<h1>`
-- [ ] Meta Open Graph con la foto tema — è il motivo per cui queste pagine
-      esistono
-- [ ] Una serata annullata conserva pagina e numero, e mostra il suo stato
-- [ ] **La barratura si aggancia a `data-state="cancelled"`**, nella scena dello
-      scroller come nella pagina della serata: l'attributo lo pubblica la PR 7 e
-      oggi non lo legge nessuna regola. Nessuna serata d'esempio è annullata,
-      quindi in `dist/` quel ramo non si vede — il test può solo pretendere che
-      la regola esista nel CSS pubblicato, ed è il motivo per cui `stateOf` è una
-      funzione pura con il suo test
-- [ ] Dallo scroller si arriva alla pagina della serata
+- [x] Rotta `/[number]`, una per serata, che rende lo scroller aperto su quella
+- [x] Lo scroller è un componente solo, usato da `/` e da `/[number]`
+- [x] Ogni rotta porta titolo, descrizione e immagine della sua serata nei meta;
+      `og:image` esce quando arriva il dominio
+- [x] Un `<h1>` per pagina, invisibile, che nomina la serata di quella rotta
+- [x] `data-cycle` di ogni rotta è quello del ciclo della sua serata
+- [x] L'URL si aggiorna alla serata a schermo, senza voci nella cronologia
+- [x] Una serata annullata conserva pagina e numero, e mostra il suo stato
+- [x] La barratura si aggancia a `data-state="cancelled"`, scritta una volta
+- [x] Una serata annullata d'esempio, prima di quella di apertura
 
 ### Test automatici
 
-- Una pagina per ogni evento, e `/81` esiste
-- Un solo `<h1>` per pagina
-- I meta Open Graph e Twitter ci sono e riportano titolo, descrizione e foto
-- Due eventi con lo stesso numero fanno fallire la build
+- Una rotta per ogni evento, coi percorsi ricavati dai contenuti
+- Ogni rotta si apre sulla **sua** serata, e `/` sulla prima ancora da svolgere:
+  scritto come contratto e non ricalcolato da un orologio — la scena di apertura
+  è *in programma*, e tutte quelle che la precedono sono passate o annullate
+- Ogni rotta pubblica titolo e descrizione della sua serata, non del sito, e
+  `og:description` dice la stessa cosa del meta
+- **Quando `site` è impostato**, ogni rotta con una foto pubblica `og:image`
+  assoluto: scritto ora, si accende alla PR 13
+- Gli `<h1>` di due rotte sono diversi, e quello della radice non nomina nessuna
+  serata
+- **Guardia** `checkEveningRoutes`: ogni `data-number` pubblicato trova la sua
+  rotta in `dist/`. È l'indirizzo che lo script scrive nella barra — un numero
+  senza rotta è un 404 che compare solo quando qualcuno ricarica o condivide
+- **Guardia** `checkHistoryPush`: nessuno script di `src/` impila una voce di
+  cronologia. È la differenza fra `replaceState` e `pushState`, cioè fra un
+  tasto indietro che esce dal sito e uno che risale l'archivio
+- La serata annullata: la sua rotta esiste, pubblica `data-state="cancelled"`, e
+  nessuna rotta si apre su di lei per difetto
+- La barratura esiste nel CSS pubblicato ed è agganciata a `data-state`
+- **Nessun `scroll-behavior: smooth` nel CSS pubblicato**, che è la correzione
+  qui sotto, letta dove la rimetterebbe chi la rimettesse
+- Le guardie precedenti continuano a passare su ogni rotta nuova, e
+  `npm run test:mutate` con loro: **47 su 47**
+
+> **Trovato provando, e non era di questa PR.** Con lo scorrimento morbido
+> acceso, **un salto interrotto da un altro salto viene lasciato cadere dal
+> motore**: si toccano due tacche a due decimi di distanza e il programma resta
+> sulla prima destinazione mentre rotaia, accento e indirizzo dicono la seconda.
+> Con le frecce lo stesso. Nessun errore, niente in `dist/`, e un sito che si
+> contraddice.
+>
+> La PR 8 l'aveva visto e l'aveva archiviato come un errore della prova — due
+> scorrimenti sovrapposti in un test scritto male — perché nella forma in cui si
+> era presentato *era* indistinguibile da quello. La differenza è che adesso ha
+> una riproduzione che è un'azione qualunque di un lettore qualunque.
+>
+> La correzione è togliere `scroll-behavior: smooth`. Non è una rinuncia
+> scambiata con la correttezza: quella proprietà raggiunge **solo** gli
+> scorrimenti chiesti da uno script, e qui sono tutti salti a una serata, quindi
+> tutto quello che comprava era rendere interrompibile l'unica cosa che quei
+> salti devono fare. In cambio `prefers-reduced-motion` è soddisfatto per
+> costruzione invece che da una regola che deve continuare a vincere, e sparisce
+> la macchinetta che accendeva la proprietà sull'evento `load`.
+>
+> La guardia `bersaglio` resta, con un compito che è rimasto uno solo: un salto
+> sul frammento lo fa il browser, non noi, e Safari è il motore che questo
+> progetto non vede finché il sito non è pubblicato.
+
+> **Trovato in revisione.** Undici difetti, e i tre che contano stanno tutti
+> nella stessa zona: quello che succede quando qualcosa va storto in mezzo a
+> un'altra cosa.
+>
+> **`history.replaceState` può lanciare.** WebKit rifiuta più di cento scritture
+> di cronologia in trenta secondi, e tenere premuta una freccia dalla prima
+> serata all'ultima e ritorno ci arriva. Lanciata da lì, l'eccezione usciva da
+> `aim()` fino al gestore dei tasti — che ha già chiamato `preventDefault()` e
+> non ha ancora scorso: le frecce avrebbero smesso di muovere il programma per
+> il resto della finestra, con lo scorrimento nativo soppresso e niente al suo
+> posto. Adesso è dentro un `try`, e l'indirizzo che resta indietro è tutto il
+> prezzo di aver toccato il limite.
+>
+> **`decodeURIComponent` pure.** Un frammento che non è codifica percentuale
+> valida — `/81#%` — faceva morire l'intera funzione di apertura, e la rotta si
+> apriva in cima all'archivio invece che sulla serata che nomina: cioè si
+> perdeva la ragione per cui `/81` esiste, per un carattere di troppo
+> nell'indirizzo scritto da qualcun altro.
+>
+> **E `loadProgramme()` veniva rieseguita per ogni rotta**: ottantadue letture
+> delle stesse quattro collection, con ciclo, sede e relatori risolti da capo
+> ogni volta — quadratico nella dimensione di un archivio che può solo crescere.
+> Adesso è memoizzata, **ma solo durante una build**: in `astro dev` il modulo
+> sopravvive al salvataggio di chi scrive, e un programma in cache continuerebbe
+> a servire le serate com'erano all'avvio del server. Non mostrare la modifica è
+> l'unica cosa che un'anteprima non può fare, e dalla PR 12 quei file li scrive
+> il CMS. Con 81 serate la build passa da 3,8 a 3,1 secondi, ma il numero che
+> conta è l'esponente.
+>
+> Due erano nei test: niente pretendeva che l'indirizzo venisse **riscritto** —
+> `checkHistoryPush` vieta la chiamata sbagliata e non chiede quella giusta,
+> quindi cancellando la riga la suite restava verde e la regola 16 non era
+> tenuta da nessuno — e tre asserzioni usavano `home!` senza mai controllare che
+> ci fosse.
+>
+> Una l'ho chiusa contro il parere della revisione, che l'aveva lasciata aperta:
+> **l'immagine da anteprima si generava anche senza dominio**, cioè un JPEG per
+> serata che nessuna pagina referenziava. Con l'archivio pieno sono ottantuno
+> ridimensionamenti e ottantuno file morti in ogni deployment. Generarla solo
+> quando c'è il dominio non toglie niente alla promessa che alla PR 13 non ci
+> sia niente da ricordarsi: arriva il dominio e arrivano le immagini.
+>
+> **Due sono rimaste aperte, di proposito.** Il `<title>` di una serata non
+> nomina l'associazione, mentre quello della radice sì: è una scelta di testo
+> italiano e la si fa guardandola, non correggendola di nascosto. E `og:type`
+> resta `website` anche sulle rotte delle serate: cambiarlo è una decisione sul
+> layout condiviso, e il posto dove si prende è la PR 13, insieme al resto dei
+> meta.
 
 ### Test manuali
 
-- Anteprima di un link su WhatsApp e su Facebook: titolo e foto compaiono
-- La pagina di una serata annullata si legge e non sembra un errore
+- Si entra da `/81`, si toccano due tacche in rapida successione, e il programma
+  atterra sulla **seconda** — con rotaia, accento e indirizzo che dicono la
+  stessa cosa. È la prova che ha trovato il difetto qui sopra
+- Frecce, Home e Fine muovono il programma e l'indirizzo insieme
+- Si entra da `/`, non si tocca niente, e l'indirizzo resta `/`; la cronologia
+  non cresce di una voce per serata attraversata
+- `/80` si legge come una serata annullata e non come un errore: titolo e data
+  barrati, l'etichetta «annullata», la nota «Serata annullata»
+- Con un contenuto finto da 81 serate: **84 pagine in 3,8 secondi**, `dist/` di
+  18 MB, una rotta di 202 KB che compressa ne fa **14** — sotto la stima di
+  20–25 KB di [vincoli-tecnici.md](vincoli-tecnici.md) — e 109 file in tutto,
+  contro i 20.000 che Cloudflare Pages concede per deployment
+
+> **Rimandata alla PR 13**: l'anteprima di un link su WhatsApp e su Facebook.
+> Senza dominio non c'è niente da incollare in una chat e `og:image` non viene
+> emesso — il layout lo omette apposta, perché un URL relativo lì dentro
+> «sembra giusto nel markup e l'anteprima esce senza figura». Il test è scritto
+> e si arma da solo quando `site` compare in configurazione.
 
 ---
 

@@ -136,6 +136,13 @@ emulazione.
 `scrollTo({ behavior: 'smooth' })` combinato con `scroll-snap-type: mandatory`
 è storicamente instabile su Safari: lo snap interrompe lo scorrimento morbido.
 
+**E non solo su Safari.** Alla PR 9 lo si è riprodotto in Chrome, e non a
+intermittenza: un salto animato interrotto da un secondo salto viene lasciato
+cadere, e la pagina resta sulla prima destinazione mentre tutto il resto — la
+rotaia, l'accento, l'indirizzo — dice la seconda. Lo scorrimento morbido è stato
+tolto: raggiungeva solo i salti fatti da script, che sono gli unici che questo
+sito compie, quindi comprava un'animazione al prezzo della loro correttezza.
+
 Il design se n'era già accorto — nel suo codice c'è una guardia con un flag
 `bersaglio` e un timer da 1200 ms. È replicata dalla PR 8, con un compito
 spostato: il salto da una tacca lo fa il browser sul frammento, e la guardia
@@ -180,9 +187,12 @@ Perimetro concordato:
   d'accento, mai trasparenze vetrose)
 - `prefers-reduced-motion` come sopra
 
-La mitigazione più forte però è strutturale: **con ogni serata raggiungibile a
-`/81` come pagina normale, chi non riesce a usare lo scroll-snap ha comunque
-accesso completo ai contenuti.** È questo che rende il pattern difendibile.
+La mitigazione più forte però è strutturale: **ogni serata ha il suo
+indirizzo.** `/81` è il programma aperto sull'ottantunesima — non un documento
+diverso — e chi non riesce a usare lo scroll-snap ha comunque tutto il contenuto
+in pagina: con gli script spenti si scorre normalmente, e sotto
+`prefers-reduced-motion` lo snap si spegne. È questo che rende il pattern
+difendibile.
 
 Attenzione all'`overflow` annidato del design — ogni sezione è a sua volta
 scrollabile dentro lo scroller — che rende ambigua la navigazione da tastiera

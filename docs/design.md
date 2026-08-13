@@ -63,7 +63,7 @@ cambio di URL, diventano pagine vere:
 | Percorso | Contenuto |
 |---|---|
 | `/` | il programma: lo scroller a scroll-snap con la Timeline |
-| `/81` | la singola serata, numero editoriale nudo |
+| `/81` | il programma aperto su quella serata, numero editoriale nudo |
 | `/chi-siamo` | manifesto, come nasce, valori, persone, sede |
 | `/contatti` | contatti |
 | `/rassegna` | **disabilitata**, "Coming soon" |

@@ -34,6 +34,7 @@ import {
 } from '../guards/language.ts';
 import { checkDevDepsInLockfile, checkNoTailwind } from '../guards/packages.ts';
 import { checkNoClientDirectives, checkNoUiFramework } from '../guards/react.ts';
+import { checkHistoryPush } from '../guards/routes.ts';
 import { checkSmoothScrollArgument } from '../guards/scroller.ts';
 import { checkHandWrittenShapes } from '../guards/shapes.ts';
 import { collectionEntries, dateOf } from '../support/frontmatter.ts';
@@ -227,6 +228,14 @@ describe('the code that handles dates', () => {
     // control a reader prone to motion sickness has stops working, with nothing
     // to see in dist/ and nothing failing.
     expect(checkSmoothScrollArgument(read(path), path).map((v) => v.detail)).toEqual([]);
+  });
+
+  it.each(codeFiles)('%s replaces the address instead of pushing it', (path) => {
+    // The programme rewrites the address as the reader scrolls. Pushed rather
+    // than replaced, that is one history entry per evening crossed: the back
+    // button stops leaving the site and starts walking the archive backwards,
+    // and the page looks identical either way.
+    expect(checkHistoryPush(read(path), path).map((v) => v.detail)).toEqual([]);
   });
 
   it.each(clocklessFiles)('%s does not read the clock', (path) => {
