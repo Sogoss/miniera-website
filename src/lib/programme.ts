@@ -81,14 +81,44 @@ export type Programme = {
 const BUILD_TIME = new Date();
 
 /**
+ * The programme as the build read it, kept for the rest of the build.
+ *
+ * Every route starts from `loadProgramme()` — the root, the evening pages of
+ * PR 9, the component gallery — and without this each of them resolved the
+ * cycle, the venue and every guest of every evening all over again: eighty-two
+ * reads of the same four collections for eighty-one evenings, which is
+ * quadratic in the size of an archive that only ever grows.
+ *
+ * The second thing it buys is worth more than the seconds: every route is now
+ * handed the *same* scenes, so an index one route works out is an index into
+ * the array the next one reads.
+ *
+ * Only in a build. In `astro dev` this module outlives an editor's save, and a
+ * cached programme would go on serving the evenings as they were when the
+ * server started — the CMS of PR 12 writes those files, and not showing the
+ * change is the one thing a preview must not do.
+ */
+let cached: Promise<Programme> | undefined;
+
+/**
  * The whole programme, ready to render.
  *
  * `now` is a parameter so that a test can hand it a different day; the default
  * is the one clock read above, and the only one in the codebase. The value is
  * passed down from here, so that a build straddling midnight cannot classify
- * the first evening against one day and the last against the next.
+ * the first evening against one day and the last against the next. A day that
+ * is not the build's own is never cached: it is somebody asking a question
+ * about a different day, and answering it from the store would answer a
+ * different question.
  */
 export async function loadProgramme(now: Date = BUILD_TIME): Promise<Programme> {
+  if (now !== BUILD_TIME || !import.meta.env.PROD) return readProgramme(now);
+
+  cached ??= readProgramme(now);
+  return cached;
+}
+
+async function readProgramme(now: Date): Promise<Programme> {
   const events = sortByNumber((await getCollection('eventi')).map((entry) => entry.data));
 
   const conflicts = findNumberDateConflicts(events);

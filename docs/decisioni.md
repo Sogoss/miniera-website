@@ -1241,6 +1241,27 @@ l'annullamento toglie — il titolo e la data — e non il luogo, che resta dov'
 già l'etichetta «annullata» sopra il titolo e la nota «Serata annullata» sotto.
 *(PR 9)*
 
+**Il programma si legge una volta per build, e mai in `astro dev`.** Ogni rotta
+parte da `loadProgramme()`, e senza memoria erano ottantadue letture delle
+stesse quattro collection con ciclo, sede e relatori risolti da capo ogni volta:
+quadratico nella dimensione di un archivio che può solo crescere. Ciò che compra
+oltre ai secondi è che ogni rotta riceve le *stesse* scene, quindi un indice che
+una rotta calcola è un indice nell'array che legge la successiva. In sviluppo no:
+il modulo sopravvive al salvataggio di chi scrive, e un programma in cache
+continuerebbe a servire le serate com'erano all'avvio del server — dalla PR 12
+quei file li scrive il CMS, e non mostrare la modifica è l'unica cosa che
+un'anteprima non può fare. E un `now` diverso da quello della build non viene
+mai messo in cache: è qualcuno che chiede di un altro giorno, e rispondergli
+dalla memoria risponderebbe a un'altra domanda. *(PR 9, in revisione)*
+
+**L'immagine da anteprima si genera solo quando c'è il dominio.** Prima si
+generava comunque, con l'argomento che alla PR 13 non ci fosse niente da
+ricordarsi — e il costo si vedeva in `dist/`: un JPEG per serata che nessuna
+pagina referenziava, cioè ottantuno ridimensionamenti e ottantuno file morti in
+ogni deployment con l'archivio pieno. La promessa regge lo stesso: arriva il
+dominio e arrivano le immagini, perché è la stessa condizione che fa emettere
+`og:image` al layout. *(PR 9, in revisione)*
+
 **Senza JavaScript, `/81` si apre in cima all'archivio.** Il salto alla scena
 giusta è lo script, e qui pesa più che su `/`, perché l'indirizzo aveva promesso
 una serata precisa. Un redirect a `/#serata-81` funzionerebbe per il browser e

@@ -82,8 +82,19 @@ const { scenes, openIndex } = Astro.props;
       var open = scroller && scroller.querySelector('[data-open]');
       if (!open) return;
 
+      /* `decodeURIComponent` throws on anything that is not valid percent
+         encoding — `/#%` is the whole of it — and thrown from here it takes the
+         opening jump with it: the route lands at the top of the archive instead
+         of on the evening it names, over one stray character in an address
+         somebody else typed. Left as it arrived is the honest fallback, since
+         an id that needs no decoding is spelt the same either way. */
       var asked = location.hash ? location.hash.slice(1) : '';
-      if (asked && document.getElementById(decodeURIComponent(asked))) return;
+      try {
+        asked = decodeURIComponent(asked);
+      } catch (error) {
+        /* Undecoded, and still worth looking up. */
+      }
+      if (asked && document.getElementById(asked)) return;
 
       scroller.scrollTop +=
         open.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
@@ -210,7 +221,24 @@ const { scenes, openIndex } = Astro.props;
            `/` is the one address that does not age, and it stays until the
            reader moves. */
         var number = scenes[index].getAttribute('data-number');
-        if (number && history.replaceState) history.replaceState(null, '', '/' + number);
+        if (number && history.replaceState) {
+          try {
+            /* The query string travels: somebody arriving from a link with a
+               campaign on it keeps it when the address is rewritten, and what
+               they copy is still the address they were given. */
+            history.replaceState(null, '', '/' + number + location.search);
+          } catch (error) {
+            /* WebKit refuses more than a hundred history writes in thirty
+               seconds and throws when it does — holding an arrow key from the
+               first evening to the last and back is enough. Uncaught, that
+               throw travels out through `aim()` into the keydown handler, which
+               has already called `preventDefault()` and has not scrolled yet:
+               the arrows would stop moving the programme at all for the rest of
+               that window, with the native scroll suppressed and nothing put in
+               its place. The address falling behind is the whole cost of
+               reaching the limit, and it is the part nobody is hurt by. */
+          }
+        }
       }
 
       /* The design's guard, kept for the case this project cannot yet test.

@@ -1293,7 +1293,8 @@ breve:
   sola cosa dentro il corpo che distingue ottantuno documenti uguali per chi li
   indicizza
 - **La foto tema diventa un'immagine da anteprima 1200×630**, ritagliata da
-  `astro:assets`
+  `astro:assets` e generata solo quando c'è il dominio, perché è solo allora che
+  il layout la pubblica
 - **Una serata annullata entra nei contenuti d'esempio**, prima di quella di
   apertura, perché il ramo `cancelled` non si vedeva in `dist/` e il test poteva
   solo pretendere che la regola esistesse
@@ -1362,6 +1363,55 @@ breve:
 > La guardia `bersaglio` resta, con un compito che è rimasto uno solo: un salto
 > sul frammento lo fa il browser, non noi, e Safari è il motore che questo
 > progetto non vede finché il sito non è pubblicato.
+
+> **Trovato in revisione.** Undici difetti, e i tre che contano stanno tutti
+> nella stessa zona: quello che succede quando qualcosa va storto in mezzo a
+> un'altra cosa.
+>
+> **`history.replaceState` può lanciare.** WebKit rifiuta più di cento scritture
+> di cronologia in trenta secondi, e tenere premuta una freccia dalla prima
+> serata all'ultima e ritorno ci arriva. Lanciata da lì, l'eccezione usciva da
+> `aim()` fino al gestore dei tasti — che ha già chiamato `preventDefault()` e
+> non ha ancora scorso: le frecce avrebbero smesso di muovere il programma per
+> il resto della finestra, con lo scorrimento nativo soppresso e niente al suo
+> posto. Adesso è dentro un `try`, e l'indirizzo che resta indietro è tutto il
+> prezzo di aver toccato il limite.
+>
+> **`decodeURIComponent` pure.** Un frammento che non è codifica percentuale
+> valida — `/81#%` — faceva morire l'intera funzione di apertura, e la rotta si
+> apriva in cima all'archivio invece che sulla serata che nomina: cioè si
+> perdeva la ragione per cui `/81` esiste, per un carattere di troppo
+> nell'indirizzo scritto da qualcun altro.
+>
+> **E `loadProgramme()` veniva rieseguita per ogni rotta**: ottantadue letture
+> delle stesse quattro collection, con ciclo, sede e relatori risolti da capo
+> ogni volta — quadratico nella dimensione di un archivio che può solo crescere.
+> Adesso è memoizzata, **ma solo durante una build**: in `astro dev` il modulo
+> sopravvive al salvataggio di chi scrive, e un programma in cache continuerebbe
+> a servire le serate com'erano all'avvio del server. Non mostrare la modifica è
+> l'unica cosa che un'anteprima non può fare, e dalla PR 12 quei file li scrive
+> il CMS. Con 81 serate la build passa da 3,8 a 3,1 secondi, ma il numero che
+> conta è l'esponente.
+>
+> Due erano nei test: niente pretendeva che l'indirizzo venisse **riscritto** —
+> `checkHistoryPush` vieta la chiamata sbagliata e non chiede quella giusta,
+> quindi cancellando la riga la suite restava verde e la regola 16 non era
+> tenuta da nessuno — e tre asserzioni usavano `home!` senza mai controllare che
+> ci fosse.
+>
+> Una l'ho chiusa contro il parere della revisione, che l'aveva lasciata aperta:
+> **l'immagine da anteprima si generava anche senza dominio**, cioè un JPEG per
+> serata che nessuna pagina referenziava. Con l'archivio pieno sono ottantuno
+> ridimensionamenti e ottantuno file morti in ogni deployment. Generarla solo
+> quando c'è il dominio non toglie niente alla promessa che alla PR 13 non ci
+> sia niente da ricordarsi: arriva il dominio e arrivano le immagini.
+>
+> **Due sono rimaste aperte, di proposito.** Il `<title>` di una serata non
+> nomina l'associazione, mentre quello della radice sì: è una scelta di testo
+> italiano e la si fa guardandola, non correggendola di nascosto. E `og:type`
+> resta `website` anche sulle rotte delle serate: cambiarlo è una decisione sul
+> layout condiviso, e il posto dove si prende è la PR 13, insieme al resto dei
+> meta.
 
 ### Test manuali
 

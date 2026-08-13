@@ -53,10 +53,11 @@ function openingSceneOf(html: string): string | undefined {
 }
 
 function metaContent(html: string, name: string): string | undefined {
-  const tag = new RegExp(
-    `<meta\\b[^>]*(?:name|property)="${name}"[^>]*>|<meta\\b[^>]*content="[^"]*"[^>]*(?:name|property)="${name}"`,
-    'i',
-  ).exec(html)?.[0];
+  /* One alternative and not two: `[^>]*` already covers whatever attributes come
+     before `name` or `property`, in either order, and cannot cross the `>` into
+     the tag after it. The second alternative this used to carry — the one
+     spelling `content` out first — could never be reached. */
+  const tag = new RegExp(`<meta\\b[^>]*(?:name|property)="${name}"[^>]*>`, 'i').exec(html)?.[0];
   return tag ? decodeEntities(attributeOf(tag, 'content') ?? '') : undefined;
 }
 
@@ -112,6 +113,8 @@ describe('the published evenings', () => {
     // content. The hidden <h1> is the one thing inside the body that names the
     // evening a route is for — checkDocumentBasics already asks that there be
     // exactly one of them on every page.
+    expect(home, 'dist/index.html is not in dist/').toBeDefined();
+
     const headings = [...routes.entries()].map(
       ([number, page]) => [number, /<h1\b[^>]*>([\s\S]*?)<\/h1>/.exec(page.html)?.[1] ?? ''] as const,
     );
@@ -128,6 +131,8 @@ describe('the published evenings', () => {
   });
 
   it('describes each route with its own evening and not with the site', () => {
+    expect(home, 'dist/index.html is not in dist/').toBeDefined();
+
     const descriptions = [...routes.values()].map((page) => metaContent(page.html, 'description'));
     expect(descriptions.every(Boolean)).toBe(true);
     expect(new Set(descriptions).size).toBe(descriptions.length);
@@ -174,6 +179,22 @@ describe('the published evenings', () => {
     // hand: `stateOf` answers this question once and every part of the site
     // asks it of the same place.
     expect(readPublishedCss()).toMatch(/\[data-state=["']?cancelled["']?\][^{]*\{[^}]*line-through/);
+  });
+
+  it('makes the address follow the evening on screen', () => {
+    /* The other half of rule 16, and the half no guard can state: checkHistoryPush
+       forbids the wrong call, and a line taken out altogether is not a wrong
+       call. Nothing would look broken either — the rail, the accent and the
+       ticks all keep working, and only the address stays on the evening the
+       page opened at, so every link copied out of the archive names the wrong
+       one. Read in dist/, which is where somebody would take it out. */
+    expect(home, 'dist/index.html is not in dist/').toBeDefined();
+
+    for (const page of [home!, ...routes.values()]) {
+      expect(page.html, `${page.path} does not follow the evening on screen`).toMatch(
+        /history\s*\.\s*replaceState\s*\(/,
+      );
+    }
   });
 
   it.each(pages.map((page) => [page.path, page] as const))(

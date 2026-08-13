@@ -35,24 +35,37 @@ export async function getStaticPaths() {
      evenings with the same number would claim the same path and stop the build
      — which is the safety net docs/contenuti.md counts on, on top of the check
      loadProgramme() already makes. */
-  return scenes.map((scene, index) => ({
-    params: { number: String(scene.number) },
-    props: { index },
-  }));
+  return scenes.map((scene) => ({ params: { number: String(scene.number) } }));
 }
 
-const { index } = Astro.props;
+/* Found by its number, and not by a position handed down from getStaticPaths:
+   the number is the identity of an evening — CLAUDE.md rule 10 — while an index
+   is only ever right as long as two separate reads of the collection agree on
+   the order. They do; the day they stop, an index publishes one evening's meta
+   on a page that opens on another, and nothing fails. */
 const { scenes } = await loadProgramme();
+const index = scenes.findIndex((candidate) => String(candidate.number) === Astro.params.number);
+if (index === -1) {
+  throw new Error(`the route /${Astro.params.number} names an evening that is not in the programme`);
+}
+
 const scene = scenes[index]!;
 
 /* 1200×630, which is what a link preview expects, cropped by astro:assets and
-   not by whoever uploaded the photograph. Built even while `site` is unset and
-   the layout therefore publishes no `og:image`: the day PR 13 fills the domain
-   in, nothing here has to change or be remembered. */
-const preview = scene.photo
-  ? (await getImage({ src: scene.photo, width: 1200, height: 630, fit: 'cover', format: 'jpeg' }))
-      .src
-  : undefined;
+   not by whoever uploaded the photograph.
+
+   Built only once the domain is, because the layout publishes `og:image` only
+   then — it has to be absolute, and a relative one looks right in the markup
+   and produces a preview with no picture. Cut for a while the other way, and
+   the cost showed up in dist/: one JPEG per evening that no page referred to,
+   which at eighty-one evenings is eighty-one resizes and eighty-one dead files
+   in every deployment. This still leaves nothing to remember at PR 13 — the
+   domain arrives and the pictures arrive with it. */
+const preview =
+  Astro.site && scene.photo
+    ? (await getImage({ src: scene.photo, width: 1200, height: 630, fit: 'cover', format: 'jpeg' }))
+        .src
+    : undefined;
 
 /* «Serata 81 — Chi tiene aperto il quartiere»: the number first, because that
    is what the association calls its evenings and what the address says. */
