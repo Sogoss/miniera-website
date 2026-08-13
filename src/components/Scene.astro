@@ -166,12 +166,12 @@ const titleId = `titolo-${scene.number}`;
     </div>
   </div>
 
-  <div class="scene-poster">
+  <div class="scene-photo">
     {
       scene.photo && (
-        <div class="scene-poster-frame">
-          <div class="scene-poster-image">
-            {/* Empty alt on purpose: the poster repeats what the text beside it
+        <div class="scene-photo-frame">
+          <div class="scene-photo-image">
+            {/* Empty alt on purpose: the picture accompanies what the text beside it
                 already says, so a screen reader announcing it would read the
                 evening twice. */}
             <Image
@@ -316,7 +316,15 @@ const titleId = `titolo-${scene.number}`;
   }
 
   /* Only ever seen with scripting off, where it is the whole of what the modal
-     would have shown. */
+     would have shown — so it is dressed like the modal's own list: the accent
+     under the word, never as the word. */
+  .scene-materials a {
+    color: var(--text-primary);
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+  }
+
   .scene-materials {
     display: flex;
     flex-direction: column;
@@ -327,14 +335,14 @@ const titleId = `titolo-${scene.number}`;
     font: var(--type-small);
   }
 
-  .scene-poster {
+  .scene-photo {
     position: relative;
     min-height: 0;
   }
 
-  /* The design turns the poster on its corner and rounds it into a capsule; the
+  /* The design turns the picture on its corner and rounds it into a capsule; the
      inner counter-rotation keeps the picture upright inside the tilted frame. */
-  .scene-poster-frame {
+  .scene-photo-frame {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -345,19 +353,19 @@ const titleId = `titolo-${scene.number}`;
     overflow: hidden;
   }
 
-  .scene-poster-image {
+  .scene-photo-image {
     width: 100%;
     height: 100%;
     transform: rotate(-45deg) scale(1.5);
   }
 
-  .scene-poster-image :global(img) {
+  .scene-photo-image :global(img) {
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
 
-  /* One column, the poster above the text — and the text still ranged left,
+  /* One column, the picture above the text — and the text still ranged left,
      which is where this parts company with the mobile design.
 
      The poster takes what is left rather than a fixed share of the viewport:
@@ -374,28 +382,27 @@ const titleId = `titolo-${scene.number}`;
       padding: clamp(64px, 9vh, 96px) var(--gutter-page) clamp(24px, 5vh, 64px);
     }
 
-    .scene-poster {
+    .scene-photo {
       order: -1;
       min-height: 0;
     }
 
-    /* Flat on a phone, tilted only on a desk.
-       A rectangle turned 45° takes up (w + h) / √2 in *both* directions, so in
-       a band 342 wide and 204 tall the biggest it can be is about 160×128 —
-       a quarter of the room it was given, which is why it read as a stamp. Lying
-       flat it fills the width. The tilt is the design's signature and it stays
-       where there is a column to hold it; here it costs more than it says. */
-    .scene-poster-frame {
-      position: static;
-      width: 100%;
-      height: 100%;
-      aspect-ratio: auto;
-      transform: none;
-      border-radius: var(--radius-md);
+    /* The tilted capsule is the brand's, not a decoration to drop when it is
+       inconvenient — so on a phone it keeps the shape and gets more room
+       instead.
+
+       The height is what the geometry allows: a rectangle turned 45° takes up
+       (w + h) / √2 in *both* directions, so in a band 342 wide the frame can be
+       at most about 200 tall before its corners run past the edges — and there
+       is nothing clipping them. 78% of a band that is itself at least a quarter
+       of the screen keeps it inside and keeps it big enough to read as a
+       picture. */
+    .scene-photo {
+      min-height: 26vh;
     }
 
-    .scene-poster-image {
-      transform: none;
+    .scene-photo-frame {
+      height: 78%;
     }
   }
 
@@ -437,7 +444,7 @@ const titleId = `titolo-${scene.number}`;
   }
 
   @media (max-width: 900px) and (max-height: 620px) {
-    .scene-poster {
+    .scene-photo {
       display: none;
     }
   }

@@ -1013,12 +1013,29 @@ in alto, che alla PR 7 non esistono: ogni misura decisa prima va rifatta quando
 arrivano. Quello che alla PR 7 doveva essere giusto è la struttura — niente
 contenuto irraggiungibile, nessuna scena scorrevole — e quello lo è.
 
-**La locandina non è ruotata su schermo stretto.** Il design la mette in piedi
-sull'angolo, e su una colonna alta funziona; in una fascia larga 342 e alta 204
-no, perché un rettangolo ruotato di 45° occupa `(w + h) / √2` in *entrambe* le
-direzioni e quindi il più grande che ci sta è circa 160×128 — un quarto dello
-spazio che ha. Da qui l'impressione, giusta, che fosse un francobollo. Sdraiata
-riempie la larghezza. L'inclinazione resta dove c'è una colonna che la regge.
+**L'immagine della serata tiene la sua forma inclinata anche sul telefono: è
+del marchio, non decorazione.** Era stata sdraiata per far spazio, e sbagliando:
+la capsula girata sull'angolo è una firma visiva come la barra arancione del
+marchio, e le firme non si tolgono quando sono scomode. Quello che si tocca è lo
+spazio che ha — un quarto dello schermo garantito — e l'altezza del riquadro,
+che la geometria limita: un rettangolo ruotato di 45° occupa `(w + h) / √2` in
+*entrambe* le direzioni, quindi in una fascia larga 342 non può superare i 200
+di altezza senza che gli angoli escano, e niente li ritaglia.
+
+**E non è una locandina.** Il nome era sbagliato in tutto il codice: una
+locandina è un manifesto che annuncia, questa è un'immagine che accompagna il
+racconto della serata — passata o futura che sia. Il campo dello schema si
+chiamava già `photo`; adesso combaciano anche la cartella, le classi e le
+didascalie dei segnaposto.
+
+**I link dentro il modale sono crema con la sottolineatura nel colore del
+ciclo, non testo colorato.** L'arancione predefinito era il colore del ciclo 1 e
+su ogni altra serata si leggeva come uno sbaglio. Ma il colore pieno del ciclo
+non può fare il testo: la garanzia che il progetto si è dato è **3:1**, la
+soglia di un bordo o di un'icona, mentre un testo ne vuole 4,5 — e due cicli su
+sei non ci arrivano sulla superficie rialzata, il verde a 3,82 e il turchese a
+3,89. Il colore va quindi dove 3:1 è la soglia giusta, cioè la riga sotto la
+parola, e la parola resta al contrasto del testo normale.
 
 **Le dimensioni scalano per `clamp()` con limiti fissi, non per percentuale
 pura.** Una percentuale vera dipende dal contenitore e per le altezze non ha un

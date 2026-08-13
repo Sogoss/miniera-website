@@ -906,7 +906,7 @@ Per esteso in [decisioni.md](decisioni.md), sotto *Lo scroller*. In breve:
   prima del documento, che è in fondo all'archivio e non la vede nessuno
 - **I target di build sono la soglia dei browser**, dichiarati in
   `astro.config.mjs`
-- **Due locandine segnaposto** entrano nei contenuti d'esempio, dichiarate come
+- **Due immagini segnaposto** entrano nei contenuti d'esempio, dichiarate come
   tali
 
 ### Obiettivi
@@ -930,7 +930,7 @@ Per esteso in [decisioni.md](decisioni.md), sotto *Lo scroller*. In breve:
       clonando markup che è già nella pagina
 - [x] Con gli script spenti i link agli interventi restano link veri e visibili:
       la classe `no-js` sul documento decide quale delle due forme si vede
-- [x] Due serate d'esempio hanno una locandina segnaposto
+- [x] Due serate d'esempio hanno un'immagine segnaposto
 - [x] La pagina provvisoria è stata rimossa, non estesa
 
 ### Test automatici
@@ -978,15 +978,16 @@ Per esteso in [decisioni.md](decisioni.md), sotto *Lo scroller*. In breve:
 > **Trovato nel controllo manuale.** A 390×800 i bottoni dei materiali della
 > serata 78 finivano sotto il bordo dello schermo, cioè irraggiungibili — la
 > scena non è scorrevole per scelta, quindi quello che esce è perso. La causa
-> era la locandina: `30vh` fissi, presi prima che il testo chiedesse il suo. Ora
+> era l'immagine della serata: `30vh` fissi, presi prima che il testo chiedesse
+> il suo. Ora
 > è una riga di griglia che prende quel che resta, e sotto certe altezze la
-> scena cede in un ordine dichiarato — descrizione, locandina, presenze — senza
+> scena cede in un ordine dichiarato — descrizione, immagine, presenze — senza
 > mai toccare titolo, data, luogo, bottoni e nota. Le soglie sono due serie
 > separate per i due layout: impilato si stringe presto, affiancato no, perché
 > un portatile a 1440×900 ha spazio e tagliare lì avrebbe accorciato una
 > descrizione che ci sta.
 >
-> **E la locandina restava comunque minuscola**, perché il contenuto di una
+> **E l'immagine restava comunque minuscola**, perché il contenuto di una
 > scena piena — due ospiti, due bottoni, presenze — non ci sta in una schermata
 > per quanto lo si stringa. Da qui il **modale**, chiesto dal committente e
 > anticipato dalla PR 10: una scena ha un bottone solo, e i link agli interventi
@@ -1240,8 +1241,9 @@ rimandate in [questioni-aperte.md](questioni-aperte.md).
       sono già in `rem`; i px sono rientrati nelle scene, copiati dal design. Per
       un pubblico di cinquanta e sessant'anni è la differenza che conta più di
       tutte le altre
-- [ ] La locandina ha una dimensione che si legge, con Timeline e navigazione a
-      schermo
+- [ ] L'immagine della serata ha una dimensione che si legge, con Timeline e
+      navigazione a schermo — la sua forma inclinata è del marchio e non si
+      toglie per far spazio
 - [ ] L'ordine in cui la scena cede su schermo basso è ancora quello giusto ora
       che gli ingombri sono tutti presenti
 - [ ] Il testo del titolo e della descrizione sono tarati sulle larghezze vere

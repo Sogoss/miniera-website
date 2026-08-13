@@ -83,10 +83,10 @@ Quello che la suite pretende è che, se una pagina ne pubblica una, sia assoluta
 
 ## Minori
 
-### Le due locandine segnaposto
+### Le due immagini segnaposto
 
-`src/assets/locandine/` contiene due immagini **generate**, non fotografie:
-servono a far vedere funzionare la colonna della locandina e il caricamento
+`src/assets/photos/` contiene due immagini **generate**, non fotografie:
+servono a far vedere funzionare la colonna dell'immagine e il caricamento
 pigro, e lo dicono di sé stesse — c'è scritto «immagine segnaposto» sopra. Sono
 assegnate alle serate 78 e 81, con un commento nel frontmatter.
 
