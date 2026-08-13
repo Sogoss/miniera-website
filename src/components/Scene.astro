@@ -223,7 +223,13 @@ const titleId = `titolo-${scene.number}`;
     grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
     gap: clamp(24px, 4vw, 64px);
     align-content: safe center;
-    padding: clamp(88px, 12vh, 140px) clamp(24px, 6vw, 104px) clamp(48px, 8vh, 88px);
+
+    /* The right side is not the left: the Timeline's rail stands there, fixed
+       over the scroller, and text running under it is the kind of defect that
+       only shows up on the evening with the longest description. The measure is
+       the rail's own, from the tokens, so the two cannot drift. */
+    padding: clamp(88px, 12vh, 140px) calc(var(--timeline-width) + var(--space-4))
+      clamp(48px, 8vh, 88px) clamp(24px, 6vw, 104px);
     border-bottom: var(--border-width-hairline) solid var(--border-hairline);
   }
 
@@ -447,7 +453,12 @@ const titleId = `titolo-${scene.number}`;
       grid-template-rows: minmax(0, 1fr) auto;
       align-content: stretch;
       gap: clamp(12px, 2.5vh, 28px);
-      padding: clamp(64px, 9vh, 96px) var(--gutter-page) clamp(24px, 5vh, 64px);
+
+      /* The rail is a bar across the bottom here, so what it took from the
+         right side above it takes from underneath. Its height is a token for
+         the same reason. */
+      padding: clamp(64px, 9vh, 96px) var(--gutter-page)
+        calc(var(--timeline-bar) + var(--space-2));
     }
 
     .scene-photo {

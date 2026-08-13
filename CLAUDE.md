@@ -158,6 +158,39 @@ non una preferenza.
     viene ignorato, ritaglia *tutto* — pubblica un buco al posto della foto, con
     l'`id` che risolve e la suite verde.
 
+14. **Una tacca della Timeline è un'ancora, non un bottone.** L'export scrive
+    `<button onClick>`; `<a href="#serata-81">` è l'elemento per una cosa che
+    porta a un punto del documento, e arriva con l'indirizzo condivisibile, il
+    tasto indietro, l'apri-in-nuova-scheda, l'annuncio da screen reader e il
+    salto che il browser fa da sé — nessuna delle quali è scritta qui. Costa
+    **meno** del bottone: che funzioni senza script è quel che la scelta più
+    economica regala, non la ragione per cui è stata fatta. Un bottone rende una
+    rotaia identica a schermo che non fa niente finché qualcuno non gli scrive
+    tutto, ed è il modo in cui questa decisione si perde in silenzio. Due
+    guardie in `test/guards/timeline.ts`: la tacca è un `<a href>` — e un `<a>`
+    senza indirizzo non lo è — e il suo frammento trova un `id` che esiste
+    davvero nella pagina, non uno che gli somiglia e non uno chiuso in un
+    `<template>`, dove `getElementById` non arriva. **E la tacca porta la
+    distanza dalla corrente, non un rango**: è ciò che permette al solo CSS di
+    stringere la finestra a tre sulla barra del telefono, dove undici non ci
+    sono mai stati, senza un secondo numero in uno script — che sarebbe un
+    markup sbagliato per chi non lo esegue.
+
+15. **Lo scorrimento morbido si dichiara come proprietà, mai come argomento.**
+    `scroll-behavior: smooth` sul contenitore, e ogni salto fatto da script
+    chiama `scrollIntoView()` **senza argomenti**, che risolve sul valore
+    calcolato della proprietà. Un `{ behavior: 'smooth' }` passato a mano batte
+    il `scroll-behavior: auto !important` che `global.css` mette sotto
+    `prefers-reduced-motion` — l'argomento vince sulla proprietà, per specifica
+    e in ogni motore — quindi l'unico comando che ha chi soffre di motion
+    sickness smette di rispondere, senza niente da vedere in `dist/` e senza
+    che niente fallisca. `checkSmoothScrollArgument` in
+    `test/guards/scroller.ts` legge il sorgente e lascia stare il foglio di
+    stile, che è la forma giusta: a distinguerli sono le virgolette.
+    **E la proprietà l'accende lo script, dopo il salto di apertura**:
+    assegnare `scrollTop` obbedisce a `scroll-behavior`, quindi dichiararla nel
+    foglio avrebbe fatto scendere l'apertura in animazione da cima all'archivio.
+
 ## Lingua
 
 Due lingue, separate da un confine netto: **il codice è in inglese, quello che
@@ -218,7 +251,16 @@ su cui il programma si apre — è ciò su cui salta lo script — e `data-cycle
 decide l'accento. I primi tre sono quelli che
 `test/build/published-dates.test.ts` legge in `dist/` per provare che una build
 in UTC pubblica le ore italiane: **se rifai la scena, riportali**. `data-label`
-porta la data breve che la Timeline userà per le tacche.
+porta la data breve che la Timeline mette sulle tacche.
+
+Dalla PR 8 la pagina porta anche **la Timeline** — la rotaia verticale a destra,
+la barra in basso sul telefono — e con essa `data-cycle` su `<html>`, che è
+l'accento di tutto ciò che non sta dentro una scena. Lo sposta l'osservatore che
+segue lo scorrimento, ed è **uno solo**: quale serata è a schermo è la stessa
+domanda dietro `aria-current`, dietro l'accento e dietro la finestra di tacche.
+Il valore di partenza lo scrive la build, ed è quello della serata di apertura:
+in `dist/` non gira nessuno script, e una rotaia che aspettasse il suo
+arriverebbe senza niente marcato.
 
 `data-cycle` è l'unico che ha bisogno di compagnia: le regole dell'accento gliele
 dà `Base.astro`, che dalla PR 5 include `CycleAccents` e `ClipShapes` per ogni

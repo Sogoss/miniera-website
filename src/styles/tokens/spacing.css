@@ -27,6 +27,24 @@
      CSS. */
   --scene-height: 100vh;
 
+  /* The room the Timeline takes, declared here because two components have to
+     agree on it: the rail draws itself this wide and a scene keeps its text out
+     from under it. Written in one place so they cannot drift — a rail that
+     overlaps the last words of a description is a defect nobody sees until the
+     description is long.
+     Vertical on the right above 900px, a bar across the bottom below it, which
+     is why there are two. Both are proportions, so PR 14 retunes them.
+
+     Wider than the design's rail, and measured rather than copied: the export
+     puts `clamp(104px, 8.5vw, 140px)` there and writes `20 mar` on its ticks,
+     while ours read `24 set 26` — the year that PR 3 added because on
+     eighty-one evenings *18 giugno* identifies nothing. At the current tick's
+     size that row wants 115px, so a 116px content box is the floor and the
+     padding of the design is on top of it. Below that the dates run off the
+     right edge of the screen, which is where this started. */
+  --timeline-width: clamp(148px, 11vw, 176px);
+  --timeline-bar: 60px;
+
   /* Radii — almost everything is squared off; the only curve in the brand is
      the bottom-right corner of the badge (see --radius-badge). */
   --radius-0: 0px;

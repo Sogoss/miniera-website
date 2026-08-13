@@ -92,6 +92,18 @@
 
   --focus-ring: var(--orange-400);
 
+  /* The two ranks of a Timeline tick that is not the current one. The current
+     one is the accent, and these are how far the others have fallen back.
+
+     They are their own tokens rather than --text-secondary and --text-muted,
+     which sit at 0.68 and 0.44 and would be near enough to borrow: the export
+     tuned these two on the tick and not on running text — `color-mix(in srgb,
+     var(--crema-100) 60%, transparent)` and the same at 34% — and borrowing
+     would tie the rail to a decision about paragraphs. Written as rgba over the
+     triple, which is what this file does instead of color-mix (rule 3). */
+  --tick-near: rgba(var(--cream-100-rgb), 0.6);
+  --tick-far: rgba(var(--cream-100-rgb), 0.34);
+
   /* Veil over the translucent bars (nav, timeline) */
   --veil-bar: rgba(var(--blue-900-rgb), 0.82);
   --veil-bar-strong: rgba(var(--blue-900-rgb), 0.92);
@@ -111,11 +123,16 @@
    (0,1,0) — and a tie is broken by document order, which puts the inline
    <style> of CycleAccents before the bundled stylesheet. The two selectors
    match different elements today, so nothing is wrong yet; the day a page
-   carries `data-cycle` on <html> itself — the natural place when a whole page
-   belongs to one cycle, and what PR 5 and PR 9 will want — :root would win on
-   that element and every accent of the page would render brand orange, with the
-   guard still green because a rule for that cycle does exist. At zero
-   specificity there is nothing left to win. */
+   carries `data-cycle` on <html> itself, :root would win on that element and
+   every accent of the page would render brand orange, with the guard still
+   green because a rule for that cycle does exist. At zero specificity there is
+   nothing left to win.
+
+   That day is PR 8. The programme puts the cycle of the evening on screen on
+   <html>, so that what lies outside every scene — the Timeline, and the
+   navigation of PR 11 — takes the colour of the evening being read. Written
+   `:root` this rule would have won there and the whole rail would have been
+   orange over a green evening. */
 :where(:root) {
   --accent: var(--cycle-1);
   --accent-rgb: var(--cycle-1-rgb);

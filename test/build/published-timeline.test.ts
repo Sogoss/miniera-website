@@ -1,0 +1,138 @@
+/* The Timeline, as it reaches a browser.
+ *
+ * Read out of dist/ and not out of the component, because most of what this
+ * PR decided is only true there: that a tick is a link and not a button, that
+ * exactly one of them is marked current before any script has run, that the
+ * accent of the opening evening is on the document, and that the two tick
+ * colours survived the minifier as rgba and not as anything else.
+ *
+ * Everything expected here comes from the content. Written as literals, adding
+ * an evening would turn the suite red with nothing broken and point at this
+ * file instead of at the programme.
+ */
+import { describe, expect, it } from 'vitest';
+import { checkSingleScroller } from '../guards/scroller.ts';
+import { checkTimelineLinks, checkTimelineTargets } from '../guards/timeline.ts';
+import { publishedPages } from '../support/dist.ts';
+import { collectionEntries } from '../support/frontmatter.ts';
+import { sortByNumber } from '../../src/lib/events.ts';
+
+const HOME = 'dist/index.html';
+const home = publishedPages().find((page) => page.path === HOME);
+const html = home?.html ?? '';
+
+/** The evenings as the content has them, in the order of the site. */
+const evenings = sortByNumber(
+  collectionEntries('eventi').map((entry) => ({
+    number: Number(entry.data.number),
+    cycle: String(entry.data.cycle ?? ''),
+  })),
+);
+
+const cycleNumbers = new Map(
+  collectionEntries('cicli').map((entry) => [entry.id, Number(entry.data.number)]),
+);
+
+/** Every tick of the published rail, with its opening tag. */
+const ticks = [...html.matchAll(/<a\b[^>]*\bdata-tick\b[^>]*>/g)];
+
+function attribute(tag: string, name: string): string | undefined {
+  return new RegExp(`\\b${name}="([^"]*)"`).exec(tag)?.[1];
+}
+
+/** The evening the programme opens on, read where the scroller marks it. */
+const openingNumber = Number(
+  attribute(
+    /<section\b[^>]*\bdata-open="true"[^>]*>/.exec(html)?.[0] ?? '',
+    'data-number',
+  ),
+);
+
+describe('the published Timeline', () => {
+  it('is on the page', () => {
+    // Without this every assertion below reads an empty list and agrees with
+    // itself: a rail that was never rendered passes «every tick is a link».
+    expect(home, `${HOME} is not in dist/`).toBeDefined();
+    expect(html).toMatch(/<nav\b[^>]*\bdata-timeline\b/);
+    expect(evenings.length).toBeGreaterThan(1);
+  });
+
+  it('gives every evening one tick, in the order of the site', () => {
+    // All of them are in the markup even though only a window shows: they are
+    // the programme, and a crawler and Ctrl+F should find them.
+    expect(ticks.map((tick) => attribute(tick[0], 'href'))).toEqual(
+      evenings.map((evening) => `#serata-${evening.number}`),
+    );
+  });
+
+  it('makes every tick a link that leads to its evening', () => {
+    expect(checkTimelineLinks(html, HOME)).toEqual([]);
+    expect(checkTimelineTargets(html, HOME)).toEqual([]);
+  });
+
+  it('marks one tick as current, and it is the evening the programme opens on', () => {
+    // Written by the build and not only by the script: in dist/ there is no
+    // script running, so a rail that waited for one would arrive with nothing
+    // marked — and this assertion is the only place that can tell.
+    const current = ticks.filter((tick) => attribute(tick[0], 'aria-current'));
+    expect(current).toHaveLength(1);
+    expect(openingNumber).toBeGreaterThan(0);
+    expect(attribute(current[0]![0], 'href')).toBe(`#serata-${openingNumber}`);
+  });
+
+  it('shows a window of ticks around the current one', () => {
+    // What the CSS reads: no attribute at all is «outside the window», and the
+    // value is the distance itself — which is how the bar on a phone keeps
+    // three of the eleven the rail shows, without a second number in a script.
+    const current = ticks.findIndex((tick) => attribute(tick[0], 'aria-current'));
+    expect(attribute(ticks[current]![0], 'data-near')).toBe('0');
+
+    for (const [at, tick] of ticks.entries()) {
+      const rank = attribute(tick[0], 'data-near');
+      if (rank === undefined) continue;
+      expect(Number(rank), `tick ${at} is ranked further than it is`).toBe(
+        Math.abs(at - current),
+      );
+    }
+  });
+
+  it('opens the document on the accent of that evening', () => {
+    // On <html>, so that what lies outside every scene takes it. Without it the
+    // rail renders in the brand orange over an evening of any other cycle: a
+    // page that is perfectly correct and the wrong colour.
+    const document = /<html\b[^>]*>/.exec(html)?.[0] ?? '';
+    const opening = evenings.find((evening) => evening.number === openingNumber);
+    expect(opening, 'no evening carries data-open in the markup').toBeDefined();
+    expect(Number(attribute(document, 'data-cycle'))).toBe(cycleNumbers.get(opening!.cycle));
+  });
+
+  it('publishes the two tick colours as rgba over the cream triple', () => {
+    // The export had them as `color-mix(… 60%)` and `… 34%`, which rule 3 keeps
+    // out. checkNoColorMixOrOklch watches the other half of that; this watches
+    // that the two tokens arrived at all and kept their values — a rail whose
+    // ranks all render the same colour is a rail that says nothing.
+    expect(home!.css).toMatch(/--tick-near:\s*rgba\(var\(--cream-100-rgb\),\s*\.?0?\.?6\)/);
+    expect(home!.css).toMatch(/--tick-far:\s*rgba\(var\(--cream-100-rgb\),\s*\.?0?\.?34\)/);
+  });
+
+  it('is clipped and not a second scrolling container', () => {
+    // The export centres a strip of eighty-one pills by translating it, and a
+    // rail that scrolled instead would be the nested scroller of rule 1 in
+    // another costume — with the arrow keys ambiguous between the two.
+    expect(checkSingleScroller(home!.css, HOME)).toEqual([]);
+    expect(home!.css).toMatch(/\.timeline[^{]*\{[^}]*overflow:\s*hidden/);
+  });
+
+  it('declares smooth scrolling in the stylesheet, where the reader can refuse it', () => {
+    expect(home!.css).toMatch(/scroll-behavior:\s*smooth/);
+
+    // And the refusal itself: under reduced motion the snap goes and the
+    // smooth goes with it, which is what turns the scroller into a list.
+    const reduced = /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{([\s\S]*?\}\s*)\}/.exec(
+      home!.css,
+    );
+    expect(reduced, 'no reduced-motion block in the published CSS').not.toBeNull();
+    expect(reduced![1]).toMatch(/scroll-behavior:\s*auto\s*!important/);
+    expect(reduced![1]).toMatch(/scroll-snap-type:\s*none\s*!important/);
+  });
+});

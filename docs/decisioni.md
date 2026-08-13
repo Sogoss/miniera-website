@@ -1048,6 +1048,104 @@ non ottiene niente. La scala degli spazi a passi di 4 px resta com'è: scalare
 tutto col viewport rompe le proporzioni fra ciò che scala e ciò che non può, a
 partire da un bordo di un pixel.
 
+## La Timeline
+
+**Una tacca è un'ancora, non un bottone.** L'export scrive `<button
+onClick={vai}>`, e quel bottone fa quello che qualcuno gli scrive e nient'altro.
+`<a href="#serata-81">` è l'elemento per una cosa che porta a un punto del
+documento, e porta con sé l'indirizzo condivisibile, il tasto indietro,
+l'apri-in-nuova-scheda, l'annuncio che uno screen reader fa per un link, la
+messa a fuoco che si sposta e il salto che il browser esegue da solo. Nessuna di
+queste è scritta da noi. Non è stata scelta per chi ha gli script spenti — su
+quello i numeri onesti sono lo 0,2% di chi li disattiva e circa l'1% di chi non
+li riceve — ma perché **costa meno del bottone**: che funzioni senza script è
+quel che la scelta più economica regala. *(PR 8)*
+
+**Lo scorrimento morbido si dichiara come proprietà, mai come argomento.**
+`scroll-behavior: smooth` sul contenitore, e ogni salto fatto da script chiama
+`scrollIntoView()` **senza argomenti**, che risolve sul valore calcolato della
+proprietà. `global.css` rimette `scroll-behavior: auto` con `!important` sotto
+`prefers-reduced-motion`, e un `{ behavior: 'smooth' }` passato a mano vince su
+quell'`!important` — l'argomento batte la proprietà, per specifica e in ogni
+motore. Sarebbe un guasto che non si vede in `dist/`, che non fa fallire niente,
+e che colpisce esattamente le persone per cui l'impostazione esiste: ha la sua
+guardia. *(PR 8)*
+
+**E la proprietà l'accende lo script, dopo il salto di apertura.** Assegnare
+`scrollTop` obbedisce a `scroll-behavior` come qualunque altro scorrimento:
+dichiarata nel foglio di stile, l'apertura sulla prima serata futura — che deve
+atterrare prima della prima pittura — sarebbe scesa in animazione da cima
+all'archivio. Senza script il salto da una tacca è istantaneo, che è la versione
+onesta di questa funzione e non una minore. *(PR 8)*
+
+**L'accento globale sta su `<html>`.** È il giorno che il commento di
+`:where(:root)` in `colors.css` aveva previsto: scritto `:root`, quella regola
+avrebbe pareggiato con le regole emesse dai cicli e vinto per ordine dei fogli,
+e la rotaia intera sarebbe stata arancione sopra una serata verde. Le scene
+continuano a portare il proprio `data-cycle` e vincono dentro di sé, perché le
+proprietà personalizzate ereditano dall'antenato più vicino che le dichiara: il
+documento decide solo per ciò che nessuna scena contiene. Il valore di partenza
+lo scrive la build, ed è quello della serata di apertura — che è anche tutto
+quello che vede chi non esegue script, ed è giusto per lui. *(PR 8)*
+
+**Una finestra di tacche, e la tacca porta la distanza vera.** Ottantuno tacche
+da una ventina di pixel sono milleseicento pixel di rotaia in una colonna alta
+una schermata. Stanno tutte nel markup — sono il programma, e un crawler e
+Ctrl+F devono trovarle — e se ne mostra un intorno della corrente, il che tiene
+anche settanta link fuori dall'ordine di tabulazione. L'export distingue tre
+ranghi (corrente, adiacente, resto) e li usa per tre misure; qui l'attributo
+porta la **distanza**, non il rango, perché è ciò che permette al solo foglio di
+stile di stringere la finestra a tre sulla barra del telefono. Con i tre ranghi
+l'unico modo sarebbe stato un secondo numero in JavaScript, e il markup sarebbe
+stato sbagliato per chiunque non lo esegua. *(PR 8)*
+
+**La spaziatura fra le tacche la porta la tacca, non un `gap`.** Trovato
+provando con ottantuno serate: la finestra nasconde la tacca, ma l'`<li>` intorno
+resta un elemento flex — vuoto, alto zero — e un `gap` si disegna fra elementi
+flex anche quando non contengono niente. Erano mille pixel di rotaia vuota, con
+le undici tacche visibili spinte sotto il bordo dello schermo. Un margine sulla
+tacca sparisce esattamente quando sparisce lei. *(PR 8)*
+
+**`justify-content: center` non centra quando il contenuto non ci sta.** La
+barra del telefono doveva ritagliare le tacche di troppo simmetricamente ai due
+lati; una riga flex che trabocca viene invece allineata all'inizio — i motori si
+rifiutano di perdere contenuto dal bordo iniziale — e la barra mostrava le
+serate più vecchie della finestra con quella corrente fuori schermo a destra. La
+finestra si stringe nel foglio di stile, non nella traslazione della striscia
+che fa l'export: quella vorrebbe misurare i nodi, un listener sul
+ridimensionamento e tacche di larghezza fissa, che le nostre date non hanno.
+*(PR 8)*
+
+**`aria-current` lo scrive la build, non solo lo script.** In `dist/` non gira
+nessuno script: una rotaia che aspettasse il suo arriverebbe senza niente
+marcato, e lo strato `build` — l'unico che questo repository considera serio —
+non avrebbe niente da leggere. Valore `true` e non `location`: `location` è il
+token più preciso, `true` è quello che ogni screen reader annuncia. *(PR 8)*
+
+**La guardia `bersaglio` resta, con un compito diverso.** Nel design protegge lo
+scorrimento morbido dallo snap; qui il salto lo fa il browser, e quel che la
+guardia impedisce è che `aria-current`, l'accento e la finestra lampeggino
+attraverso quaranta serate mentre lo scorrimento le attraversa. Flag più timer
+da 1200 ms, come nel codice del design — il timer perché uno scorrimento morbido
+interrotto dallo snap può non arrivare mai. *(PR 8)*
+
+**La rotaia è più larga di quella del design, e la misura è misurata.**
+L'export dichiara `clamp(104px, 8.5vw, 140px)` e scrive `20 mar` sulle sue
+tacche; le nostre leggono `24 set 26`, con l'anno che la PR 3 ha aggiunto perché
+su ottantuno serate *18 giugno* non identifica niente. Con la larghezza del
+design le date uscivano dal bordo destro dello schermo. Il numero viene dal
+misurare la riga della tacca corrente — 115px — e non dal ritoccare finché non
+sembra a posto. *(PR 8)*
+
+**La colonna non prende gli eventi del puntatore, le tacche sì.** Un riquadro
+fisso sopra lo scroller viene interrogato per primo dal hit-testing, e una rotella
+sopra di esso cerca un antenato scorrevole *suo*: trova il documento, che è alto
+una schermata e non si muove. Il risultato è una striscia in cui il programma
+non scorre. Spenti gli eventi sulla colonna, la rotella raggiunge la scena
+sotto; le tacche li riprendono, e la striscia morta è larga quanto loro. Sulla
+barra del telefono invece gli eventi restano, perché lì c'è un fondo e un bordo
+e un dito che la tocca sta su un controllo. *(PR 8)*
+
 ## Rimandate
 
 **Il dominio.** Se ne riparla a sito finito. Il design presuppone
