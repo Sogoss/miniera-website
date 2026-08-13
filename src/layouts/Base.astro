@@ -64,8 +64,14 @@ const preview = Astro.site && image ? new URL(image, Astro.site).href : undefine
 ---
 
 <!doctype html>
-<html lang="it">
+<html lang="it" class="no-js">
   <head>
+    {/* Removed before anything is painted, so that the page can be styled for
+        «the script is running» without a flash of the other version. What that
+        buys is the one thing progressive enhancement needs and CSS cannot ask:
+        a page that shows a button where a modal will open, and the plain links
+        where it will not. */}
+    <script is:inline>document.documentElement.classList.remove('no-js');</script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>

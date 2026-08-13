@@ -50,6 +50,17 @@ export function scrollableRules(css: string): { selector: string; index: number 
   return found;
 }
 
+/* A dialog is the one place a second scrolling box is not nested inside the
+   first: while it is open the rest of the page is inert, so there is no
+   question which one a gesture is driving — and its content can be longer than
+   the screen with nowhere else to put it.
+
+   Recognised from the selector, which means the exception has to be *written*:
+   `dialog.modal .modal-panel`, not `.modal-panel`. A guard cannot see from the
+   CSS that an element sits inside a dialog, so the rule says it out loud or it
+   does not get the exception. */
+const IN_A_DIALOG = /(^|[\s,>+~])dialog\b|\[data-modal\b/i;
+
 /**
  * More than one scrolling container on a page that is a scroller.
  *
@@ -57,10 +68,11 @@ export function scrollableRules(css: string): { selector: string; index: number 
  * on `.scene` stops watching the day somebody renames the class, and this
  * repository has been bitten by that shape of check before. What is true here
  * regardless of naming is that the programme is *one* scrolling box — anything
- * else on the page that scrolls is nested inside it.
+ * else on the page that scrolls is nested inside it, except what a dialog
+ * carries.
  */
 export function checkSingleScroller(css: string, path = 'the page'): Violation[] {
-  const rules = scrollableRules(css);
+  const rules = scrollableRules(css).filter((rule) => !IN_A_DIALOG.test(rule.selector));
   if (rules.length <= 1) return [];
 
   const clean = stripComments(css);

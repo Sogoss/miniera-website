@@ -14,6 +14,7 @@
  * degradation if it does not run.
  */
 import Base from '../layouts/Base.astro';
+import Modal from '../components/Modal.astro';
 import Scene from '../components/Scene.astro';
 import { loadProgramme } from '../lib/programme.ts';
 
@@ -34,6 +35,28 @@ const { scenes, nextIndex } = await loadProgramme();
       ))
     }
   </div>
+
+  {/* What the «Prenota il posto» button shows, written once for the whole
+      programme: it is the same for every evening still to come, so it does not
+      belong inside a scene. In a <template> because it has no place in the page
+      until it is asked for — unlike the links of an evening, which are content
+      and stay in the markup.
+
+      The number to write to is not here yet: it is the president's, the design
+      only ever had a placeholder, and publishing a wrong one is worse than
+      publishing none. PR 10 puts it in, and with it the direct link that gives
+      this button something to do with scripting off. */}
+  <template id="booking">
+    <p>
+      La sala ha sessanta posti. Per tenerne uno si scrive all'organizzatore con
+      il proprio nome e quante persone siete: la risposta arriva in serata.
+    </p>
+    <p>
+      Se non si prenota si può venire lo stesso, ma il posto non è garantito.
+    </p>
+  </template>
+
+  <Modal />
 </Base>
 
 {/* Inline and synchronous, right after the markup it moves: it runs before the

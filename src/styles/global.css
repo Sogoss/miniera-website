@@ -82,6 +82,17 @@ svg {
   max-width: 100%;
 }
 
+/* The two halves of progressive enhancement.
+   The document starts as `no-js` and the first inline script of the head takes
+   the class off, so a page can carry both forms of a thing and show the one
+   that will work: the button that opens a modal, or the plain list of links
+   that needs no script. Both are in the markup — the modal is filled by cloning
+   the list, so there is one source and nothing is lost with scripting off. */
+.no-js .only-js,
+html:not(.no-js) .no-js-only {
+  display: none;
+}
+
 /* Said, not shown.
    The scroller needs a page-level <h1> that the design has no place for: the
    titles of the evenings are <h2> — 81 <h1>s would be one per evening — and

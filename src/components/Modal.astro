@@ -1,0 +1,165 @@
+---
+/* The one modal of the page, filled from whatever opened it.
+ *
+ * One in the document and not one per evening: with 81 scenes, a modal each
+ * would be 81 copies of the same chrome in the DOM. A button says where its
+ * content is — `data-modal-from="materials-78"` — and the script clones that
+ * element in here.
+ *
+ * The content is cloned from markup that is **already on the page**, never
+ * built from data: the links to an evening's recordings are real `<a href>`
+ * elements inside the scene, hidden by CSS only once the script has run. With
+ * scripting off they are simply there, in a list, and nothing is lost. That is
+ * also why there is one source for them and not two — a list and a copy in a
+ * template would drift the day somebody edits one.
+ *
+ * `<dialog>` and `showModal()` do the work that would otherwise be a hundred
+ * lines: the focus goes inside and cannot leave, Esc closes, the rest of the
+ * page goes inert, and the focus returns to the button that opened it. Safari
+ * has had it since 15.4 — the same version as `svh`, which is the floor this
+ * project already set for itself.
+ */
+---
+
+<dialog class="modal" data-modal aria-labelledby="modal-title">
+  <div class="modal-panel">
+    <button class="modal-close" type="button" data-modal-close aria-label="Chiudi">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+        <path d="M6 6l12 12M18 6L6 18"></path>
+      </svg>
+    </button>
+
+    <h2 class="modal-title" id="modal-title" data-modal-title></h2>
+    <div class="modal-body" data-modal-body></div>
+  </div>
+</dialog>
+
+<script is:inline>
+  (function () {
+    var modal = document.querySelector('[data-modal]');
+    if (!modal || typeof modal.showModal !== 'function') return;
+
+    var title = modal.querySelector('[data-modal-title]');
+    var body = modal.querySelector('[data-modal-body]');
+
+    document.addEventListener('click', function (event) {
+      var opener = event.target.closest('[data-modal-from]');
+      if (opener) {
+        var source = document.getElementById(opener.getAttribute('data-modal-from'));
+        if (!source) return;
+
+        // The modal takes the accent of the scene it was opened from. It lives
+        // outside every scene — one per page — so on its own it would always be
+        // the default orange; carrying the attribute over is enough, because the
+        // rules CycleAccents emits are plain `[data-cycle="N"]` selectors and
+        // apply to whatever element wears one. Written here and never in the
+        // markup: a fixed cycle in the HTML would be a lie about the page.
+        var scene = opener.closest('[data-cycle]');
+        if (scene) modal.setAttribute('data-cycle', scene.getAttribute('data-cycle'));
+        else modal.removeAttribute('data-cycle');
+
+        title.textContent = opener.getAttribute('data-modal-title') || '';
+        body.replaceChildren(
+          // A <template> holds its markup in `content`; anything else is cloned
+          // as it stands. The links of a scene are an ordinary list, so that
+          // they are still there — and still links — with scripting off.
+          (source.content || source).cloneNode(true),
+        );
+        modal.showModal();
+        return;
+      }
+
+      // Clicking outside the panel closes it. The dialog element covers the
+      // whole viewport, so a click that lands on the dialog itself and not on
+      // anything inside it is a click on the backdrop.
+      if (event.target === modal || event.target.closest('[data-modal-close]')) {
+        modal.close();
+      }
+    });
+  })();
+</script>
+
+<style>
+  .modal {
+    width: min(540px, calc(100% - var(--space-5) * 2));
+    max-height: calc(100% - var(--space-5) * 2);
+    padding: 0;
+    background: var(--surface-raised);
+    border: var(--border-width-hairline) solid var(--border-hairline);
+    border-top: var(--border-width-accent) solid var(--accent);
+    border-radius: var(--radius-badge);
+    box-shadow: var(--shadow-lift-lg);
+    color: var(--text-primary);
+    overflow: visible;
+  }
+
+  .modal::backdrop {
+    background: var(--veil-modal);
+  }
+
+  /* The panel scrolls, and the selector says where it is on purpose: the guard
+     over nested scrollers reads the selector, and a box that scrolls inside a
+     dialog is the one exception it makes — while a modal is open the rest of
+     the page is inert, so there is no question which box a gesture is driving.
+     Written as `.modal-panel` alone it would be reported, and rightly. */
+  dialog.modal .modal-panel {
+    max-height: 80vh;
+    padding: clamp(24px, 3vw, 44px);
+    overflow-y: auto;
+  }
+
+  .modal-close {
+    position: absolute;
+    top: -18px;
+    right: -18px;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    background: var(--accent);
+    border: var(--border-width-strong) solid var(--surface-raised);
+    border-radius: var(--radius-pill);
+    color: var(--text-on-accent);
+    cursor: pointer;
+    box-shadow: var(--shadow-lift);
+    transition: transform var(--dur-fast) var(--ease-out);
+  }
+
+  .modal-close:active {
+    transform: translateY(2px);
+  }
+
+  .modal-close svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .modal-title {
+    margin: 0 0 var(--space-4);
+    font-size: var(--text-2xl);
+    text-wrap: pretty;
+  }
+
+  /* The list arrives from a scene, where it is styled as a fallback list; in
+     here it is the content itself. */
+  .modal-body :global(ul) {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .modal-body :global(p) {
+    margin: 0 0 var(--space-4);
+    font: var(--type-body);
+    color: var(--text-secondary);
+  }
+
+  .modal-body :global(a) {
+    font: var(--type-body);
+    font-weight: var(--weight-semibold);
+  }
+</style>

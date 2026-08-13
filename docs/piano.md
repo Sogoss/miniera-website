@@ -65,10 +65,11 @@ sostituisce un telefono vero.
 | 7 | Lo scroller del programma | `scroller-programma` | fatta |
 | 8 | Timeline e navigazione da tastiera | `timeline` | da fare |
 | 9 | Le pagine delle serate | `pagine-serata` | da fare |
-| 10 | Modale di prenotazione | `modale-prenotazione` | da fare |
+| 10 | La prenotazione dentro il modale | `modale-prenotazione` | da fare |
 | 11 | Chi siamo, contatti, rassegna disabilitata | `pagine-istituzionali` | da fare |
 | 12 | Sveltia CMS | `cms-sveltia` | da fare |
 | 13 | Pubblicazione | `pubblicazione` | da fare |
+| 14 | Proporzioni su schermo piccolo | `proporzioni-mobile` | da fare |
 
 Fuori dalla beta, bloccate da [questioni-aperte.md](questioni-aperte.md):
 migrazione delle foto e caricamento delle 81 serate storiche.
@@ -923,6 +924,12 @@ Per esteso in [decisioni.md](decisioni.md), sotto *Lo scroller*. In breve:
       quella di apertura `data-open`
 - [x] I componenti della PR 6 fanno il lavoro che è loro: `Label`, `GuestRow`,
       `Button`
+- [x] Una scena ha **un bottone solo**, che apre il modale: i materiali dietro
+      «Rivedi la serata», la prenotazione dietro «Prenota il posto»
+- [x] **Un solo `<dialog>` per pagina**, riusato da tutti i bottoni, riempito
+      clonando markup che è già nella pagina
+- [x] Con gli script spenti i link agli interventi restano link veri e visibili:
+      la classe `no-js` sul documento decide quale delle due forme si vede
 - [x] Due serate d'esempio hanno una locandina segnaposto
 - [x] La pagina provvisoria è stata rimossa, non estesa
 
@@ -939,7 +946,16 @@ Per esteso in [decisioni.md](decisioni.md), sotto *Lo scroller*. In breve:
   salterebbe
 - **Guardia**: la pagina è un solo contenitore scorrevole. Scritta sul conteggio
   e non sul nome della classe — una guardia agganciata a `.scene` smette di
-  guardare il giorno che qualcuno rinomina
+  guardare il giorno che qualcuno rinomina. L'unica eccezione è ciò che sta
+  dentro un `<dialog>`, e va **scritta nel selettore**: dal CSS non si vede che
+  un `.modal-panel` è dentro un modale
+- **Guardia**: ogni bottone che apre il modale trova il suo bersaglio nella
+  stessa pagina, e di modali ce n'è uno solo. Un bersaglio che non risolve è un
+  tocco che non fa niente — sul telefono, indistinguibile da un tocco non
+  registrato
+- **Guardia**: i link agli interventi non stanno solo dentro un `<template>`.
+  Lì sarebbero invisibili a chi non ha script, a un crawler e a Ctrl+F
+- Una scena pubblica al massimo un bottone
 - **Guardia**: nessuna media query pubblicata in sintassi range
 - Le asserzioni sul fuso continuano a passare sui quattro ancoraggi, che era la
   promessa scritta nel `CLAUDE.md`
@@ -969,6 +985,19 @@ Per esteso in [decisioni.md](decisioni.md), sotto *Lo scroller*. In breve:
 > separate per i due layout: impilato si stringe presto, affiancato no, perché
 > un portatile a 1440×900 ha spazio e tagliare lì avrebbe accorciato una
 > descrizione che ci sta.
+>
+> **E la locandina restava comunque minuscola**, perché il contenuto di una
+> scena piena — due ospiti, due bottoni, presenze — non ci sta in una schermata
+> per quanto lo si stringa. Da qui il **modale**, chiesto dal committente e
+> anticipato dalla PR 10: una scena ha un bottone solo, e i link agli interventi
+> stanno dietro di esso. La PR 10 è stata riscritta di conseguenza — le resta il
+> contenuto vero della prenotazione, che è la parte che dipende da una questione
+> aperta.
+>
+> Il caso senza JavaScript è stato discusso e non aggirato: i link restano
+> `<a href>` veri nel markup e la classe `no-js` decide quale forma si vede, così
+> non c'è contenuto che esista solo per chi ha gli script. Costava meno di
+> anticipare la rotta `/78` e non perde niente rispetto a oggi.
 
 ### Test manuali
 
@@ -1057,31 +1086,43 @@ scroller ha comunque accesso completo ai contenuti.
 
 ---
 
-## PR 10 — Modale di prenotazione
+## PR 10 — La prenotazione dentro il modale
 
 **Branch:** `modale-prenotazione` · **Dipende da:** 9
 
+**Riscritta alla PR 7.** Il modale è arrivato lì, chiesto dal committente e
+imposto dal layout: una scena con un bottone per registrazione non stava in una
+schermata. Quello che resta qui è la parte che alla PR 7 non poteva esserci —
+l'informazione vera della prenotazione e il numero a cui scrivere, che è una
+questione aperta e non una riga di codice.
+
+Il modale, e quindi già fatto: uno solo nel DOM riusato da tutte le serate; si
+chiude con Esc e con un clic fuori, la messa a fuoco resta dentro e torna al
+bottone che l'ha aperto — è `<dialog>` con `showModal()`, non codice nostro;
+presente su entrambe le larghezze.
+
 ### Obiettivi
 
-- [ ] **Un solo** modale nel DOM, riusato da tutte le serate future dello
-      scroller — non uno per serata
-- [ ] Contiene l'informazione reale: sessanta posti, si scrive su WhatsApp con
-      nome e numero di persone, risposta entro sera
-- [ ] Link `wa.me` al numero configurato in un posto solo
-- [ ] Si chiude con Esc e con un clic fuori; la messa a fuoco resta dentro e
-      torna al bottone che l'ha aperto
-- [ ] Presente su entrambe le larghezze, come deciso
+- [ ] Il testo della prenotazione dice l'informazione reale: sessanta posti, si
+      scrive con nome e numero di persone, risposta entro sera
+- [ ] Link `wa.me` al numero vero, configurato **in un posto solo**
+- [ ] Con gli script spenti il bottone «Prenota il posto» è un link diretto a
+      WhatsApp invece di un bottone morto: è il fallback che alla PR 7 non
+      esisteva perché non esisteva il numero
+- [ ] Il numero esce da [questioni-aperte.md](questioni-aperte.md)
 
 ### Test automatici
 
-- Il modale è unico nel documento
-- Compare solo se esiste almeno una serata futura
 - Il link punta al numero configurato e non a un valore scritto a mano
+- Il segnaposto del design — `+39 300 000 0000` — non compare in `dist/`
+- Il bottone della prenotazione compare solo sulle serate che si possono ancora
+  prenotare, e il suo bersaglio nel modale esiste (guardia della PR 7)
 
 ### Test manuali
 
-- Esc, clic fuori, e ritorno della messa a fuoco
+- Esc, clic fuori, e ritorno della messa a fuoco al bottone
 - Sul telefono, il link apre davvero WhatsApp con il messaggio precompilato
+- Con gli script spenti, il bottone porta comunque a WhatsApp
 
 ---
 
@@ -1168,3 +1209,56 @@ scroller ha comunque accesso completo ai contenuti.
   Safari si ritrae e l'apertura cade sulla prima serata futura; su Android lo
   stesso giro; e lo scorrimento morbido della Timeline arriva a destinazione
   senza essere interrotto dallo snap
+
+---
+
+## PR 14 — Proporzioni su schermo piccolo
+
+**Branch:** `proporzioni-mobile` · **Dipende da:** 8, 11
+
+Non è rifinitura rimandata per pigrizia: è **la stessa taratura fatta una volta
+sola invece che tre**. Su un telefono la scena divide l'altezza con due cose che
+alla PR 7 non esistevano ancora — la Timeline orizzontale in basso (PR 8) e la
+navigazione a pillola in alto (PR 11) — e ogni misura decisa prima che ci siano
+va rifatta quando arrivano.
+
+Quello che alla PR 7 doveva essere giusto, ed è giusto, è la **struttura**:
+niente contenuto che esce dallo schermo e nessuna scena scorrevole. Le
+proporzioni fra le parti sono un'altra cosa e si guardano quando lo schermo è
+pieno di tutto ciò che ci andrà.
+
+Va fatta **su un telefono vero**, non in emulazione, insieme alle prove
+rimandate in [questioni-aperte.md](questioni-aperte.md).
+
+### Obiettivi
+
+- [ ] **I `clamp()` tipografici hanno i limiti in `rem`, non in px.** È l'unico
+      punto in cui oggi il sito viola davvero una buona pratica: `font-size:
+      clamp(28px, min(4.6vw, 7.2vh), 72px)` non dipende in nessuno dei suoi tre
+      termini dalla dimensione del carattere di base, quindi chi ingrandisce il
+      testo dal browser o dal sistema non ottiene niente. I token `--text-*`
+      sono già in `rem`; i px sono rientrati nelle scene, copiati dal design. Per
+      un pubblico di cinquanta e sessant'anni è la differenza che conta più di
+      tutte le altre
+- [ ] La locandina ha una dimensione che si legge, con Timeline e navigazione a
+      schermo
+- [ ] L'ordine in cui la scena cede su schermo basso è ancora quello giusto ora
+      che gli ingombri sono tutti presenti
+- [ ] Il testo del titolo e della descrizione sono tarati sulle larghezze vere
+      dei telefoni comuni, non su una scala scelta a tavolino
+- [ ] Le tacche della Timeline e la pillola della navigazione non coprono niente
+      di ciò che una scena deve mostrare
+
+### Test automatici
+
+- Le guardie esistenti continuano a passare: una scena non diventa scorrevole e
+  la pagina resta un solo contenitore scorrevole
+- Nessuna media query in sintassi range nel CSS pubblicato
+
+### Test manuali
+
+- Su un telefono vero, con tutte le serate: la scena si legge senza che niente
+  esca dallo schermo, in verticale e in orizzontale
+- **Con il testo del sistema ingrandito**, che è il controllo per cui esiste il
+  primo obiettivo: portarlo al 200% e vedere che il sito cresce invece di
+  restare fermo. È un pubblico di cinquanta e sessant'anni

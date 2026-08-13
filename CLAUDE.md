@@ -226,11 +226,23 @@ pagina. **Una pagina non si scrive più `<html>` e `<head>` da sé**: le scrive 
 layout, e ciò che il layout porta — lingua, meta, salta-a, accenti, forme — è
 guardato pagina per pagina in `test/build/published-pages.test.ts`.
 
+**Il modale è uno solo per pagina, e si riempie clonando ciò che è già nel
+markup.** I link agli interventi di una serata sono `<a href>` veri dentro la
+scena: il CSS li nasconde solo dopo che lo script è partito — è la classe
+`no-js` sul documento, tolta dal primo script della testa — così con gli script
+spenti non si perde niente. **Non spostarli in un `<template>`**: lì sarebbero
+invisibili a chi non ha script, a un crawler e a Ctrl+F, e una guardia lo dice.
+Tre guardie in `test/guards/modal.ts`: il bersaglio di ogni bottone esiste nella
+pagina, di `<dialog>` ce n'è uno, i link stanno fuori dai template.
+
 **Lo scroller è un solo contenitore scorrevole.** L'export rende scorrevole anche
 ogni scena, e non si copia: con due contenitori annidati né una tastiera né uno
 screen reader sanno a chi parlano le frecce. Il testo lungo si ritaglia, non si
 scorre — `checkSingleScroller` in `test/guards/scroller.ts` conta i contenitori
-scorrevoli della pagina e ne pretende uno.
+scorrevoli della pagina e ne pretende uno. L'unica eccezione è ciò che sta
+dentro un `<dialog>` — mentre è aperto il resto è inerte — e **va scritta nel
+selettore**: `dialog.modal .modal-panel`, perché dal CSS non si vede che un
+`.modal-panel` sta dentro un modale.
 
 **I target di build sono la soglia dei browser.** Stanno in `astro.config.mjs` e
 non sono un dettaglio di configurazione: senza, il minificatore riscrive

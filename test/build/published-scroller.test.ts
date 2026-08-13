@@ -11,6 +11,7 @@
  * them in one document.
  */
 import { describe, expect, it } from 'vitest';
+import { checkLinksOutsideTemplates } from '../guards/modal.ts';
 import { checkSingleScroller } from '../guards/scroller.ts';
 import { publishedPages } from '../support/dist.ts';
 import { collectionEntries } from '../support/frontmatter.ts';
@@ -25,6 +26,11 @@ const evenings = sortByNumber(
     number: Number(entry.data.number),
     cycle: String(entry.data.cycle ?? ''),
     photo: typeof entry.data.photo === 'string' ? entry.data.photo : undefined,
+    materials: Array.isArray(entry.data.materials)
+      ? (entry.data.materials as { url?: unknown }[])
+          .map((material) => material.url)
+          .filter((url): url is string => typeof url === 'string')
+      : [],
   })),
 );
 
@@ -38,6 +44,17 @@ const scenes = [...(home?.html ?? '').matchAll(/<section\b[^>]*\bdata-scene\b[^>
 
 function attribute(tag: string, name: string): string | undefined {
   return new RegExp(`\\b${name}="([^"]*)"`).exec(tag)?.[1];
+}
+
+/** The markup of one scene, from its opening tag to its own closing one.
+ *
+ *  Cut at `</section>` and not at the next scene: the last one would otherwise
+ *  swallow everything after it — the modal, its close button, the scripts —
+ *  and a count of what is «in a scene» would quietly include them. */
+function sceneAt(at: number): string {
+  const from = scenes[at]!.index;
+  const to = (home?.html ?? '').indexOf('</section>', from);
+  return (home?.html ?? '').slice(from, to === -1 ? undefined : to);
 }
 
 describe('the published programme', () => {
@@ -59,7 +76,12 @@ describe('the published programme', () => {
     // for a single <h1>; what this adds is that the evenings are the <h2>s
     // under it rather than, say, paragraphs in bold.
     expect([...home!.html.matchAll(/<h1\b/g)]).toHaveLength(1);
-    expect([...home!.html.matchAll(/<h2\b/g)]).toHaveLength(evenings.length);
+    // Counted inside the scenes: the modal has an `<h2>` of its own, which is
+    // the right thing for a labelled dialog and no part of the page outline —
+    // a closed <dialog> is `display: none` and out of the accessibility tree.
+    for (const [at] of evenings.entries()) {
+      expect([...sceneAt(at).matchAll(/<h2\b/g)]).toHaveLength(1);
+    }
   });
 
   it.each([
@@ -105,12 +127,29 @@ describe('the published programme', () => {
     expect(loading.filter((value) => value === 'eager').length).toBeLessThanOrEqual(1);
 
     const opening = scenes.findIndex((scene) => attribute(scene[0], 'data-open') === 'true');
-    const openingScene = home!.html.slice(
-      scenes[opening]!.index,
-      scenes[opening + 1]?.index,
-    );
+    const openingScene = sceneAt(opening);
     if (/<img/.test(openingScene)) {
       expect(openingScene).toMatch(/<img[^>]*loading="eager"/);
+    }
+  });
+
+  it('keeps the recordings of an evening as links, not only as modal fodder', () => {
+    // The modal is filled by cloning markup that is already on the page, so
+    // these stay real `<a href>`: shut inside a <template> they would be
+    // invisible to a reader with no scripting, to a crawler and to Ctrl+F.
+    const urls = evenings.flatMap((evening) => evening.materials);
+    expect(urls.length, 'no sample evening has recordings to check').toBeGreaterThan(0);
+    expect(checkLinksOutsideTemplates(home!.html, urls, HOME)).toEqual([]);
+  });
+
+  it('gives a scene one button, not one per recording', () => {
+    // Two buttons stacked put the second under the bottom edge of a 390×800
+    // screen, and the scene is deliberately not scrollable — so they collapse
+    // into one that opens the modal.
+    for (const [at, evening] of evenings.entries()) {
+      const buttons = [...sceneAt(at).matchAll(/<button\b/g)];
+      expect(buttons.length, `evening #${evening.number} has ${buttons.length} buttons`)
+        .toBeLessThanOrEqual(1);
     }
   });
 
@@ -118,8 +157,13 @@ describe('the published programme', () => {
     // The one thing here no stylesheet can do. Inline and synchronous on
     // purpose: bundled as a module it would run after the first paint, and the
     // programme would be drawn at the top and then jump.
-    const script = /<script>([\s\S]*?)<\/script>/.exec(home!.html)?.[1] ?? '';
-    expect(script, 'no inline script to open the programme').toContain('data-open');
+    // Looked for among all of them, not taken as the first: the head already
+    // carries the one that takes `no-js` off the document.
+    const scripts = [...home!.html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1] ?? '');
+    expect(
+      scripts.some((script) => script.includes('data-open')),
+      'no inline script to open the programme',
+    ).toBe(true);
     expect(home!.html).not.toMatch(/<script[^>]*\btype="module"/);
   });
 

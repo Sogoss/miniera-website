@@ -940,6 +940,49 @@ lo stringe presto; affiancato, il testo ha la sua colonna e un portatile a
 1440×900 ha aria da vendere — tagliare lì avrebbe accorciato una descrizione che
 ci sta.
 
+**Una scena ha un bottone solo, e apre un modale.** Prima ne aveva uno per
+registrazione, e su 390×800 il secondo finiva sotto il bordo — con la scena non
+scorrevole per scelta, quello è contenuto che nessuno può raggiungere. Ora i
+materiali stanno dietro un «Rivedi la serata» e la prenotazione dietro «Prenota
+il posto», e tutt'e due aprono **lo stesso** `<dialog>`: uno per pagina, come la
+PR 10 aveva già deciso, perché con ottantuno serate un modale ciascuna sarebbero
+ottantuno copie della stessa cornice nel DOM.
+
+**Il modale si riempie clonando markup che è già nella pagina, mai costruendolo
+dai dati.** I link agli interventi di una serata sono `<a href>` veri dentro la
+scena, nascosti dal CSS *solo dopo* che lo script è partito: con gli script
+spenti sono semplicemente lì, in una lista, e non si perde niente. Una sola
+fonte, per giunta — una lista più una copia in un `<template>` divergerebbero il
+giorno che qualcuno ne modifica una. Una guardia pretende che quei link stiano
+fuori dai template, perché dentro sarebbero invisibili a chi non ha script, a un
+crawler e a Ctrl+F.
+
+**La classe `no-js` sul documento, tolta dal primo script della testa.** È
+l'unica cosa che permette a una pagina di portarsi dietro entrambe le forme —
+il bottone e la lista — e di mostrare quella che funzionerà davvero, senza un
+lampo dell'altra. Costa due regole CSS e nessuna rotta anticipata.
+
+**Il testo della prenotazione sta in un `<template>`, e lì va bene**: è scritto
+per il modale e non ha un posto nella pagina finché non lo si chiede, a
+differenza dei link di una serata, che sono contenuto. Il numero a cui scrivere
+non c'è ancora — è quello del presidente, il design aveva un segnaposto, e
+pubblicarne uno sbagliato è peggio che non pubblicarne. Arriva con la PR 10, e
+con lui il link diretto che dà a quel bottone qualcosa da fare anche senza
+script.
+
+**`<dialog>` e `showModal()` invece di un modale scritto a mano.** Fanno gratis
+ciò che sarebbero cento righe: il fuoco entra e non esce, Esc chiude, il resto
+della pagina diventa inerte, e il fuoco torna al bottone che l'ha aperto. Safari
+li ha dalla 15.4 — la stessa versione di `svh`, cioè esattamente la soglia che
+questo progetto si è già dato.
+
+**Un contenitore scorrevole dentro un dialog è l'eccezione alla regola dello
+scroller unico, e va scritta nel selettore.** Mentre un modale è aperto il resto
+della pagina è inerte, quindi non c'è ambiguità su quale scatola stia scorrendo.
+La guardia legge il CSS e non può sapere che un `.modal-panel` sta dentro un
+dialog: perciò l'eccezione la si dichiara scrivendo `dialog.modal .modal-panel`,
+e chi scrive `.modal-panel` e basta viene segnalato — giustamente.
+
 **Il titolo di pagina si dice, non si mostra.** Il design non ne ha uno — i
 titoli delle serate erano tutti `<h1>` — e qui sono `<h2>` sotto un `<h1>`
 unico, che però nel disegno non ha posto. Sta nel markup con
@@ -963,6 +1006,29 @@ colonna della locandina resta vuota, il layout a due colonne è metà lavoro e
 `loading="lazy"` è un test scritto su niente. Sono generate — forme e colori del
 marchio, nessun volto — e dichiarate come segnaposto nel file che le usa. Escono
 quando arrivano le foto vere: [questioni-aperte.md](questioni-aperte.md).
+
+**Le proporzioni su schermo piccolo si tarano una volta sola, alla PR 14.** Su
+un telefono la scena divide l'altezza con la Timeline in basso e la navigazione
+in alto, che alla PR 7 non esistono: ogni misura decisa prima va rifatta quando
+arrivano. Quello che alla PR 7 doveva essere giusto è la struttura — niente
+contenuto irraggiungibile, nessuna scena scorrevole — e quello lo è.
+
+**La locandina non è ruotata su schermo stretto.** Il design la mette in piedi
+sull'angolo, e su una colonna alta funziona; in una fascia larga 342 e alta 204
+no, perché un rettangolo ruotato di 45° occupa `(w + h) / √2` in *entrambe* le
+direzioni e quindi il più grande che ci sta è circa 160×128 — un quarto dello
+spazio che ha. Da qui l'impressione, giusta, che fosse un francobollo. Sdraiata
+riempie la larghezza. L'inclinazione resta dove c'è una colonna che la regge.
+
+**Le dimensioni scalano per `clamp()` con limiti fissi, non per percentuale
+pura.** Una percentuale vera dipende dal contenitore e per le altezze non ha un
+riferimento; le unità viewport da sole diventano assurde sui ventisette pollici
+e illeggibili sui 320 px. Quello che invece va corretto — ed è la PR 14 — sono i
+**limiti in px** dei `clamp` tipografici: nessuno dei tre termini dipende dalla
+dimensione del carattere di base, quindi chi ingrandisce il testo dal sistema
+non ottiene niente. La scala degli spazi a passi di 4 px resta com'è: scalare
+tutto col viewport rompe le proporzioni fra ciò che scala e ciò che non può, a
+partire da un bordo di un pixel.
 
 ## Rimandate
 

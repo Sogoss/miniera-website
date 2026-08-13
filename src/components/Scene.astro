@@ -125,14 +125,43 @@ const titleId = `titolo-${scene.number}`;
       }
     </div>
 
+    {/* One button, whatever the evening has to offer.
+        A past evening with recordings had one button per recording, and on a
+        390×800 screen the second one fell under the bottom edge — with the
+        scene deliberately not scrollable, that is content nobody can reach. So
+        the buttons collapse into one that opens the modal.
+
+        The links themselves stay in the markup as real links, hidden only once
+        the script has run: the modal is filled by cloning this list, so there
+        is one source, and with scripting off the list is simply visible. */}
     <div class="scene-actions">
       {
-        scene.materials.map((material) => (
-          <Button href={material.url} target="_blank" rel="noopener">
-            {material.label}
-          </Button>
-        ))
+        scene.materials.length > 0 && (
+          <Fragment>
+            <Button class="only-js" data-modal-from={`materials-${scene.number}`} data-modal-title={scene.title}>
+              Rivedi la serata
+            </Button>
+            <ul class="scene-materials no-js-only" id={`materials-${scene.number}`}>
+              {scene.materials.map((material) => (
+                <li>
+                  <a href={material.url} target="_blank" rel="noopener">
+                    {material.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </Fragment>
+        )
       }
+
+      {
+        state === 'upcoming' && (
+          <Button class="only-js" data-modal-from="booking" data-modal-title={scene.title}>
+            Prenota il posto
+          </Button>
+        )
+      }
+
       <p class="scene-note">{scene.note}</p>
     </div>
   </div>
@@ -286,6 +315,18 @@ const titleId = `titolo-${scene.number}`;
     color: var(--text-muted);
   }
 
+  /* Only ever seen with scripting off, where it is the whole of what the modal
+     would have shown. */
+  .scene-materials {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font: var(--type-small);
+  }
+
   .scene-poster {
     position: relative;
     min-height: 0;
@@ -336,6 +377,25 @@ const titleId = `titolo-${scene.number}`;
     .scene-poster {
       order: -1;
       min-height: 0;
+    }
+
+    /* Flat on a phone, tilted only on a desk.
+       A rectangle turned 45° takes up (w + h) / √2 in *both* directions, so in
+       a band 342 wide and 204 tall the biggest it can be is about 160×128 —
+       a quarter of the room it was given, which is why it read as a stamp. Lying
+       flat it fills the width. The tilt is the design's signature and it stays
+       where there is a column to hold it; here it costs more than it says. */
+    .scene-poster-frame {
+      position: static;
+      width: 100%;
+      height: 100%;
+      aspect-ratio: auto;
+      transform: none;
+      border-radius: var(--radius-md);
+    }
+
+    .scene-poster-image {
+      transform: none;
     }
   }
 

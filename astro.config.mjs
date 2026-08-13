@@ -14,6 +14,16 @@ export default defineConfig({
   // between two vocabularies that say the same thing, for ever.
 
   vite: {
+    server: {
+      // Vite answers «Blocked request. This host is not allowed» to anything
+      // that reaches it under a hostname it does not know — which is every
+      // tunnel. These are the domains a tunnel hands out, so that a phone can
+      // open the development server without the site being published: the
+      // checks on a real telephone are the ones this project cannot do any
+      // other way. It has no effect on a build.
+      allowedHosts: ['.ngrok-free.app', '.ngrok.app', '.ngrok.io', '.trycloudflare.com'],
+    },
+
     build: {
       // The browser floor of docs/vincoli-tecnici.md, told to the minifier.
       //

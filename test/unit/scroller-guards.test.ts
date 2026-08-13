@@ -46,6 +46,18 @@ describe('checkSingleScroller', () => {
     expect(checkSingleScroller(shared)[0]!.detail).toContain('.scene, .other');
   });
 
+  it('lets a dialog have its own scrolling panel', () => {
+    // The one place a second scrolling box is not nested inside the first:
+    // while a modal is open the rest of the page is inert. The exception has to
+    // be written into the selector, because a guard reading CSS cannot see from
+    // `.modal-panel` alone that the element sits inside a dialog.
+    const withModal = `${SCROLLER}\ndialog.modal .modal-panel { max-height: 80vh; overflow-y: auto; }`;
+    expect(checkSingleScroller(withModal)).toEqual([]);
+
+    const unwritten = `${SCROLLER}\n.modal-panel { max-height: 80vh; overflow-y: auto; }`;
+    expect(checkSingleScroller(unwritten)).toHaveLength(1);
+  });
+
   it('ignores what is only in a comment', () => {
     expect(checkSingleScroller(`${SCROLLER}\n/* .scene { overflow: auto; } */`)).toEqual([]);
   });
