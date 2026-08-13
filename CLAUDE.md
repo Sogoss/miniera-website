@@ -172,9 +172,13 @@ non una preferenza.
     davvero nella pagina, non uno che gli somiglia e non uno chiuso in un
     `<template>`, dove `getElementById` non arriva. **E la tacca porta la
     distanza dalla corrente, non un rango**: è ciò che permette al solo CSS di
-    stringere la finestra a tre sulla barra del telefono, dove undici non ci
-    sono mai stati, senza un secondo numero in uno script — che sarebbe un
-    markup sbagliato per chi non lo esegue. **E l'accento sta sul segno, mai
+    dare due trattamenti diversi alle tacche vicine e a quelle lontane, senza un
+    secondo numero in uno script — che sarebbe un markup sbagliato per chi non
+    lo esegue. **E ogni serata ha la sua tacca visibile**: le lontane sono
+    marchi senza data sul desktop, e sul telefono la barra scorre. Nasconderle
+    faceva una rotaia che non raggiunge l'archivio — undici tacche su ottantuno,
+    con la dodicesima a settanta schermate di distanza — ed è il difetto che ha
+    trovato il committente guardando la barra su un telefono, non un test. **E l'accento sta sul segno, mai
     sulla data**: quello che i cicli garantiscono è 3:1, la soglia di un bordo,
     e una parola ne vuole 4,5 — è la decisione che `Modal.astro` aveva già
     scritto per il link dentro il pannello.
@@ -307,9 +311,15 @@ ogni scena, e non si copia: con due contenitori annidati né una tastiera né un
 screen reader sanno a chi parlano le frecce. Il testo lungo si ritaglia, non si
 scorre — `checkSingleScroller` in `test/guards/scroller.ts` conta i contenitori
 scorrevoli della pagina e ne pretende uno. L'unica eccezione è ciò che sta
-dentro un `<dialog>` — mentre è aperto il resto è inerte — e **va scritta nel
-selettore**: `dialog.modal .modal-panel`, perché dal CSS non si vede che un
-`.modal-panel` sta dentro un modale.
+dentro un `<dialog>` — mentre è aperto il resto è inerte — e **la barra della
+Timeline sul telefono**, che è fissa, sta fuori dal programma e scorre
+sull'altro asse, quindi non prende nessun gesto che lo scroller volesse. Tutt'e
+due **vanno scritte nel selettore** — `dialog.modal .modal-panel`,
+`.timeline[data-timeline]` — perché dal CSS non si vede né che un
+`.modal-panel` sta dentro un modale né che una striscia è una barra
+orizzontale. E la seconda la guardia **la verifica sull'asse** invece di
+crederle sul nome: `[data-timeline] { overflow-y: auto }` sarebbe un secondo
+scroller verticale con l'etichetta giusta.
 
 **I target di build sono la soglia dei browser.** Stanno in `astro.config.mjs` e
 non sono un dettaglio di configurazione: senza, il minificatore riscrive

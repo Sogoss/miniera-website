@@ -1191,6 +1191,53 @@ sotto; le tacche li riprendono, e la striscia morta è larga quanto loro. Sulla
 barra del telefono invece gli eventi restano, perché lì c'è un fondo e un bordo
 e un dito che la tocca sta su un controllo. *(PR 8)*
 
+## La Timeline che raggiunge l'archivio
+
+**Ogni serata ha la sua tacca visibile.** Fino alla PR 9 le tacche fuori dalla
+finestra erano `display: none`: undici su ottantuno, quindi dalla rotaia si
+raggiungevano solo le vicine e per arrivare alla dodicesima si scorrevano
+settanta schermate. La rotaia non faceva la cosa per cui esiste. L'export ha lo
+stesso limite e non ci è mai arrivato, perché nei suoi file di design le serate
+sono sei — ed è il committente ad averlo visto, guardando la barra su un
+telefono, non un test. *(PR 10)*
+
+**Sul desktop le lontane sono marchi senza data.** Ottantuno trattini da sei
+pixel di passo stanno in circa cinquecento, accanto ai trecento delle undici
+etichettate: l'archivio intero entra in una colonna alta una schermata, e le
+date restano leggibili dove si sta. Non è un meccanismo in più — è un valore in
+più su una scala che c'era già, e la tacca porta **già** la distanza vera invece
+di un rango tagliato a due. È la decisione della PR 8 che paga adesso. *(PR 10)*
+
+**E il passo lo porta il padding, non il margine.** Scritto come margine, il
+passo era lo stesso e il bersaglio erano i due pixel del trattino: il margine
+sta fuori dalla scatola e non prende il clic. *(PR 10, trovato provando)*
+
+**Sul telefono la barra scorre in orizzontale.** Ottantuno trattini ci
+starebbero anche lì, ma un bersaglio da quattro pixel per un dito non è un
+bersaglio: la barra scorrevole tiene le pillole con la loro data, che è come
+funziona ogni selettore di date su un telefono. *(PR 10)*
+
+**L'eccezione a «un solo contenitore scorrevole» si scrive nel selettore e si
+verifica sull'asse.** La regola esiste contro l'annidamento — due scroller
+verticali uno dentro l'altro e non si sa a chi parlano le frecce — e la barra è
+fissa, sta fuori dal programma e si muove sull'altro asse, quindi non prende
+nessun gesto che lo scroller volesse. Dal CSS niente di tutto questo si vede in
+`.timeline-strip`, quindi la regola dice `[data-timeline]` a voce alta, come il
+modale dice `dialog.modal .modal-panel`. Ma il nome da solo non basta: la
+guardia esenta un box che scorre **orizzontalmente** e porta quell'attributo,
+perché `[data-timeline] { overflow-y: auto }` sarebbe un secondo scroller
+verticale con l'etichetta giusta — cioè esattamente la cosa per cui la guardia
+esiste. *(PR 10)*
+
+**Senza script la barra del telefono si apre all'inizio dell'archivio.**
+`scrollLeft` non lo imposta nessun foglio di stile, quindi la posizione iniziale
+la può dare solo uno script: chi non ne ha vede le pillole della prima serata
+mentre `aria-current` sta su una fuori schermo. È una degradazione **nuova** —
+prima la barra era giusta anche senza script — e si accetta perché una barra
+vive per essere toccata, e un bersaglio che un dito non prende non serve a
+nessuno. L'alternativa scartata erano i marchi nudi anche sul telefono: niente
+si degrada, e il bersaglio torna a quattro pixel. *(PR 10)*
+
 ## Le rotte delle serate
 
 **`/81` non è una pagina della serata 81: è il programma aperto sulla serata

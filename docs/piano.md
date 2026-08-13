@@ -65,7 +65,7 @@ sostituisce un telefono vero.
 | 7 | Lo scroller del programma | `scroller-programma` | fatta |
 | 8 | Timeline e navigazione da tastiera | `timeline` | fatta |
 | 9 | Le pagine delle serate | `pagine-serata` | fatta |
-| 10 | La Timeline raggiunge l'archivio | `timeline-archivio` | da fare |
+| 10 | La Timeline raggiunge l'archivio | `timeline-archivio` | fatta |
 | 11 | La prenotazione dentro il modale | `modale-prenotazione` | da fare |
 | 12 | Chi siamo, contatti, rassegna disabilitata | `pagine-istituzionali` | da fare |
 | 13 | Sveltia CMS | `cms-sveltia` | da fare |
@@ -1486,13 +1486,13 @@ raggiunge l'archivio è pubblicare il difetto.
 
 ### Obiettivi
 
-- [ ] Ogni serata ha la sua tacca **visibile**, su tutte e due le larghezze
-- [ ] Sul desktop le tacche fuori dalla finestra sono marchi senza data
-- [ ] Sul telefono la barra scorre in orizzontale, e la tacca corrente resta in
+- [x] Ogni serata ha la sua tacca **visibile**, su tutte e due le larghezze
+- [x] Sul desktop le tacche fuori dalla finestra sono marchi senza data
+- [x] Sul telefono la barra scorre in orizzontale, e la tacca corrente resta in
       vista mentre si legge
-- [ ] L'eccezione a `checkSingleScroller` è scritta nel selettore e argomentata
-- [ ] Il bersaglio da toccare resta ragionevole su tutte e due le larghezze
-- [ ] Quello che si degrada senza script è dichiarato
+- [x] L'eccezione a `checkSingleScroller` è scritta nel selettore e argomentata
+- [x] Il bersaglio da toccare resta ragionevole su tutte e due le larghezze
+- [x] Quello che si degrada senza script è dichiarato
 
 ### Test automatici
 
@@ -1505,10 +1505,33 @@ raggiunge l'archivio è pubblicare il difetto.
 - Con un contenuto finto da 81 serate la rotaia non sfonda la schermata
 - Le guardie precedenti continuano a passare, e `npm run test:mutate` con loro
 
+> **Trovato scrivendo.** Due, e tutt'e due riguardano cose che stanno **fuori**
+> dalla scatola che si tocca.
+>
+> **Il bersaglio era alto due pixel.** Il passo delle tacche nude è di sei, ma
+> scritto come margine: il margine sta fuori dalla scatola e non prende il clic,
+> quindi restavano i due pixel del trattino — un link che nessuno può centrare
+> apposta. Portato a padding, che sta dentro: stesso passo, bersaglio di sei.
+>
+> **E il minificatore collassa `overflow-x` e `overflow-y` nella
+> scorciatoia.** Nel sorgente la barra dichiara i due assi separati; in `dist/`
+> arriva `overflow: auto hidden`, e l'asserzione scritta come si digita il CSS
+> falliva su un foglio esatto. La guardia invece la leggeva bene, perché la
+> scorciatoia la sapeva già interpretare — quindi l'asserzione adesso usa il suo
+> parser invece di un secondo modo di leggere la stessa cosa. È il ripiego
+> collassato della regola 4 nella sua forma più mite: qui non si perde niente,
+> si riscrive soltanto, e la risposta è la stessa — leggere `dist/`, e leggerlo
+> come lo legge il codice.
+
 ### Test manuali
 
 - Con 81 serate finte: dalla rotaia si arriva alla dodicesima in un tocco, sul
-  desktop e sul telefono
+  desktop e sul telefono — **fatto**: 82 tacche, tutte visibili, undici
+  etichettate, la striscia alta 702px in una rotaia da 757. Un trattino a sei
+  tacche dalla cima porta alla serata 6, con indirizzo, accento e finestra che
+  la seguono
+- Sul telefono la barra scorre: striscia da 7168px in una barra da 593, e lo
+  script la porta sulla pillola corrente all'apertura — **fatto**
 - Il bersaglio si prende con un dito, non con un puntatore
 - Con gli script spenti, quello che succede è quello che è scritto
 
