@@ -66,13 +66,16 @@ Fatto:
 - La Timeline: una tacca per serata, rotaia a destra e barra in basso sul
   telefono, con la navigazione da tastiera e l'accento che segue la serata a
   schermo. Le tacche sono link veri, quindi funzionano anche senza script
+- Ogni serata ha il suo indirizzo, `/81`, che è il programma aperto su quella
+  serata e ne porta i meta per le anteprime; l'indirizzo segue chi scorre
 
 Da fare: l'elenco completo dei passi, in ordine e uno per PR, sta in
-[piano.md](piano.md). In sintesi — le pagine delle serate, il modale, le pagine
+[piano.md](piano.md). In sintesi — la prenotazione dentro il modale, le pagine
 istituzionali, il CMS, la pubblicazione. La migrazione delle 81 serate storiche
 resta fuori dalla beta, vedi [questioni-aperte.md](questioni-aperte.md).
 
-`src/pages/index.astro` è lo scroller del programma, con la Timeline. Ogni scena
-porta quattro attributi che i test leggono in `dist/` — `data-number`,
-`data-state`, `data-open`, `data-cycle` — e che vanno riportati se la scena
-viene rifatta; `<html>` porta l'accento della serata a schermo.
+Lo scroller del programma è `src/components/Programme.astro`, e le rotte che lo
+usano sono `src/pages/index.astro` e `src/pages/[number].astro`. Ogni scena porta
+quattro attributi che i test leggono in `dist/` — `data-number`, `data-state`,
+`data-open`, `data-cycle` — e che vanno riportati se la scena viene rifatta;
+`<html>` porta l'accento della serata a schermo, e l'indirizzo il suo numero.

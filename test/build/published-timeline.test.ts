@@ -142,11 +142,18 @@ describe('the published Timeline', () => {
     expect(home!.css).toMatch(/\.timeline[^{]*\{[^}]*overflow:\s*hidden/);
   });
 
-  it('declares smooth scrolling in the stylesheet, where the reader can refuse it', () => {
-    expect(home!.css).toMatch(/scroll-behavior:\s*smooth/);
+  it('animates no jump, and can still be asked for less movement', () => {
+    /* No `scroll-behavior: smooth` anywhere, and its absence is the fix rather
+       than an omission: the property reaches only the scrolls a script asks
+       for, every one of those is a jump to an evening, and an animated jump can
+       be interrupted — the second of two ticks tapped in quick succession is
+       dropped by the engine and the programme stays on the first while the
+       rail, the accent and the address name the second. Read in dist/ because
+       that is where somebody putting it back would put it. */
+    expect(home!.css).not.toMatch(/scroll-behavior:\s*smooth/);
 
-    // And the refusal itself: under reduced motion the snap goes and the
-    // smooth goes with it, which is what turns the scroller into a list.
+    // And the refusal that was always there: under reduced motion the snap goes
+    // too, which is what turns the scroller into a list.
     const reduced = /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{([\s\S]*?\}\s*)\}/.exec(
       home!.css,
     );

@@ -1,0 +1,342 @@
+---
+/* The programme itself: the scroller, its rail, and the three scripts that make
+ * it behave — everything a route needs except which evening it opens on.
+ *
+ * A component and not a page, because there are two routes and one programme.
+ * `/` opens on the first evening still to come; `/81` opens on the eighty-first
+ * and carries its meta, which is the whole reason those addresses exist — a
+ * link shared in a chat shows a title and a picture because of the Open Graph
+ * tags of that route, not because of its path. Copied into the second page
+ * instead of shared, this would be two sources for one screen: exactly what
+ * this repository spends its time catching.
+ *
+ * The full-screen scroll-snap format is the client's requirement and not a
+ * design choice to renegotiate — CLAUDE.md rule 1 — so its costs are paid
+ * inside the constraint: `prefers-reduced-motion` turns this into an ordinary
+ * list, every evening has an address of its own, and the titles are `<h2>`
+ * under the one `<h1>` each route carries.
+ *
+ * Opening on an evening other than the first is the one thing here that no CSS
+ * can do: a document opens at the top, and the position of a scrolling
+ * container is not something a stylesheet sets. Hence the inline script below —
+ * ten lines, no dependency, and a plain degradation if it does not run.
+ */
+import Modal from './Modal.astro';
+import Scene from './Scene.astro';
+import Timeline from './Timeline.astro';
+import type { Scene as SceneData } from '../lib/programme.ts';
+
+interface Props {
+  scenes: SceneData[];
+  /** Which evening this route opens on. */
+  openIndex: number;
+}
+
+const { scenes, openIndex } = Astro.props;
+---
+
+  {/* Before the programme and not after it, which is where it was: the rail is
+      fixed, so where it stands on screen owes nothing to where it stands here,
+      and after the scroller its ticks came after every button of every evening.
+      On the archive this is written for that is eighty-odd stops to pass before
+      reaching the one control whose whole purpose is not having to. */}
+  <Timeline scenes={scenes} current={openIndex} />
+
+  {/* `tabindex="0"` because this box, and not the document, is what scrolls.
+      Safari does not make a scrolling container focusable on its own, so
+      without it a reader on a keyboard has nothing to press: the document is
+      exactly one screen tall and does not move, the skip link lands on <main>
+      whose nearest scrolling ancestor is that same document, and the arrows,
+      the space bar and Page Down all do nothing until Tab happens to reach a
+      link inside a scene. Chrome and Firefox add the stop themselves; this
+      says it out loud for the browser this project's floor is written for. */}
+  <div class="scroller" data-scroller tabindex="0">
+    {
+      scenes.map((scene, index) => (
+        <Scene scene={scene} open={index === openIndex} eager={index === openIndex} />
+      ))
+    }
+  </div>
+
+  {/* Inline and synchronous, right after the markup it moves: it runs before
+      the first paint, so the programme is *drawn* at the right evening instead
+      of being drawn at the top and jumping. `is:inline` keeps Astro from
+      bundling it into a deferred module, which would put the jump after the
+      paint. Inside the layout and not after it: written after `</Base>` it was
+      published after `</html>`, which every browser recovers from by moving it
+      into the body — a parse error nobody sees and nothing here needs.
+
+      Measured rather than computed from an index: with `content-visibility` the
+      heights are the declared intrinsic ones, and asking the element where it
+      is gets the same answer without this file knowing how tall a scene is.
+
+      An address that names a scene wins over the opening evening: `/#serata-82`
+      is a link somebody was given — the Timeline of PR 8 writes them — and
+      jumping away from it would answer a request with somewhere else.
+
+      Without JavaScript nothing here happens: the programme opens on the oldest
+      evening and scrolls normally. That is the whole degradation. */}
+  <script is:inline>
+    (function () {
+      var scroller = document.querySelector('[data-scroller]');
+      var open = scroller && scroller.querySelector('[data-open]');
+      if (!open) return;
+
+      var asked = location.hash ? location.hash.slice(1) : '';
+      if (asked && document.getElementById(decodeURIComponent(asked))) return;
+
+      scroller.scrollTop +=
+        open.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
+    })();
+  </script>
+
+  {/* What the «Prenota il posto» button shows, written once for the whole
+      programme: it is the same for every evening still to come, so it does not
+      belong inside a scene. In a <template> because it has no place in the page
+      until it is asked for — unlike the links of an evening, which are content
+      and stay in the markup.
+
+      The number to write to is not here yet: it is the president's, the design
+      only ever had a placeholder, and publishing a wrong one is worse than
+      publishing none. PR 10 puts it in, and with it the direct link that gives
+      this button something to do with scripting off. */}
+  <template id="booking">
+    <p>
+      La sala ha sessanta posti. Per tenerne uno si scrive all'organizzatore con
+      il proprio nome e quante persone siete: la risposta arriva in serata.
+    </p>
+    <p>
+      Se non si prenota si può venire lo stesso, ma il posto non è garantito.
+    </p>
+  </template>
+
+  <Modal />
+
+  {/* What follows the reader: the tick that says where they are, the accent of
+      the evening on screen, and the keys that move between evenings.
+      Everything here is *informative* — nothing on the page depends on it to
+      work. The ticks are links and the browser does the jump; without this
+      script the rail simply stops keeping up.
+
+      Inline like the other two, and for the same practical reason as much as
+      any: bundled it would be a module, and a module is deferred — a second
+      request for fifty lines that have no imports.
+
+      One observer, three answers. Which evening is on screen is the question
+      behind `aria-current`, behind the accent and behind which ticks are in the
+      window, and asking it once is the difference between one listener and
+      three that can disagree. */}
+  <script is:inline>
+    (function () {
+      var scroller = document.querySelector('[data-scroller]');
+      var timeline = document.querySelector('[data-timeline]');
+      if (!scroller || !timeline || typeof IntersectionObserver !== 'function') return;
+
+      var scenes = [].slice.call(scroller.querySelectorAll('[data-scene]'));
+      var ticks = [].slice.call(timeline.querySelectorAll('[data-tick]'));
+      if (scenes.length === 0 || scenes.length !== ticks.length) return;
+
+      var span = Number(timeline.getAttribute('data-window')) || 0;
+
+      // Where the build left it, rather than a guess: the opening evening is
+      // marked in the markup, and reading it back is what keeps this script
+      // from having to know how that was decided.
+      var current = 0;
+      for (var i = 0; i < ticks.length; i++) {
+        if (ticks[i].getAttribute('aria-current')) current = i;
+      }
+
+      /* There is no smooth scrolling here, and that is a decision rather than
+         an omission — see CLAUDE.md rule 15.
+
+         `scroll-behavior` reaches only the scrolls a script asks for, and every
+         one of those here is a jump to an evening. Animated, a jump can be
+         interrupted: a second one issued while the first is in flight is
+         dropped by the engine, and the programme stays on the first
+         destination while the rail, the accent and the address all name the
+         second. Two ticks tapped two tenths of a second apart is enough, and
+         what it leaves behind is a site that contradicts itself with nothing
+         to see. Found at PR 9 and fixed there; PR 8 had shipped it, and had
+         written the symptom off as a bad measurement.
+
+         So the property is not declared and the jumps land at once. Which also
+         answers `prefers-reduced-motion` by construction instead of by a rule
+         that has to keep winning, and is why `scrollIntoView()` below is still
+         called with no argument at all: `behavior: 'smooth'` passed by hand
+         would put the animation back where no stylesheet could reach it. */
+
+      /* The window of ticks around `centre`, put on or taken off. The value is
+         the distance itself, which is what lets the stylesheet decide how much
+         of the window a screen this size can hold — the bar on a phone keeps
+         three of the eleven the rail shows. */
+      function mark(centre, on) {
+        var from = Math.max(0, centre - span);
+        var to = Math.min(ticks.length - 1, centre + span);
+        for (var i = from; i <= to; i++) {
+          if (on) ticks[i].setAttribute('data-near', String(Math.abs(i - centre)));
+          else ticks[i].removeAttribute('data-near');
+        }
+      }
+
+      function setCurrent(index) {
+        if (index === current) return;
+        mark(current, false);
+        ticks[current].removeAttribute('aria-current');
+
+        current = index;
+        mark(current, true);
+        ticks[current].setAttribute('aria-current', 'true');
+
+        // The accent of the whole document, for everything outside a scene. A
+        // scene declares its own and wins inside itself, because custom
+        // properties inherit from the nearest ancestor that sets them.
+        var cycle = scenes[index].getAttribute('data-cycle');
+        if (cycle) document.documentElement.setAttribute('data-cycle', cycle);
+
+        /* And the address, so that copying it copies the evening being read.
+           Every evening is a route; the ticks stay fragments on purpose, since
+           pointing them at `/N` would make each one fetch two hundred kilobytes
+           of document to do the work of a scroll.
+
+           `replaceState` and never `pushState`: pushed, the back button would
+           need one press for every evening crossed, so leaving the site the way
+           one came would take eighty of them. It is the difference of one word,
+           and nothing about the page looks wrong when it is the wrong word.
+
+           Only on a change, which is why this sits below the early return
+           above: rewriting `/` to `/81` the moment the page opens would hand
+           anyone who bookmarks the root an address that ages — in November that
+           bookmark still opens the eighty-first, which by then is behind us.
+           `/` is the one address that does not age, and it stays until the
+           reader moves. */
+        var number = scenes[index].getAttribute('data-number');
+        if (number && history.replaceState) history.replaceState(null, '', '/' + number);
+      }
+
+      /* The design's guard, kept for the case this project cannot yet test.
+         A jump that the engine animates crosses every evening in between, and
+         the observer would report each one: the rail flickering through forty
+         dates and the site through forty colours before settling. Nothing here
+         animates any more — the jumps land at once — but a fragment jump is the
+         browser's, not ours, and Safari is the browser whose behaviour we do not
+         get to see until the site is published (docs/questioni-aperte.md). So a
+         jump still names its destination, and until that destination arrives —
+         or 1200 ms pass, because an animation interrupted by snap may never
+         arrive — what the observer reports is not news. */
+      var target = null;
+      var timer;
+
+      function aim(index) {
+        /* Already there: nothing is going to cross the middle line, so the
+           destination would never arrive and the guard would sit deaf for its
+           whole 1200 ms — the rail and the accent frozen while the reader
+           scrolls. Clicking the current tick and pressing Down on the last
+           evening are both this. */
+        if (index === current) return;
+
+        target = index;
+        clearTimeout(timer);
+        timer = setTimeout(function () {
+          target = null;
+        }, 1200);
+        setCurrent(index);
+      }
+
+      var observer = new IntersectionObserver(
+        function (entries) {
+          for (var i = 0; i < entries.length; i++) {
+            if (!entries[i].isIntersecting) continue;
+            var index = scenes.indexOf(entries[i].target);
+            if (index === -1) continue;
+
+            if (target !== null) {
+              if (index === target) {
+                target = null;
+                clearTimeout(timer);
+              }
+              continue;
+            }
+            setCurrent(index);
+          }
+        },
+        // A line across the middle of the scroller rather than a share of a
+        // scene: with the margins taking both halves away the root is one
+        // horizontal line, and the evening crossing it is the evening being
+        // read — exactly one of them, whatever the height of a scene.
+        { root: scroller, rootMargin: '-50% 0px -50% 0px' },
+      );
+
+      for (var s = 0; s < scenes.length; s++) observer.observe(scenes[s]);
+
+      // The jump itself is the browser's: this only says where it is going, so
+      // that the rail does not read the forty evenings it passes over.
+      timeline.addEventListener('click', function (event) {
+        /* A click the browser is not going to follow — Ctrl or Cmd for a new
+           tab, Shift for a new window, anything already handled — leaves the
+           programme exactly where it was. Aiming at the evening it names would
+           move `aria-current`, the accent and the window onto an evening that
+           is not on screen, and then deafen the observer for 1200 ms, so
+           nothing would put them back until the reader scrolled. */
+        if (event.defaultPrevented || event.button !== 0) return;
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+        var tick = event.target.closest ? event.target.closest('[data-tick]') : null;
+        if (!tick) return;
+
+        var index = Number(tick.getAttribute('data-index'));
+        if (index >= 0 && index < scenes.length) aim(index);
+      });
+
+      /* The keys, explicitly, on the box that scrolls.
+         A scrolling container answers the arrows by itself in Chrome and
+         Firefox, by a number of pixels and not by an evening; Safari does not
+         answer at all until something inside it has focus. Both are the same
+         problem for a reader on a keyboard, and docs/vincoli-tecnici.md asks
+         for these five keys by name.
+
+         `scrollIntoView()` with no argument at all: that leaves the *how* to
+         `scroll-behavior`, which is the only way a reader who has asked for
+         reduced motion gets an instant jump. */
+      scroller.addEventListener('keydown', function (event) {
+        // Shift with the rest: Shift+Home and Shift+Down are how a keyboard
+        // selects, and taking them over answers a request nobody made.
+        if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
+
+        var index = null;
+        if (event.key === 'Home') index = 0;
+        else if (event.key === 'End') index = scenes.length - 1;
+        else if (event.key === 'ArrowDown' || event.key === 'PageDown') index = current + 1;
+        else if (event.key === 'ArrowUp' || event.key === 'PageUp') index = current - 1;
+        if (index === null) return;
+
+        index = Math.max(0, Math.min(scenes.length - 1, index));
+        event.preventDefault();
+        aim(index);
+        scenes[index].scrollIntoView();
+      });
+    })();
+  </script>
+
+<style>
+  /* The scroller is the page: the document itself does not scroll, this does.
+     One screen per evening, snapping to the top of each.
+
+     `--scene-height` is `svh` with a `vh` fallback declared in @supports — with
+     `dvh` the height changes as Safari's address bar retracts and, under
+     mandatory snap, the position jumps (rule 5). */
+  .scroller {
+    height: var(--scene-height);
+    overflow-y: auto;
+    scroll-snap-type: y mandatory;
+
+    /* Hidden, as in the design: the Timeline of PR 8 is what tells a reader
+       where they are, and a scrollbar over 81 evenings says almost nothing. */
+    scrollbar-width: none;
+  }
+
+  .scroller::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+
+</style>

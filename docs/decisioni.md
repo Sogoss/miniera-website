@@ -1061,27 +1061,31 @@ quello i numeri onesti sono lo 0,2% di chi li disattiva e circa l'1% di chi non
 li riceve — ma perché **costa meno del bottone**: che funzioni senza script è
 quel che la scelta più economica regala. *(PR 8)*
 
-**Lo scorrimento morbido si dichiara come proprietà, mai come argomento.**
-`scroll-behavior: smooth` sul contenitore, e ogni salto fatto da script chiama
-`scrollIntoView()` **senza argomenti**, che risolve sul valore calcolato della
-proprietà. `global.css` rimette `scroll-behavior: auto` con `!important` sotto
-`prefers-reduced-motion`, e un `{ behavior: 'smooth' }` passato a mano vince su
-quell'`!important` — l'argomento batte la proprietà, per specifica e in ogni
-motore. Sarebbe un guasto che non si vede in `dist/`, che non fa fallire niente,
-e che colpisce esattamente le persone per cui l'impostazione esiste: ha la sua
-guardia. *(PR 8)*
+**Lo scroller non anima i salti.** `scroll-behavior: smooth` c'è stato dalla
+PR 8 alla PR 9 ed è stato tolto, perché un salto animato è interrompibile: un
+secondo salto partito mentre il primo è in volo il motore lo lascia cadere, e il
+programma resta sulla prima destinazione mentre rotaia, accento e indirizzo
+dicono la seconda. Due tacche toccate a due decimi di distanza bastano — e la
+PR 8 l'aveva visto, in una forma indistinguibile da un errore di misura, e
+l'aveva archiviato come tale.
 
-**E la proprietà l'accende lo script, a documento caricato.** Assegnare
-`scrollTop` obbedisce a `scroll-behavior` come qualunque altro scorrimento:
-dichiarata nel foglio di stile, l'apertura sulla prima serata futura — che deve
-atterrare prima della prima pittura — sarebbe scesa in animazione da cima
-all'archivio. **E l'apertura non è l'unico scorrimento che il browser fa mentre
-la pagina arriva**: chi entra da `/#serata-3` lascia il frammento al motore, di
-proposito, e un motore che ci torna sopra a caricamento finito troverebbe la
-proprietà già accesa — lo stesso difetto per l'altra strada. Quindi si accende
-sull'evento `load`. Prima di allora una tacca salta lo stesso, istantanea, che è
-il degrado sotto cui tutta questa funzione è scritta per essere al sicuro.
-*(PR 8, la seconda metà in revisione)*
+Non è una rinuncia scambiata con la correttezza. `scroll-behavior` raggiunge
+**solo** gli scorrimenti chiesti da uno script, e qui sono tutti salti a una
+serata: tutto ciò che quella proprietà comprava era rendere interrompibile
+l'unica cosa che quei salti devono fare. In cambio `prefers-reduced-motion` è
+soddisfatto per costruzione invece che da una regola che deve continuare a
+vincere, e sparisce la macchinetta che accendeva la proprietà sull'evento
+`load`. *(PR 8, tolto in PR 9)*
+
+**E se l'animazione tornasse, tornerebbe come proprietà — mai come argomento.**
+Un `{ behavior: 'smooth' }` passato a una chiamata batte il
+`scroll-behavior: auto !important` che `global.css` mette sotto
+`prefers-reduced-motion`: l'argomento vince sulla proprietà, per specifica e in
+ogni motore. Sarebbe un guasto invisibile in `dist/`, che non fa fallire niente
+e colpisce esattamente le persone per cui l'impostazione esiste. La guardia
+resta, e adesso conta di più: rimettere l'animazione così è la prima cosa che
+verrà in mente a qualcuno. Ogni salto continua a chiamare `scrollIntoView()`
+senza argomenti. *(PR 8)*
 
 **L'accento globale sta su `<html>`.** È il giorno che il commento di
 `:where(:root)` in `colors.css` aveva previsto: scritto `:root`, quella regola
@@ -1186,6 +1190,63 @@ non scorre. Spenti gli eventi sulla colonna, la rotella raggiunge la scena
 sotto; le tacche li riprendono, e la striscia morta è larga quanto loro. Sulla
 barra del telefono invece gli eventi restano, perché lì c'è un fondo e un bordo
 e un dito che la tocca sta su un controllo. *(PR 8)*
+
+## Le rotte delle serate
+
+**`/81` non è una pagina della serata 81: è il programma aperto sulla serata
+81.** Il piano lasciava intendere un documento diverso dallo scroller, e non lo
+è — stesse scene, stesso ordine, stessa rotaia, e in più i meta di quella
+serata. È ciò che rende vero il motivo per cui quegli indirizzi esistono: un
+link incollato in chat mostra titolo e figura per i meta Open Graph della rotta
+che nomina, non per il suo percorso. *(PR 9)*
+
+**Lo scroller è un componente e le rotte sono due.** `Programme.astro` tiene il
+markup, i tre script e gli stili; `index.astro` gli passa la prima serata futura
+e `[number].astro` la propria. Copiato nella seconda pagina sarebbe due sorgenti
+per una schermata sola. *(PR 9)*
+
+**L'indirizzo segue la serata a schermo, e si sostituisce.** Le tacche restano
+frammenti — puntarle a `/N` farebbe scaricare duecento kilobyte di documento per
+fare il lavoro di uno scorrimento — quindi a tenere allineato l'indirizzo è
+`history.replaceState` dentro l'osservatore che c'è già. Con `pushState` sarebbe
+una voce di cronologia per ogni serata attraversata, e il tasto indietro
+smetterebbe di uscire dal sito per mettersi a risalire l'archivio: è la
+differenza di una parola e ha la sua guardia. *(PR 9)*
+
+**E si aggiorna al cambio, non all'apertura.** Riscrivere `/` in `/81` appena la
+pagina si apre consegnerebbe a chi mette un segnalibro sulla radice un indirizzo
+che invecchia: a novembre quel segnalibro aprirebbe ancora l'ottantunesima, che
+nel frattempo è passata. `/` è l'unico indirizzo che non invecchia e resta
+finché il lettore non si muove. *(PR 9)*
+
+**L'`<h1>` di ogni rotta nomina la sua serata**, e resta invisibile. Ottantuno
+documenti con lo stesso corpo e meta diversi sono contenuto duplicato: quel
+titolo è la sola cosa dentro il corpo che li distingue per chi li indicizza. La
+radice tiene il suo, che parla del sito — perché è «la prossima serata», quando
+la si legge. *(PR 9)*
+
+**Una serata annullata d'esempio entra nei contenuti, prima di quella di
+apertura.** Senza, il ramo `cancelled` non arriva in `dist/` e il test può solo
+pretendere che la regola della barratura esista — non che finisca su qualcosa.
+Con lei si prova anche che il programma la salta e si apre sulla successiva.
+Collocata lì apposta, perché è lì che il salto si vede. Esce quando arrivano le
+serate vere, come le immagini segnaposto. *(PR 9)*
+
+**La barratura sta in `Scene.astro`, agganciata a `data-state`.** C'è un posto
+solo perché c'è un template solo: la rotta `/80` è quella stessa scena, aperta
+su di lei. Lo stato lo decide `stateOf` nel dominio, una volta, e ogni parte del
+sito fa la stessa domanda allo stesso attributo. È barrato quello che
+l'annullamento toglie — il titolo e la data — e non il luogo, che resta dov'è.
+`line-through` non lo annuncia nessuno screen reader: a dirlo a parole ci sono
+già l'etichetta «annullata» sopra il titolo e la nota «Serata annullata» sotto.
+*(PR 9)*
+
+**Senza JavaScript, `/81` si apre in cima all'archivio.** Il salto alla scena
+giusta è lo script, e qui pesa più che su `/`, perché l'indirizzo aveva promesso
+una serata precisa. Un redirect a `/#serata-81` funzionerebbe per il browser e
+romperebbe la ragione per cui la rotta esiste: lo scraper che costruisce
+l'anteprima segue i redirect e leggerebbe i meta della radice. Accettata e
+scritta; il programma resta tutto lì da scorrere. *(PR 9)*
 
 ## Rimandate
 

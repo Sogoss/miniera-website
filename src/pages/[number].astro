@@ -1,0 +1,69 @@
+---
+/* One evening, at its own address.
+ *
+ * Not a different page from the programme: **the same programme, opened on this
+ * evening**, and carrying its title, its description and its picture in the
+ * head. That is the whole reason these addresses exist — docs/design.md — since
+ * a link pasted into a chat shows a title and a photograph because of the Open
+ * Graph tags of the route it names, and not because of the path.
+ *
+ * The number is the address and is never reassigned, so a cancelled evening
+ * keeps its route: whoever was already sent `/82` must not find a 404 there
+ * (docs/contenuti.md).
+ *
+ * Two things a reader gets here that the root cannot give, and one they do not:
+ *
+ * - a link that names an evening for ever, where `/` always means «the next
+ *   one». Both are wanted, which is why both exist;
+ * - a preview with that evening's picture, once the domain is set;
+ * - and, with scripting off, they land at the top of the archive rather than on
+ *   the evening they asked for. The jump is the script. A redirect to
+ *   `/#serata-81` would fix the browser and break the reason this route exists:
+ *   the scraper that builds the preview follows redirects, and would read the
+ *   root's tags. Declared in docs/piano.md rather than papered over — the whole
+ *   programme is still there to scroll.
+ */
+import { getImage } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import Programme from '../components/Programme.astro';
+import { loadProgramme } from '../lib/programme.ts';
+
+export async function getStaticPaths() {
+  const { scenes } = await loadProgramme();
+
+  /* One route per evening, numbered as the collection numbers them. Two
+     evenings with the same number would claim the same path and stop the build
+     — which is the safety net docs/contenuti.md counts on, on top of the check
+     loadProgramme() already makes. */
+  return scenes.map((scene, index) => ({
+    params: { number: String(scene.number) },
+    props: { index },
+  }));
+}
+
+const { index } = Astro.props;
+const { scenes } = await loadProgramme();
+const scene = scenes[index]!;
+
+/* 1200×630, which is what a link preview expects, cropped by astro:assets and
+   not by whoever uploaded the photograph. Built even while `site` is unset and
+   the layout therefore publishes no `og:image`: the day PR 13 fills the domain
+   in, nothing here has to change or be remembered. */
+const preview = scene.photo
+  ? (await getImage({ src: scene.photo, width: 1200, height: 630, fit: 'cover', format: 'jpeg' }))
+      .src
+  : undefined;
+
+/* «Serata 81 — Chi tiene aperto il quartiere»: the number first, because that
+   is what the association calls its evenings and what the address says. */
+const title = `Serata ${scene.number} — ${scene.title}`;
+---
+
+<Base title={title} description={scene.description} image={preview} cycle={scene.cycle.number}>
+  {/* Invisible, as at the root, and naming this evening. Eighty-one routes
+      publishing the same body differ in the head and here: it is the only thing
+      inside the document that tells them apart for whoever indexes them. */}
+  <h1 class="visually-hidden">{title}</h1>
+
+  <Programme scenes={scenes} openIndex={index} />
+</Base>

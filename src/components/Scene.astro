@@ -317,6 +317,28 @@ const titleId = `titolo-${scene.number}`;
     font-weight: var(--weight-semibold);
   }
 
+  /* An evening that was called off, struck through on the two facts the
+     cancellation takes away: what it was, and when it was going to be. The
+     place stays — the room is still there — and so does the description, which
+     is where an editor writes what happened.
+
+     Hung on `data-state` and not on a class of its own: the state is decided by
+     `stateOf` in the domain, once, and every part of the site asks the same
+     question of the same attribute. There is one place to write this because
+     there is one template — the route `/80` is this same scene, opened on it —
+     and a second copy would be two declarations at equal specificity decided by
+     the order of two stylesheets, which is rule 12 in another costume.
+
+     Said in words as well as drawn: `line-through` is not announced by a screen
+     reader, so the label above the title reads «annullata» and the note below
+     reads «Serata annullata». Neither of those is this rule's job, and both are
+     already there — this is the half a reader sees at a glance. */
+  .scene[data-state='cancelled'] .scene-title,
+  .scene[data-state='cancelled'] .scene-when {
+    text-decoration: line-through;
+    text-decoration-thickness: var(--border-width-hairline);
+  }
+
   .scene-icon {
     flex: none;
     width: 18px;

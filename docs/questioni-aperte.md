@@ -44,6 +44,17 @@ Non è ancora stato deciso dove.
 
 ## Da fare alla PR 13
 
+### L'anteprima di un link su WhatsApp e su Facebook
+
+Rimandata dalla PR 9, che è la PR in cui gli indirizzi delle serate esistono e i
+meta li portano. Senza dominio non c'è niente da incollare in una chat, e
+`og:image` il layout non lo emette affatto: deve essere assoluto, e assoluto lo
+può essere solo con `site` in configurazione. Il test è già scritto e si arma da
+solo quando quella riga compare.
+
+Da provare, allora: che l'anteprima esca con titolo, descrizione e figura, e che
+la figura sia quella della serata e non la stessa per tutte.
+
 ### La prova su un telefono vero
 
 Rimandata dalla PR 7, e non perché non conti: è la prova che regge la decisione
