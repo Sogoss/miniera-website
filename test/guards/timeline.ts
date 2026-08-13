@@ -19,8 +19,13 @@ import { attributeOf } from './document.ts';
 import { stripMarkupComments } from './language.ts';
 import { type Violation, lineNumber } from './types.ts';
 
-/** Every element marked as a tick, with its opening tag. */
-function tickTags(markup: string): { tag: string; index: number }[] {
+/** Every element marked as a tick, with its opening tag.
+ *
+ *  Exported because the assertions in test/build/ ask the same question of
+ *  dist/ — how many ticks are there, and what does each one carry — and three
+ *  copies of this pattern is three places to rename `data-tick` and two to
+ *  forget, each of which goes on passing over a list of nothing. */
+export function tickTags(markup: string): { tag: string; index: number }[] {
   const pattern = /<([a-z][a-z0-9-]*)\b[^>]*?\sdata-tick\b[^>]*>/gi;
   return [...markup.matchAll(pattern)].map((match) => ({ tag: match[0], index: match.index }));
 }
@@ -84,7 +89,17 @@ export function checkTimelineTargets(markup: string, path = 'the page'): Violati
     const href = (attributeOf(tag, 'href') ?? '').trim();
     if (!href.startsWith('#')) continue;
 
-    const id = decodeURIComponent(href.slice(1));
+    /* A fragment that is not valid percent-encoding — `#%zz` — makes
+       decodeURIComponent throw, and a guard that throws reports nothing at all
+       about the rest of the page while looking like an infrastructure failure.
+       Left as written: that is what getElementById would be handed too. */
+    let id: string;
+    try {
+      id = decodeURIComponent(href.slice(1));
+    } catch {
+      id = href.slice(1);
+    }
+
     if (id === '' || ids.has(id) || reported.has(id)) continue;
     reported.add(id);
 

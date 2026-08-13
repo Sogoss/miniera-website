@@ -33,7 +33,10 @@
      overlaps the last words of a description is a defect nobody sees until the
      description is long.
      Vertical on the right above 900px, a bar across the bottom below it, which
-     is why there are two. Both are proportions, so PR 14 retunes them.
+     is why there are two. The first is a proportion and the second is not: a
+     column of dates is a share of the width, while the height of the bar is a
+     touch target, and a finger is the same size on every screen. PR 14 retunes
+     the proportion.
 
      Wider than the design's rail, and measured rather than copied: the export
      puts `clamp(104px, 8.5vw, 140px)` there and writes `20 mar` on its ticks,
@@ -43,7 +46,19 @@
      padding of the design is on top of it. Below that the dates run off the
      right edge of the screen, which is where this started. */
   --timeline-width: clamp(148px, 11vw, 176px);
-  --timeline-bar: 60px;
+
+  /* The bar is a sum and not a measurement: the tick, the padding on both
+     sides of it, the hairline on both sides of that, and the step the bar
+     stands off the bottom edge. Written out because a number read off the
+     screen once is a number that stops being true the first time somebody
+     raises the touch target — the obvious thing to do to a row of pills — and
+     what it costs then is the note of every scene sliding under the bar, on a
+     phone, silently. Timeline.astro draws itself from the same parts. */
+  --timeline-tick-height: 36px;
+  --timeline-bar: calc(
+    var(--timeline-tick-height) + var(--space-2) * 2 + var(--border-width-hairline) * 2 +
+      var(--space-3)
+  );
 
   /* Radii — almost everything is squared off; the only curve in the brand is
      the bottom-right corner of the badge (see --radius-badge). */

@@ -174,7 +174,10 @@ non una preferenza.
     distanza dalla corrente, non un rango**: è ciò che permette al solo CSS di
     stringere la finestra a tre sulla barra del telefono, dove undici non ci
     sono mai stati, senza un secondo numero in uno script — che sarebbe un
-    markup sbagliato per chi non lo esegue.
+    markup sbagliato per chi non lo esegue. **E l'accento sta sul segno, mai
+    sulla data**: quello che i cicli garantiscono è 3:1, la soglia di un bordo,
+    e una parola ne vuole 4,5 — è la decisione che `Modal.astro` aveva già
+    scritto per il link dentro il pannello.
 
 15. **Lo scorrimento morbido si dichiara come proprietà, mai come argomento.**
     `scroll-behavior: smooth` sul contenitore, e ogni salto fatto da script
@@ -187,9 +190,12 @@ non una preferenza.
     che niente fallisca. `checkSmoothScrollArgument` in
     `test/guards/scroller.ts` legge il sorgente e lascia stare il foglio di
     stile, che è la forma giusta: a distinguerli sono le virgolette.
-    **E la proprietà l'accende lo script, dopo il salto di apertura**:
-    assegnare `scrollTop` obbedisce a `scroll-behavior`, quindi dichiararla nel
-    foglio avrebbe fatto scendere l'apertura in animazione da cima all'archivio.
+    **E la proprietà l'accende lo script, sull'evento `load`**: assegnare
+    `scrollTop` obbedisce a `scroll-behavior`, quindi dichiararla nel foglio
+    avrebbe fatto scendere l'apertura in animazione da cima all'archivio — e
+    accenderla subito dopo quel salto lascia scoperto l'altro scorrimento che il
+    browser fa mentre la pagina arriva, quello sul frammento di chi entra da
+    `/#serata-3`.
 
 ## Lingua
 

@@ -92,11 +92,19 @@ export function checkSingleScroller(css: string, path = 'the page'): Violation[]
   }));
 }
 
-/* Written with the quotes required, which is what tells the two apart:
-   `scroll-behavior: smooth` in a stylesheet is the correct way to ask for this
-   and has no quotes around its value, while the argument of a scroll call
-   always does. A guard that flagged the stylesheet would be flagging the fix. */
-const SMOOTH_ARGUMENT = /(?<![-\w])behavior\s*:\s*(['"`])smooth\1/g;
+/* Written with the quotes required *on the value*, which is what tells the two
+   apart: `scroll-behavior: smooth` in a stylesheet is the correct way to ask
+   for this and has no quotes around its value, while the argument of a scroll
+   call always does. A guard that flagged the stylesheet would be flagging the
+   fix.
+
+   The key may carry quotes of its own — `{ 'behavior': 'smooth' }` is the same
+   call — and both halves of this guard used to let that through: the pattern
+   wanted the colon straight after the word, and the masking below blanks what
+   is inside quotes, so the one form somebody would reach for to get past a
+   linter was the one form nothing was looking at. The optional group is the
+   key's own quote, and the backreference makes the two ends agree. */
+const SMOOTH_ARGUMENT = /(?<![-\w])(['"])?behavior\1\s*:\s*(['"`])smooth\2/g;
 
 /**
  * Smooth scrolling asked for as an argument instead of declared as a property.

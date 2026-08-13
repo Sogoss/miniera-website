@@ -92,17 +92,24 @@
 
   --focus-ring: var(--orange-400);
 
-  /* The two ranks of a Timeline tick that is not the current one. The current
-     one is the accent, and these are how far the others have fallen back.
+  /* The two ranks of a Timeline tick that is not the current one: how far each
+     of the others has fallen back. Written as rgba over the triple, which is
+     what this file does instead of color-mix (rule 3).
 
-     They are their own tokens rather than --text-secondary and --text-muted,
-     which sit at 0.68 and 0.44 and would be near enough to borrow: the export
-     tuned these two on the tick and not on running text — `color-mix(in srgb,
-     var(--crema-100) 60%, transparent)` and the same at 34% — and borrowing
-     would tie the rail to a decision about paragraphs. Written as rgba over the
-     triple, which is what this file does instead of color-mix (rule 3). */
+     Their own tokens and not --text-secondary and --text-muted: the export
+     tuned this pair on the tick and not on running text, and borrowing would
+     tie the rail to a decision about paragraphs. On the blue ground the near
+     one composites to 5.27:1 and the far one to 3.50:1.
+
+     The far one is **not** the export's value. There it is 34% of the cream,
+     which composites to 2.66:1 — under the 3:1 this project guarantees for a
+     border, let alone for eight ticks of date text at 11px, and lower than
+     anything else the site ships. 0.44 is where --text-muted sits, which is
+     this repository's floor for text a reader is meant to be able to read, and
+     the step down from the near rank survives it: 5.27 to 3.50 is still a rank.
+     A mockup is not a contrast ratio. */
   --tick-near: rgba(var(--cream-100-rgb), 0.6);
-  --tick-far: rgba(var(--cream-100-rgb), 0.34);
+  --tick-far: rgba(var(--cream-100-rgb), 0.44);
 
   /* Veil over the translucent bars (nav, timeline) */
   --veil-bar: rgba(var(--blue-900-rgb), 0.82);

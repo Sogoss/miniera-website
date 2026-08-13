@@ -11,8 +11,9 @@
  * file instead of at the programme.
  */
 import { describe, expect, it } from 'vitest';
+import { attributeOf } from '../guards/document.ts';
 import { checkSingleScroller } from '../guards/scroller.ts';
-import { checkTimelineLinks, checkTimelineTargets } from '../guards/timeline.ts';
+import { checkTimelineLinks, checkTimelineTargets, tickTags } from '../guards/timeline.ts';
 import { publishedPages } from '../support/dist.ts';
 import { collectionEntries } from '../support/frontmatter.ts';
 import { sortByNumber } from '../../src/lib/events.ts';
@@ -33,19 +34,24 @@ const cycleNumbers = new Map(
   collectionEntries('cicli').map((entry) => [entry.id, Number(entry.data.number)]),
 );
 
-/** Every tick of the published rail, with its opening tag. */
-const ticks = [...html.matchAll(/<a\b[^>]*\bdata-tick\b[^>]*>/g)];
-
-function attribute(tag: string, name: string): string | undefined {
-  return new RegExp(`\\b${name}="([^"]*)"`).exec(tag)?.[1];
-}
+/* Every tick of the published rail, and every attribute read by the same two
+   helpers the guards use. A fourth private copy of «find the ticks» is three
+   renames away from a file that asserts nothing over an empty list, and a
+   private `attributeOf` is one that does not know `data-href` is not `href` —
+   which is the mistake test/guards/document.ts exists to have made once. */
+const ticks = tickTags(html);
 
 /** The evening the programme opens on, read where the scroller marks it. */
 const openingNumber = Number(
-  attribute(
+  attributeOf(
     /<section\b[^>]*\bdata-open="true"[^>]*>/.exec(html)?.[0] ?? '',
     'data-number',
   ),
+);
+
+/** How far either side of the current tick the build says the window reaches. */
+const span = Number(
+  attributeOf(/<nav\b[^>]*\bdata-timeline\b[^>]*>/.exec(html)?.[0] ?? '', 'data-window'),
 );
 
 describe('the published Timeline', () => {
@@ -60,7 +66,7 @@ describe('the published Timeline', () => {
   it('gives every evening one tick, in the order of the site', () => {
     // All of them are in the markup even though only a window shows: they are
     // the programme, and a crawler and Ctrl+F should find them.
-    expect(ticks.map((tick) => attribute(tick[0], 'href'))).toEqual(
+    expect(ticks.map((tick) => attributeOf(tick.tag, 'href'))).toEqual(
       evenings.map((evening) => `#serata-${evening.number}`),
     );
   });
@@ -74,22 +80,35 @@ describe('the published Timeline', () => {
     // Written by the build and not only by the script: in dist/ there is no
     // script running, so a rail that waited for one would arrive with nothing
     // marked — and this assertion is the only place that can tell.
-    const current = ticks.filter((tick) => attribute(tick[0], 'aria-current'));
+    const current = ticks.filter((tick) => attributeOf(tick.tag, 'aria-current'));
     expect(current).toHaveLength(1);
     expect(openingNumber).toBeGreaterThan(0);
-    expect(attribute(current[0]![0], 'href')).toBe(`#serata-${openingNumber}`);
+    expect(attributeOf(current[0]!.tag, 'href')).toBe(`#serata-${openingNumber}`);
   });
 
-  it('shows a window of ticks around the current one', () => {
+  it('shows a window of ticks around the current one, and only those', () => {
     // What the CSS reads: no attribute at all is «outside the window», and the
     // value is the distance itself — which is how the bar on a phone keeps
     // three of the eleven the rail shows, without a second number in a script.
-    const current = ticks.findIndex((tick) => attribute(tick[0], 'aria-current'));
-    expect(attribute(ticks[current]![0], 'data-near')).toBe('0');
+    const current = ticks.findIndex((tick) => attributeOf(tick.tag, 'aria-current'));
+    expect(attributeOf(ticks[current]!.tag, 'data-near')).toBe('0');
+    expect(span).toBeGreaterThan(0);
+
+    /* Which ticks carry the attribute and not only what the ones that do say:
+       a build that ranked all eighty-one satisfied every assertion this used to
+       make, and published the whole archive at once down the side of the page.
+       The width is read from `data-window`, which is already published for the
+       script — so this asks the build about itself instead of becoming a second
+       place that knows the number. */
+    const from = Math.max(0, current - span);
+    const to = Math.min(ticks.length - 1, current + span);
 
     for (const [at, tick] of ticks.entries()) {
-      const rank = attribute(tick[0], 'data-near');
-      if (rank === undefined) continue;
+      const rank = attributeOf(tick.tag, 'data-near');
+      if (at < from || at > to) {
+        expect(rank, `tick ${at} is outside the window and still ranked`).toBeUndefined();
+        continue;
+      }
       expect(Number(rank), `tick ${at} is ranked further than it is`).toBe(
         Math.abs(at - current),
       );
@@ -103,7 +122,7 @@ describe('the published Timeline', () => {
     const document = /<html\b[^>]*>/.exec(html)?.[0] ?? '';
     const opening = evenings.find((evening) => evening.number === openingNumber);
     expect(opening, 'no evening carries data-open in the markup').toBeDefined();
-    expect(Number(attribute(document, 'data-cycle'))).toBe(cycleNumbers.get(opening!.cycle));
+    expect(Number(attributeOf(document, 'data-cycle'))).toBe(cycleNumbers.get(opening!.cycle));
   });
 
   it('publishes the two tick colours as rgba over the cream triple', () => {
@@ -112,7 +131,7 @@ describe('the published Timeline', () => {
     // that the two tokens arrived at all and kept their values — a rail whose
     // ranks all render the same colour is a rail that says nothing.
     expect(home!.css).toMatch(/--tick-near:\s*rgba\(var\(--cream-100-rgb\),\s*\.?0?\.?6\)/);
-    expect(home!.css).toMatch(/--tick-far:\s*rgba\(var\(--cream-100-rgb\),\s*\.?0?\.?34\)/);
+    expect(home!.css).toMatch(/--tick-far:\s*rgba\(var\(--cream-100-rgb\),\s*\.?0?\.?44\)/);
   });
 
   it('is clipped and not a second scrolling container', () => {

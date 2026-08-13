@@ -8,7 +8,7 @@
 import { describe, expect, it } from 'vitest';
 import { checkBrandSignature } from '../guards/brand.ts';
 import { checkModalTargets, checkSingleModal } from '../guards/modal.ts';
-import { checkTimelineLinks, checkTimelineTargets } from '../guards/timeline.ts';
+import { checkTimelineLinks, checkTimelineTargets, tickTags } from '../guards/timeline.ts';
 import {
   checkDocumentBasics,
   checkOpenGraph,
@@ -121,7 +121,9 @@ describe('every published page', () => {
     // The anti-vacuity half of the pair above, and the same argument as the
     // brand one below it: rename `data-tick` and every assertion keeps passing
     // over a list of nothing, on every page, with no tick watched anywhere.
-    const ticks = pages.flatMap((page) => [...page.html.matchAll(/<a\b[^>]*\bdata-tick\b/g)]);
+    // Found the way the guards find them, so that a rename cannot make this
+    // half agree with itself while the other half stops looking.
+    const ticks = pages.flatMap((page) => tickTags(page.html));
     expect(ticks.length, 'no page publishes a Timeline tick').toBeGreaterThan(0);
   });
 

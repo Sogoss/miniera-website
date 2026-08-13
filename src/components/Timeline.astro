@@ -56,29 +56,34 @@ function rank(index: number): string | undefined {
 }
 ---
 
+{/* The ticks are the children of the strip, with no list around them.
+    A list would be the ordinary way to mark up navigation links, and here it
+    announces a lie: eighty-one items of which eleven are shown, because hiding
+    the tick leaves its `<li>` behind — empty, in the accessibility tree, and
+    still a flex item drawing a gap between things that are not there. Both of
+    those are the wrapper, not the window. A `<nav>` of links says the true
+    number, because what is hidden is the whole child. */}
 <nav class="timeline" data-timeline data-window={WINDOW} aria-label="Le serate">
-  <ol class="timeline-strip">
+  <div class="timeline-strip">
     {
       scenes.map((scene, index) => (
-        <li>
-          <a
-            class="timeline-tick"
-            href={`#serata-${scene.number}`}
-            data-tick
-            data-index={index}
-            data-near={rank(index)}
-            aria-current={index === current ? 'true' : undefined}
-          >
-            <span class="tick-mark" aria-hidden="true" />
-            <span class="tick-date">{scene.shortDate}</span>
-            {/* The date alone names nothing on a list of eighty-one of them.
-                Said and not shown: the rail has room for six characters. */}
-            <span class="visually-hidden">— {scene.title}</span>
-          </a>
-        </li>
+        <a
+          class="timeline-tick"
+          href={`#serata-${scene.number}`}
+          data-tick
+          data-index={index}
+          data-near={rank(index)}
+          aria-current={index === current ? 'true' : undefined}
+        >
+          <span class="tick-mark" aria-hidden="true" />
+          <span class="tick-date">{scene.shortDate}</span>
+          {/* The date alone names nothing on a list of eighty-one of them.
+              Said and not shown: the rail has room for six characters. */}
+          <span class="visually-hidden">— {scene.title}</span>
+        </a>
       ))
     }
-  </ol>
+  </div>
 </nav>
 
 <style>
@@ -104,20 +109,18 @@ function rank(index: number): string | undefined {
     pointer-events: none;
   }
 
-  /* No `gap` here, and that is not a style preference.
-     What the window hides is the tick; the `<li>` around it stays a flex item,
-     empty and zero tall — but a gap is drawn between flex items whether or not
-     they have anything in them. With eighty-one evenings that was seventy gaps
-     of nothing: a thousand pixels of empty rail that pushed the eleven visible
-     ticks off the bottom of the screen. Spacing carried by the tick itself
-     disappears exactly when the tick does. */
+  /* `gap` is safe here because the ticks are the flex items themselves: a child
+     with `display: none` is not a flex item at all, so no gap is drawn beside
+     it. It was not safe while each tick sat inside an `<li>` — the wrapper
+     stayed, empty and zero tall, and a gap is drawn between flex items whether
+     or not they contain anything. With eighty-one evenings that was seventy
+     gaps of nothing, a thousand pixels of empty rail that pushed the eleven
+     visible ticks off the bottom of the screen. */
   .timeline-strip {
     position: relative;
     display: flex;
     flex-direction: column;
-    margin: 0;
-    padding: 0;
-    list-style: none;
+    gap: var(--space-2);
   }
 
   /* The rail the ticks sit on, faded at both ends so the window does not read
@@ -144,7 +147,6 @@ function rank(index: number): string | undefined {
     display: none;
     align-items: center;
     gap: var(--space-2);
-    margin-block: var(--space-1);
     pointer-events: auto;
     color: var(--tick-far);
     font: var(--type-mono);
@@ -166,9 +168,18 @@ function rank(index: number): string | undefined {
   }
 
   /* Last of the three, and equal in specificity to the one above: the current
-     tick has to win on the order of these rules. */
+     tick has to win on the order of these rules.
+
+     The accent is on the mark and never on the date. What the cycles guarantee
+     is 3:1 against the ground — the threshold for a border or a mark — while a
+     word wants 4.5:1, and at 15px three of the five tuned cycles do not get
+     there: the orange is at 4.35, the rose at 3.92, the purple at 3.88. It is
+     the same decision Modal.astro writes out for the link inside the panel —
+     the colour goes where 3:1 is the right bar, and the word stays at the
+     contrast of ordinary text. The size and the weight are what say «this
+     one». */
   .timeline-tick[data-near='0'] {
-    color: var(--accent);
+    color: var(--text-primary);
     font-size: var(--text-sm);
     font-weight: var(--weight-bold);
   }
@@ -191,6 +202,7 @@ function rank(index: number): string | undefined {
 
   .timeline-tick[data-near='0'] .tick-mark {
     width: 26px;
+    background: var(--accent);
   }
 
   /* A bar across the bottom, as in the mobile design: a row of pills with the
@@ -206,7 +218,13 @@ function rank(index: number): string | undefined {
       left: var(--space-3);
       width: auto;
       height: auto;
-      padding: var(--space-1);
+      /* One step and not one half-step, and the reason is the focus ring: the
+         box is clipped, so a ring drawn `outline-offset` outside a tick is
+         drawn outside the clip and nothing of it shows. The padding has to be
+         at least the offset plus the width of the ring. `--timeline-bar`
+         is the sum of exactly these parts, so a scene keeps its text clear of
+         whatever this comes to. */
+      padding: var(--space-2);
       background: var(--veil-bar);
       /* Both spellings: Safari only dropped the prefix at 18, and this
          project's floor is 15.4. Two different properties, not the double
@@ -243,9 +261,10 @@ function rank(index: number): string | undefined {
     }
 
     .timeline-tick {
-      min-height: 36px;
-      margin-block: 0;
-      margin-inline: var(--space-1);
+      /* The touch target, from the token the bar's own height is summed from:
+         raised here alone it would grow the bar under a scene that had already
+         reserved the old height, and the note would go under the pills. */
+      min-height: var(--timeline-tick-height);
       padding: 0 var(--space-2);
       border-radius: var(--radius-pill);
       color: var(--tick-near);

@@ -94,6 +94,17 @@ describe('checkSmoothScrollArgument', () => {
     expect(checkSmoothScrollArgument(`el.scrollBy({ behavior : 'smooth' })`, 'a.ts')).toHaveLength(1);
   });
 
+  it('reads a key that carries quotes of its own', () => {
+    // The one form somebody reaches for to get past a linter, and the one form
+    // this guard used to miss twice over: the pattern wanted the colon straight
+    // after the word, and the masking blanks what is inside quotes — so a
+    // quoted key was read as prose about the rule instead of the rule broken.
+    expect(checkSmoothScrollArgument(`el.scrollTo({ "behavior": "smooth" })`, 'a.ts')).toHaveLength(
+      1,
+    );
+    expect(checkSmoothScrollArgument(`el.scrollTo({'behavior':'smooth'})`, 'a.ts')).toHaveLength(1);
+  });
+
   it('leaves the stylesheet alone', () => {
     // The property is the fix this guard pushes towards, and it travels through
     // the same files: a component's <style> block sits in the .astro this reads.

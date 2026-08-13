@@ -34,6 +34,13 @@ const openingCycle = scenes[nextIndex]?.cycle.number;
       hang off nothing. */}
   <h1 class="visually-hidden">Il programma della Miniera Culturale in Periferia</h1>
 
+  {/* Before the programme and not after it, which is where it was: the rail is
+      fixed, so where it stands on screen owes nothing to where it stands here,
+      and after the scroller its ticks came after every button of every evening.
+      On the archive this is written for that is eighty-odd stops to pass before
+      reaching the one control whose whole purpose is not having to. */}
+  <Timeline scenes={scenes} current={nextIndex} />
+
   {/* `tabindex="0"` because this box, and not the document, is what scrolls.
       Safari does not make a scrolling container focusable on its own, so
       without it a reader on a keyboard has nothing to press: the document is
@@ -81,8 +88,6 @@ const openingCycle = scenes[nextIndex]?.cycle.number;
         open.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
     })();
   </script>
-
-  <Timeline scenes={scenes} current={nextIndex} />
 
   {/* What the «Prenota il posto» button shows, written once for the whole
       programme: it is the same for every evening still to come, so it does not
@@ -147,8 +152,23 @@ const openingCycle = scenes[nextIndex]?.cycle.number;
          of the archive instead. Declared as a property and never as an argument
          to a scroll call: `behavior: 'smooth'` passed by hand beats the
          `scroll-behavior: auto !important` that global.css sets under
-         prefers-reduced-motion, and there is nothing in dist/ to see it. */
-      scroller.setAttribute('data-smooth', 'true');
+         prefers-reduced-motion, and there is nothing in dist/ to see it.
+
+         After the load and not here, because the opening jump is not the only
+         scroll the browser performs while a document is arriving: landing on
+         `/#serata-3` leaves the fragment to the engine — the script above
+         stands aside for it deliberately — and an engine that scrolls to the
+         fragment again once the document is loaded would find the property
+         already on and animate down through the archive. Which is the thing
+         this attribute exists to prevent, reached by the other road. Before the
+         load fires, a tick still jumps: instantly, which is the degradation
+         this whole feature is written to be safe under. */
+      function allowSmooth() {
+        scroller.setAttribute('data-smooth', 'true');
+      }
+
+      if (document.readyState === 'complete') allowSmooth();
+      else window.addEventListener('load', allowSmooth);
 
       /* The window of ticks around `centre`, put on or taken off. The value is
          the distance itself, which is what lets the stylesheet decide how much
@@ -190,6 +210,13 @@ const openingCycle = scenes[nextIndex]?.cycle.number;
       var timer;
 
       function aim(index) {
+        /* Already there: nothing is going to cross the middle line, so the
+           destination would never arrive and the guard would sit deaf for its
+           whole 1200 ms — the rail and the accent frozen while the reader
+           scrolls. Clicking the current tick and pressing Down on the last
+           evening are both this. */
+        if (index === current) return;
+
         target = index;
         clearTimeout(timer);
         timer = setTimeout(function () {
@@ -227,6 +254,15 @@ const openingCycle = scenes[nextIndex]?.cycle.number;
       // The jump itself is the browser's: this only says where it is going, so
       // that the rail does not read the forty evenings it passes over.
       timeline.addEventListener('click', function (event) {
+        /* A click the browser is not going to follow — Ctrl or Cmd for a new
+           tab, Shift for a new window, anything already handled — leaves the
+           programme exactly where it was. Aiming at the evening it names would
+           move `aria-current`, the accent and the window onto an evening that
+           is not on screen, and then deafen the observer for 1200 ms, so
+           nothing would put them back until the reader scrolled. */
+        if (event.defaultPrevented || event.button !== 0) return;
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
         var tick = event.target.closest ? event.target.closest('[data-tick]') : null;
         if (!tick) return;
 
@@ -245,7 +281,9 @@ const openingCycle = scenes[nextIndex]?.cycle.number;
          `scroll-behavior`, which is the only way a reader who has asked for
          reduced motion gets an instant jump. */
       scroller.addEventListener('keydown', function (event) {
-        if (event.metaKey || event.ctrlKey || event.altKey) return;
+        // Shift with the rest: Shift+Home and Shift+Down are how a keyboard
+        // selects, and taking them over answers a request nobody made.
+        if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
 
         var index = null;
         if (event.key === 'Home') index = 0;

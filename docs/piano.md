@@ -1145,7 +1145,8 @@ Per esteso in [decisioni.md](decisioni.md), sotto *La Timeline*. In breve:
 - [x] Nessun divisore «oggi», come deciso
 - [x] Token nuovi per le tacche: nell'export erano `color-mix` al 60% e al 34%
       sul crema, e oggi non hanno un equivalente — `--tick-near` e `--tick-far`,
-      scritti `rgba(var(--cream-100-rgb), …)`
+      scritti `rgba(var(--cream-100-rgb), …)`. Il secondo non tiene il valore
+      dell'export: il 34% compone 2,66:1 sul blu, ed è stato portato a 0,44
 - [x] `aria-current` sulla tacca della serata a schermo
 - [x] Navigazione da tastiera: frecce, PagSu/PagGiù, Home/Fine
 - [x] Guardia `bersaglio` con timer da 1200 ms sullo scorrimento morbido, come
@@ -1218,11 +1219,65 @@ Per esteso in [decisioni.md](decisioni.md), sotto *La Timeline*. In breve:
 > interazioni vere — tasto, clic, anche due frecce in rapida successione —
 > frecce e tacche arrivano dove devono.
 
+> **Trovato in revisione.** Quindici difetti, e il filo che li lega è che quasi
+> tutti stanno dove il rendering è corretto: si vedono contando, non guardando.
+>
+> Quattro sul contrasto e sulla messa a fuoco. **L'accento era sulla data della
+> tacca corrente**, cioè il colore del ciclo su una parola a 15px, mentre quello
+> che i cicli garantiscono è 3:1 — tre dei cinque colori tarati non arrivano al
+> 4,5 che una parola vuole. `Modal.astro` aveva già scritto questa decisione per
+> il link dentro il pannello, e la rotaia la contraddiceva. **Il colore delle
+> tacche lontane** stava a 2,66:1, sotto qualunque altra cosa il sito spedisca.
+> **L'anello di messa a fuoco sulla barra del telefono era ritagliato via
+> interamente** — il margine interno della barra era esattamente lo scostamento
+> dell'anello, e la barra ritaglia. **E `--timeline-bar` era un numero letto a
+> schermo**, non la somma delle parti da cui la barra è fatta: alzare il
+> bersaglio da toccare l'avrebbe fatta crescere sotto una scena che aveva
+> riservato l'altezza vecchia.
+>
+> Tre nello script. Un Ctrl-clic su una tacca — quello che apre in una scheda
+> nuova — spostava `aria-current`, l'accento e la finestra su una serata che non
+> era a schermo, e poi assordava l'osservatore per 1200 ms. `aim()` armava quel
+> timer anche quando la destinazione era già la corrente, e niente poteva più
+> disarmarlo perché nessuna scena avrebbe attraversato la linea di mezzo. E il
+> tasto Shift non era nell'elenco dei modificatori da lasciar stare, quindi
+> Shift+Freccia — cioè selezionare del testo — saltava alla serata dopo.
+>
+> Tre nelle verifiche, che è la metà peggiore. `checkSmoothScrollArgument` non
+> vedeva una chiave fra virgolette — `{ 'behavior': 'smooth' }`, la forma che si
+> scrive per far tacere un linter — e non la vedeva due volte: il motivo per cui
+> la regola 15 esiste, con la guardia che risponde «nessuna violazione». Il test
+> sulla finestra pretendeva che i ranghi presenti fossero giusti e mai che gli
+> altri non ci fossero, quindi una build che avesse marcato tutte e ottantuno le
+> tacche lo passava intero pubblicando l'archivio giù per il fianco della
+> pagina. E `test/build/` si era riscritto in casa sia il modo di trovare le
+> tacche sia `attributeOf` — il secondo senza il lookbehind che
+> `test/guards/document.ts` documenta come la sua unica ragione di esistere,
+> cioè `data-href` letto come `href`.
+>
+> **La rotaia stava dopo il programma nel documento.** È fissa, quindi a schermo
+> non cambia niente e per una tastiera cambia tutto: le tacche venivano dopo
+> ogni bottone di ogni serata.
+>
+> Due erano nell'involucro delle tacche, e una risolve l'altra. Ogni tacca
+> stava in un `<li>` che restava anche quando la tacca no: settanta elementi
+> vuoti nell'albero dell'accessibilità — «elenco, 81 elementi» per una rotaia
+> che ne mostra undici — ed è lo stesso `<li>` che aveva causato i mille pixel
+> di `gap` vuoto trovati nel controllo manuale. Tolta la lista, `gap` torna
+> corretto da sé, perché un figlio in `display: none` non è un elemento flex.
+>
+> E l'ultima riguarda l'altro scorrimento che il browser fa mentre la pagina
+> arriva: `data-smooth` si accendeva subito dopo il salto di apertura, ma chi
+> entra da `/#serata-3` lascia il frammento al motore, e un motore che ci torna
+> sopra a caricamento finito avrebbe trovato la proprietà già accesa. Adesso si
+> accende sull'evento `load`.
+
 ### Test manuali
 
 - Tastiera completa su desktop: frecce, PagSu/PagGiù, Home/Fine, con la messa a
   fuoco sempre visibile — provata anche su una tacca, dove l'anello arriva
-  intero e non lo ritaglia la rotaia
+  intero e non lo ritaglia la rotaia; e sulla barra del telefono, dove prima
+  dell'aggiustamento del margine interno non se ne vedeva niente
 - Con un contenuto finto da 81 serate: la finestra segue lo scorrimento, undici
   tacche sul desktop e tre sulla barra del telefono, la rotaia non sfonda la
   schermata. È la prova che ha trovato i due difetti qui sopra

@@ -1071,12 +1071,17 @@ motore. Sarebbe un guasto che non si vede in `dist/`, che non fa fallire niente,
 e che colpisce esattamente le persone per cui l'impostazione esiste: ha la sua
 guardia. *(PR 8)*
 
-**E la proprietà l'accende lo script, dopo il salto di apertura.** Assegnare
+**E la proprietà l'accende lo script, a documento caricato.** Assegnare
 `scrollTop` obbedisce a `scroll-behavior` come qualunque altro scorrimento:
 dichiarata nel foglio di stile, l'apertura sulla prima serata futura — che deve
 atterrare prima della prima pittura — sarebbe scesa in animazione da cima
-all'archivio. Senza script il salto da una tacca è istantaneo, che è la versione
-onesta di questa funzione e non una minore. *(PR 8)*
+all'archivio. **E l'apertura non è l'unico scorrimento che il browser fa mentre
+la pagina arriva**: chi entra da `/#serata-3` lascia il frammento al motore, di
+proposito, e un motore che ci torna sopra a caricamento finito troverebbe la
+proprietà già accesa — lo stesso difetto per l'altra strada. Quindi si accende
+sull'evento `load`. Prima di allora una tacca salta lo stesso, istantanea, che è
+il degrado sotto cui tutta questa funzione è scritta per essere al sicuro.
+*(PR 8, la seconda metà in revisione)*
 
 **L'accento globale sta su `<html>`.** È il giorno che il commento di
 `:where(:root)` in `colors.css` aveva previsto: scritto `:root`, quella regola
@@ -1099,12 +1104,48 @@ stile di stringere la finestra a tre sulla barra del telefono. Con i tre ranghi
 l'unico modo sarebbe stato un secondo numero in JavaScript, e il markup sarebbe
 stato sbagliato per chiunque non lo esegua. *(PR 8)*
 
-**La spaziatura fra le tacche la porta la tacca, non un `gap`.** Trovato
-provando con ottantuno serate: la finestra nasconde la tacca, ma l'`<li>` intorno
-resta un elemento flex — vuoto, alto zero — e un `gap` si disegna fra elementi
-flex anche quando non contengono niente. Erano mille pixel di rotaia vuota, con
-le undici tacche visibili spinte sotto il bordo dello schermo. Un margine sulla
-tacca sparisce esattamente quando sparisce lei. *(PR 8)*
+**Le tacche sono i figli della striscia, senza una lista intorno.** Una lista è
+il modo ordinario di marcare dei link di navigazione, e qui annuncia una cosa
+falsa: ottantuno elementi di cui se ne vedono undici, perché a nascondersi è la
+tacca e l'`<li>` intorno resta. Resta in due modi, e tutti e due sono
+dell'involucro e non della finestra — nell'albero dell'accessibilità, dove uno
+screen reader legge settanta elementi vuoti, e nel layout, dove un `<li>` vuoto
+è ancora un elemento flex e un `gap` si disegna fra elementi flex anche quando
+non contengono niente. Con ottantuno serate erano mille pixel di rotaia vuota,
+con le undici tacche visibili spinte sotto il bordo dello schermo — trovato
+provando, prima dell'altra metà. Tolto l'involucro, `gap` torna corretto: un
+figlio in `display: none` non è un elemento flex, quindi non gli si disegna
+niente accanto. *(PR 8, la seconda metà in revisione)*
+
+**L'accento va sulla tacca e mai sulla data.** Quello che i cicli garantiscono è
+**3:1** sul fondo — la soglia di un bordo o di un segno — mentre una parola ne
+vuole 4,5, e a 15px tre dei cinque colori tarati non ci arrivano: l'arancio a
+4,35, il rosa a 3,92, il viola a 3,88. È la stessa decisione che `Modal.astro`
+aveva già scritto per il link dentro il pannello, e che la rotaia aveva
+contraddetto: il colore va dove 3:1 è la soglia giusta, e la parola resta al
+contrasto del testo normale. A dire «questa» restano la misura, il peso e il
+segno colorato. *(PR 8, in revisione)*
+
+**Il colore delle tacche lontane non è quello dell'export.** Lì è il 34% del
+crema, che sul blu compone **2,66:1** — sotto il 3:1 che questo progetto
+garantisce a un bordo, figurarsi a otto tacche di data a 11px, e sotto qualunque
+altra cosa il sito spedisca. Portato a 0,44, che è dove sta `--text-muted`, cioè
+il pavimento di questo repository per un testo che si deve poter leggere. Il
+gradino verso la tacca vicina sopravvive: 5,27 contro 3,50. Un mockup non è un
+rapporto di contrasto. *(PR 8, in revisione)*
+
+**La rotaia sta prima del programma nel documento.** È fissa, quindi dove sta
+nel markup non cambia niente a schermo e cambia tutto per una tastiera: dopo lo
+scroller, le sue tacche venivano dopo ogni bottone di ogni serata, cioè
+ottanta fermate prima dell'unico comando che esiste per non doverle fare. *(PR
+8, in revisione)*
+
+**`--timeline-bar` è una somma, non una misura letta a schermo.** La tacca, il
+suo margine interno sui due lati, il filo di bordo, e il passo con cui la barra
+si stacca dal fondo. Un numero letto una volta smette di essere vero la prima
+volta che qualcuno alza il bersaglio da toccare — la cosa ovvia da fare a una
+fila di pillole — e quello che costa allora è la nota di ogni scena che scivola
+sotto la barra, sul telefono, in silenzio. *(PR 8, in revisione)*
 
 **`justify-content: center` non centra quando il contenuto non ci sta.** La
 barra del telefono doveva ritagliare le tacche di troppo simmetricamente ai due
