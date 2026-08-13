@@ -43,6 +43,26 @@ describe('checkModalTargets', () => {
     expect(checkModalTargets('<!-- <button data-modal-from="ghost"></button> -->')).toEqual([]);
   });
 
+  it('accepts the id of a template, which is where the booking text lives', () => {
+    const booking =
+      '<button data-modal-from="booking">Prenota</button>' +
+      '<template id="booking"><p>La sala ha sessanta posti.</p></template>';
+    expect(checkModalTargets(booking)).toEqual([]);
+  });
+
+  it('does not accept an id shut inside a template', () => {
+    // `document.getElementById` does not look in there: the contents of a
+    // template are an inert document of their own. The attribute is in the
+    // markup, the element is not in the page, and the button is dead — which
+    // is the one failure this guard exists for.
+    const unreachable =
+      '<button data-modal-from="materials-78">Rivedi</button>' +
+      '<template id="booking"><ul id="materials-78"></ul></template>';
+    const violations = checkModalTargets(unreachable, 'dist/index.html');
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain('materials-78');
+  });
+
   it('finds the openers whatever quotes they use', () => {
     expect(modalOpeners("<button data-modal-from='booking'>")).toHaveLength(1);
   });

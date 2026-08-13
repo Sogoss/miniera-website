@@ -31,15 +31,29 @@ export function modalOpeners(markup: string): { target: string; index: number }[
  *
  * `document.getElementById` returning null is where this ends up, and the
  * script leaves the page exactly as it was: the failure is a tap that does
- * nothing at all.
+ * nothing at all. Which is also why an id written *inside* a `<template>` does
+ * not count as an answer: it is in the markup and not in the document, so it
+ * reads as a target that is there and behaves as one that is not.
  */
 export function checkModalTargets(markup: string, path = 'the page'): Violation[] {
   const clean = stripMarkupComments(markup);
   const violations: Violation[] = [];
   const reported = new Set<string>();
 
+  /* Ids counted where `document.getElementById` would find them, which is not
+     everywhere the attribute can be written: the contents of a `<template>` are
+     an inert document of their own, so an id in there resolves to nothing. The
+     id *on* the template survives — that is the booking text, and it is how the
+     modal is filled — so only the inside is blanked, spaces for characters and
+     newlines kept, which leaves the line numbers of everything after it right. */
+  const reachable = clean.replace(
+    /(<template\b[^>]*>)([\s\S]*?)(<\/template>)/gi,
+    (_whole, open: string, inside: string, close: string) =>
+      open + inside.replace(/[^\n]/g, ' ') + close,
+  );
+
   const ids = new Set(
-    [...clean.matchAll(/\sid\s*=\s*(?:"([^"]*)"|'([^']*)')/gi)].map((match) =>
+    [...reachable.matchAll(/\sid\s*=\s*(?:"([^"]*)"|'([^']*)')/gi)].map((match) =>
       (match[1] ?? match[2] ?? '').trim(),
     ),
   );

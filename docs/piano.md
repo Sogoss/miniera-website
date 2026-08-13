@@ -952,7 +952,10 @@ Per esteso in [decisioni.md](decisioni.md), sotto *Lo scroller*. In breve:
 - **Guardia**: ogni bottone che apre il modale trova il suo bersaglio nella
   stessa pagina, e di modali ce n'è uno solo. Un bersaglio che non risolve è un
   tocco che non fa niente — sul telefono, indistinguibile da un tocco non
-  registrato
+  registrato. I bersagli si contano dove `getElementById` li troverebbe: un
+  `id` scritto **dentro** un `<template>` non conta, perché quel contenuto è un
+  documento inerte a parte — l'`id` *sul* template invece sì, ed è come si
+  riempie il modale con il testo della prenotazione
 - **Guardia**: i link agli interventi non stanno solo dentro un `<template>`.
   Lì sarebbero invisibili a chi non ha script, a un crawler e a Ctrl+F
 - Una scena pubblica al massimo un bottone
@@ -999,6 +1002,73 @@ Per esteso in [decisioni.md](decisioni.md), sotto *Lo scroller*. In breve:
 > `<a href>` veri nel markup e la classe `no-js` decide quale forma si vede, così
 > non c'è contenuto che esista solo per chi ha gli script. Costava meno di
 > anticipare la rotta `/78` e non perde niente rispetto a oggi.
+
+> **Trovato nella revisione.** Otto difetti, e sono tutti la stessa specie: il
+> sorgente dice una cosa e `dist/` ne pubblica un'altra, senza che niente
+> diventi rosso.
+>
+> - `Astro.slots.has('portrait')` risponde sulla **presenza dello slot**, non su
+>   ciò che disegna. Chi lo riempie scrive `{speaker.photo && <Image
+>   slot="portrait" …/>}`, che quando la foto non c'è è uno slot che rende la
+>   stringa vuota — e `has()` dice sì lo stesso. In `dist/` c'erano quattro
+>   cornici da 56×56 vuote, una davanti a ogni nome, con il loro `gap`. Ora lo
+>   slot si rende prima e la cornice si disegna solo se ne è uscito qualcosa
+> - `.scene-photo` si pubblicava **anche senza locandina**. Su telefono è la riga
+>   di griglia che prende quel che resta, con un fondo di `26vh`: le serate senza
+>   immagine — quasi tutto l'archivio — si aprivano con un quarto di schermo
+>   bianco sopra il proprio titolo e il testo schiacciato in fondo
+> - Il clone che riempie il modale si portava dietro la classe `no-js-only`, che
+>   è **la classe che lo nasconde**: il corpo si vedeva perché
+>   `html:not(.no-js) .no-js-only` e la regola del modale pareggiano di
+>   specificità, e a decidere era l'ordine con cui Astro linka due fogli. E si
+>   portava dietro il proprio `id`, duplicato nel documento per tutto il tempo
+>   che il modale resta aperto. Ora il clone li perde entrambi
+> - Il ramo «`showModal` non c'è» **usciva senza rimettere `no-js`**, cioè
+>   lasciava la pagina nella forma «gli script funzionano»: un bottone che non fa
+>   niente sopra una lista di link nascosti. Su un browser sotto la soglia dei
+>   15.4, che è esattamente quello per cui il meccanismo `no-js` esiste
+> - Lo script di apertura **saltava sopra un `#serata-N` in arrivo** — i link che
+>   la Timeline della PR 8 distribuisce — e correva contro lo scorrimento che il
+>   browser fa da sé sul frammento, con esiti diversi da un motore all'altro. E
+>   stava scritto dopo `</Base>`, quindi pubblicato **dopo `</html>`**: i browser
+>   lo recuperano spostandolo nel body, ma è un errore di parsing e basta un
+>   post-processore che tratti come scartabile ciò che sta lì
+> - `<meta charset>` **non era più la prima cosa nella testa**, perché lo script
+>   `no-js` gli era passato davanti. Innocuo finché quello script è ASCII, cioè
+>   fino al giorno che qualcosa sopra la dichiarazione porta un accento — in un
+>   progetto la cui regola sulla lingua è *accenti scritti per intero*
+>
+> Due erano **nei test**, che è la metà peggiore. L'asserzione «continua a
+> funzionare con quello script spento» cercava `display: none` con lo spazio in
+> un CSS minificato: non poteva diventare rossa mai, e riscritta con lo spazio
+> avrebbe pescato le regole legittime di `.scene-description` e compagne. E
+> `checkModalTargets` raccoglieva gli `id` anche dentro i `<template>`, dove
+> `getElementById` non arriva: la guardia sarebbe rimasta verde proprio sul
+> rifacimento che `checkLinksOutsideTemplates` esiste per vietare — bottone morto
+> a runtime, suite verde.
+>
+> **Lo scroller ha preso `tabindex="0"`.** Il documento è alto una schermata sola
+> e non scorre; il salta-a porta su `<main>`, il cui antenato scorrevole più
+> vicino è quel documento fermo. Chi naviga da tastiera non aveva niente da
+> premere — frecce, spazio e Page Down su nulla — finché il Tab non capitava su
+> un link dentro una scena. Chrome e Firefox rendono focalizzabile un contenitore
+> scorrevole da sé; Safari, cioè il browser per cui la soglia è scritta, no.
+>
+> **Tre sono rimaste aperte, di proposito.** Che una serata futura con materiali
+> pubblichi due bottoni non è impedito nel componente: lo prende il test sul
+> conteggio, che però diventa rosso indicando il file del contenuto invece del
+> punto dove si decide — costa una regola editoriale, non una correzione. Il
+> `max-height: 80vh` del pannello passa alla PR 14, che è dove le proporzioni su
+> schermo piccolo si tarano una volta sola. E lo **stile della serata annullata**
+> non è stato scritto: `data-state="cancelled"` si pubblica e nessuna regola lo
+> legge, mentre il commento di `stateOf` in `src/lib/events.ts` dice ancora che
+> la barratura la porta questa PR.
+>
+> Resta una trappola, scritta qui perché la prossima persona non la ritrovi da
+> sola: `checkSingleModal` conta le occorrenze di `<dialog` nel markup
+> pubblicato, e `stripMarkupComments` toglie i commenti HTML, non quelli
+> JavaScript. Scrivere quella parola in un commento **dentro** lo script in linea
+> del modale fa scattare la guardia su un secondo modale che non esiste.
 
 ### Test manuali
 
@@ -1250,6 +1320,14 @@ rimandate in [questioni-aperte.md](questioni-aperte.md).
       dei telefoni comuni, non su una scala scelta a tavolino
 - [ ] Le tacche della Timeline e la pillola della navigazione non coprono niente
       di ciò che una scena deve mostrare
+- [ ] **Il pannello del modale sta dentro lo schermo che c'è.** Oggi è
+      `max-height: 80vh`, cioè misurato sul viewport grande: su iOS con la barra
+      degli indirizzi visibile può essere più alto di quel che si vede, e il
+      `max-height` del `<dialog>` non lo taglia perché `.modal` è `overflow:
+      visible` — il fondo di un testo lungo finisce fuori senza una barra che ci
+      porti. È la stessa questione `svh` contro `vh` delle scene, rimandata qui
+      perché cambiare quel numero cambia le proporzioni del modale, e le
+      proporzioni si guardano su un telefono vero
 
 ### Test automatici
 

@@ -170,8 +170,15 @@ describe('the published programme', () => {
   it('keeps working with that script switched off', () => {
     // The declared degradation: the programme opens on the oldest evening and
     // scrolls normally. What makes it true is that nothing else on the page
-    // depends on the script — so nothing about a scene is hidden until it runs.
-    expect(home!.css.replace(/\s+/g, ' ')).not.toMatch(/\.scene[^{]*\{[^}]*display: none/);
+    // depends on the script — so no scene is hidden until it runs.
+    //
+    // The scene itself, and not everything whose class starts with it:
+    // `.scene-description`, `.scene-photo` and `.scene-attendance` are hidden
+    // on purpose on a short screen, which is the whole of the previous commit.
+    // And with the spacing left open, because the published file is minified —
+    // written `display: none` this matched nothing at all and would have said
+    // «fine» over a stylesheet that hid every evening.
+    expect(home!.css).not.toMatch(/\.scene(?![\w-])[^{]*\{[^}]*display\s*:\s*none/);
     expect(home!.html).not.toContain('hidden data-scene');
   });
 });

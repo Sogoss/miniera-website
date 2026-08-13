@@ -10,7 +10,7 @@
  * The scroller opens on the first evening still to come, which is the one thing
  * here that no CSS can do: a document opens at the top, and the position of a
  * scrolling container is not something a stylesheet sets. Hence the inline
- * script at the foot of this file — ten lines, no dependency, and a plain
+ * script under the scroller below — ten lines, no dependency, and a plain
  * degradation if it does not run.
  */
 import Base from '../layouts/Base.astro';
@@ -28,13 +28,53 @@ const { scenes, nextIndex } = await loadProgramme();
       hang off nothing. */}
   <h1 class="visually-hidden">Il programma della Miniera Culturale in Periferia</h1>
 
-  <div class="scroller" data-scroller>
+  {/* `tabindex="0"` because this box, and not the document, is what scrolls.
+      Safari does not make a scrolling container focusable on its own, so
+      without it a reader on a keyboard has nothing to press: the document is
+      exactly one screen tall and does not move, the skip link lands on <main>
+      whose nearest scrolling ancestor is that same document, and the arrows,
+      the space bar and Page Down all do nothing until Tab happens to reach a
+      link inside a scene. Chrome and Firefox add the stop themselves; this
+      says it out loud for the browser this project's floor is written for. */}
+  <div class="scroller" data-scroller tabindex="0">
     {
       scenes.map((scene, index) => (
         <Scene scene={scene} open={index === nextIndex} eager={index === nextIndex} />
       ))
     }
   </div>
+
+  {/* Inline and synchronous, right after the markup it moves: it runs before
+      the first paint, so the programme is *drawn* at the right evening instead
+      of being drawn at the top and jumping. `is:inline` keeps Astro from
+      bundling it into a deferred module, which would put the jump after the
+      paint. Inside the layout and not after it: written after `</Base>` it was
+      published after `</html>`, which every browser recovers from by moving it
+      into the body — a parse error nobody sees and nothing here needs.
+
+      Measured rather than computed from an index: with `content-visibility` the
+      heights are the declared intrinsic ones, and asking the element where it
+      is gets the same answer without this file knowing how tall a scene is.
+
+      An address that names a scene wins over the opening evening: `/#serata-82`
+      is a link somebody was given — the Timeline of PR 8 writes them — and
+      jumping away from it would answer a request with somewhere else.
+
+      Without JavaScript nothing here happens: the programme opens on the oldest
+      evening and scrolls normally. That is the whole degradation. */}
+  <script is:inline>
+    (function () {
+      var scroller = document.querySelector('[data-scroller]');
+      var open = scroller && scroller.querySelector('[data-open]');
+      if (!open) return;
+
+      var asked = location.hash ? location.hash.slice(1) : '';
+      if (asked && document.getElementById(decodeURIComponent(asked))) return;
+
+      scroller.scrollTop +=
+        open.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
+    })();
+  </script>
 
   {/* What the «Prenota il posto» button shows, written once for the whole
       programme: it is the same for every evening still to come, so it does not
@@ -58,27 +98,6 @@ const { scenes, nextIndex } = await loadProgramme();
 
   <Modal />
 </Base>
-
-{/* Inline and synchronous, right after the markup it moves: it runs before the
-    first paint, so the programme is *drawn* at the right evening instead of
-    being drawn at the top and jumping. `is:inline` keeps Astro from bundling it
-    into a deferred module, which would put the jump after the paint.
-
-    Measured rather than computed from an index: with `content-visibility` the
-    heights are the declared intrinsic ones, and asking the element where it is
-    gets the same answer without this file knowing how tall a scene is.
-
-    Without JavaScript nothing here happens: the programme opens on the oldest
-    evening and scrolls normally. That is the whole degradation. */}
-<script is:inline>
-  (function () {
-    var scroller = document.querySelector('[data-scroller]');
-    var open = scroller && scroller.querySelector('[data-open]');
-    if (!open) return;
-    scroller.scrollTop +=
-      open.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
-  })();
-</script>
 
 <style>
   /* The scroller is the page: the document itself does not scroll, this does.

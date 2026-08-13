@@ -177,9 +177,14 @@ const titleId = `titolo-${scene.number}`;
     </div>
   </div>
 
-  <div class="scene-photo">
-    {
-      scene.photo && (
+  {/* The band, and not only what goes in it, depends on there being a picture:
+      on a phone `.scene-photo` is the grid row that takes what is left, with a
+      floor of a quarter of the screen, so an evening with no picture published
+      an empty quarter of a screen above its own title. Most evenings of the
+      archive have no picture yet. */}
+  {
+    scene.photo && (
+      <div class="scene-photo">
         <div class="scene-photo-frame">
           <div class="scene-photo-image">
             {/* Empty alt on purpose: the picture accompanies what the text beside it
@@ -195,9 +200,9 @@ const titleId = `titolo-${scene.number}`;
             />
           </div>
         </div>
-      )
-    }
-  </div>
+      </div>
+    )
+  }
 </section>
 
 <style>

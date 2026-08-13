@@ -31,19 +31,22 @@ interface Props extends Omit<HTMLAttributes<'div'>, 'role' | 'style'> {
 }
 
 const { name, role, size = 34, class: className, style, ...rest } = Astro.props;
-const hasPortrait = Astro.slots.has('portrait');
+
+/* Rendered first, and only then asked whether anything came out of it.
+   `Astro.slots.has()` answers about the slot and not about what it draws: a
+   caller writing `{speaker.photo && <Image slot="portrait" …/>}` — which is
+   every caller, because a speaker may have no portrait — passes a slot that
+   renders the empty string, and `has()` still says yes. The frame was then
+   drawn around nothing: 56×56 of blank, plus the gap, in front of every name
+   of every evening. */
+const portrait = Astro.slots.has('portrait') ? await Astro.slots.render('portrait') : '';
+const hasPortrait = portrait.trim() !== '';
 
 const inlineStyle = [`--guest-size: ${size}px`, style].filter(Boolean).join('; ');
 ---
 
 <div class:list={['guest-row', className]} style={inlineStyle} {...rest}>
-  {
-    hasPortrait && (
-      <span class="guest-portrait">
-        <slot name="portrait" />
-      </span>
-    )
-  }
+  {hasPortrait && <span class="guest-portrait" set:html={portrait} />}
   <span class="guest-lines">
     <span class="guest-name">{name}</span>
     {role && <span class="guest-role">{role}</span>}

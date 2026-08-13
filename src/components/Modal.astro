@@ -37,7 +37,18 @@
 <script is:inline>
   (function () {
     var modal = document.querySelector('[data-modal]');
-    if (!modal || typeof modal.showModal !== 'function') return;
+    if (!modal || typeof modal.showModal !== 'function') {
+      // The head takes `no-js` off as soon as *a* script runs, which is one
+      // question short of the one the two classes ask: what they decide is
+      // whether the button or the list is the thing that works. On a browser
+      // with no dialog element — below the 15.4 floor, which is where a reader
+      // with an old telephone actually is — leaving it off publishes a button
+      // that does nothing over a list of links nobody can see. Putting it back is
+      // the honest answer: no working modal is, for these two rules, the same
+      // as no script at all. Before the first paint, so nothing flashes.
+      document.documentElement.classList.add('no-js');
+      return;
+    }
 
     var title = modal.querySelector('[data-modal-title]');
     var body = modal.querySelector('[data-modal-body]');
@@ -59,12 +70,26 @@
         else modal.removeAttribute('data-cycle');
 
         title.textContent = opener.getAttribute('data-modal-title') || '';
-        body.replaceChildren(
-          // A <template> holds its markup in `content`; anything else is cloned
-          // as it stands. The links of a scene are an ordinary list, so that
-          // they are still there — and still links — with scripting off.
-          (source.content || source).cloneNode(true),
-        );
+
+        // A <template> holds its markup in `content`; anything else is cloned
+        // as it stands. The links of a scene are an ordinary list, so that they
+        // are still there — and still links — with scripting off.
+        var clone = (source.content || source).cloneNode(true);
+
+        // What an element carries in the page is wrong in here, twice. Its `id`
+        // is what the button points at, and a second element wearing it makes
+        // the page's identifiers ambiguous for as long as the modal is open.
+        // And `no-js-only` is the class that hides it out there: the rule is
+        // `html:not(.no-js) .no-js-only`, which applies wherever the element
+        // stands — the clone survived only because the modal's own rule happens
+        // to tie with it on specificity and win on the order of two
+        // stylesheets, which is not something to publish a modal on.
+        if (clone.nodeType === 1) {
+          clone.removeAttribute('id');
+          clone.classList.remove('no-js-only');
+        }
+
+        body.replaceChildren(clone);
         modal.showModal();
         return;
       }
