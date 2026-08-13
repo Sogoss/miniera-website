@@ -95,7 +95,7 @@ const BUILD_TIME = new Date();
  *
  * Only in a build. In `astro dev` this module outlives an editor's save, and a
  * cached programme would go on serving the evenings as they were when the
- * server started — the CMS of PR 12 writes those files, and not showing the
+ * server started — the CMS of PR 13 writes those files, and not showing the
  * change is the one thing a preview must not do.
  */
 let cached: Promise<Programme> | undefined;

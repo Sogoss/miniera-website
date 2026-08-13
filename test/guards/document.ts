@@ -143,12 +143,12 @@ const ALWAYS = [
  * until `site` is set in astro.config.mjs there is no domain to build one from
  * — a relative value there is not resolved by WhatsApp or Facebook, and in the
  * markup it looks perfectly fine. So it is required exactly when the site knows
- * its own address, which is what makes this turn red *by itself* the day PR 13
+ * its own address, which is what makes this turn red *by itself* the day PR 14
  * sets it.
  *
  * `og:image` is deliberately **not** in that list. It needs a picture, not a
  * domain, and this repository has none: requiring it with the domain would have
- * meant PR 13 opening on a red suite it could only fix by inventing an asset
+ * meant PR 14 opening on a red suite it could only fix by inventing an asset
  * nobody has chosen — see docs/questioni-aperte.md. What is checked is the half
  * that is checkable: if a page does publish one, it must be absolute, because a
  * relative `og:image` is the silent version of having none.
@@ -188,7 +188,7 @@ export function checkOpenGraph(
   if (!url || !/^https?:\/\//i.test(url)) {
     violations.push({
       rule: 'document',
-      detail: `${path}: \`site\` is set in astro.config.mjs but there is no absolute \`og:url\`. The domain is what it was waiting for — see PR 13`,
+      detail: `${path}: \`site\` is set in astro.config.mjs but there is no absolute \`og:url\`. The domain is what it was waiting for — see PR 14`,
     });
   }
 

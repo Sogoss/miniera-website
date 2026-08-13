@@ -69,7 +69,7 @@ export function publishedPages(): { path: string; html: string; css: string }[] 
 /**
  * A file Astro copied out of public/ rather than rendered.
  *
- * Those are not ours and cannot be held to what the layout guarantees: PR 12
+ * Those are not ours and cannot be held to what the layout guarantees: PR 13
  * drops the Sveltia CMS shell at `public/admin/index.html`, which has no
  * `lang`, no Open Graph, no skip link and no clip shapes. Handing it to the
  * document guards would turn five assertions red at once over a page nobody

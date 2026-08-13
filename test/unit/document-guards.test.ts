@@ -125,11 +125,11 @@ describe('checkOpenGraph', () => {
 
     const missing = checkOpenGraph(page(), 'dist/index.html', { withDomain: true });
     expect(missing).toHaveLength(1);
-    expect(missing[0]!.detail).toContain('PR 13');
+    expect(missing[0]!.detail).toContain('PR 14');
   });
 
   it('does not ask for an og:image the repository has no picture for', () => {
-    // Requiring it with the domain would open PR 13 on a red suite fixable only
+    // Requiring it with the domain would open PR 14 on a red suite fixable only
     // by inventing a social image nobody has chosen — the decision is in
     // questioni-aperte.md, not in a failing test.
     const violations = checkOpenGraph(page(), 'dist/index.html', { withDomain: true });
