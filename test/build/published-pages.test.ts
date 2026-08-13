@@ -8,6 +8,7 @@
 import { describe, expect, it } from 'vitest';
 import { checkBrandSignature } from '../guards/brand.ts';
 import { checkModalTargets, checkSingleModal } from '../guards/modal.ts';
+import { checkTimelineLinks, checkTimelineTargets, tickTags } from '../guards/timeline.ts';
 import {
   checkDocumentBasics,
   checkOpenGraph,
@@ -103,6 +104,28 @@ describe('every published page', () => {
       expect(checkSingleModal(page.html, page.path)).toEqual([]);
     },
   );
+
+  it.each(pages.map((page) => [page.path, page] as const))(
+    '%s leads nowhere from a tick that is not a link',
+    (_path, page) => {
+      // Asked of every page and not only of the programme: the rail belongs to
+      // the scroller today, and PR 11 puts navigation on the institutional
+      // pages. A page with no ticks passes over an empty list, which is what
+      // the assertion below is for.
+      expect(checkTimelineLinks(page.html, page.path)).toEqual([]);
+      expect(checkTimelineTargets(page.html, page.path)).toEqual([]);
+    },
+  );
+
+  it('publishes a rail somewhere, so that the two tick guards have work to do', () => {
+    // The anti-vacuity half of the pair above, and the same argument as the
+    // brand one below it: rename `data-tick` and every assertion keeps passing
+    // over a list of nothing, on every page, with no tick watched anywhere.
+    // Found the way the guards find them, so that a rename cannot make this
+    // half agree with itself while the other half stops looking.
+    const ticks = pages.flatMap((page) => tickTags(page.html));
+    expect(ticks.length, 'no page publishes a Timeline tick').toBeGreaterThan(0);
+  });
 
   it('publishes at least one mark, so that the rule-7 guard has work to do', () => {
     // The anti-vacuity half. Rename `data-brand` in Brand.astro — a refactor, a

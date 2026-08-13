@@ -33,6 +33,18 @@ interface Props {
   description?: string;
   /** A path from the site root — `/foto/81.jpg` — for the social preview. */
   image?: string;
+  /** The cycle whose accent the document starts on.
+   *
+   *  On <html>, so that what lies outside every scene takes it: the Timeline,
+   *  and the navigation of PR 11. A scene carries its own `data-cycle` and wins
+   *  inside itself — custom properties inherit from the nearest ancestor that
+   *  declares them, so this one only ever decides for what no scene contains.
+   *
+   *  The programme moves it as the reader scrolls; what is written here is where
+   *  the page opens, which is also all a reader with no scripting ever gets, and
+   *  is right for them. Left out, the accent is the brand orange of
+   *  `:where(:root)` — a page that renders perfectly in the wrong colour. */
+  cycle?: number;
   /** Where the skip link lands, which is also the id of <main>. */
   mainId?: string;
   skipLabel?: string;
@@ -53,6 +65,7 @@ const {
   title,
   description = DEFAULT_DESCRIPTION,
   image,
+  cycle,
   mainId = 'programma',
   skipLabel = 'Salta al programma',
   noindex = false,
@@ -64,7 +77,7 @@ const preview = Astro.site && image ? new URL(image, Astro.site).href : undefine
 ---
 
 <!doctype html>
-<html lang="it" class="no-js">
+<html lang="it" class="no-js" data-cycle={cycle}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />

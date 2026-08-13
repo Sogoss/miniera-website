@@ -6,7 +6,11 @@
  * tell which of the two it is driving.
  */
 import { describe, expect, it } from 'vitest';
-import { checkSingleScroller, scrollableRules } from '../guards/scroller.ts';
+import {
+  checkSingleScroller,
+  checkSmoothScrollArgument,
+  scrollableRules,
+} from '../guards/scroller.ts';
 
 const SCROLLER = '.scroller { height: var(--scene-height); overflow-y: auto; scroll-snap-type: y mandatory; }';
 
@@ -64,5 +68,68 @@ describe('checkSingleScroller', () => {
 
   it('says nothing about a page that scrolls nowhere', () => {
     expect(checkSingleScroller('.card { padding: 1rem; }')).toEqual([]);
+  });
+});
+
+/* Negative tests for the guard over smooth scrolling asked for in JavaScript.
+ *
+ * The defect is invisible everywhere it could be looked for: the source reads
+ * correctly, dist/ carries no trace of it, the page behaves perfectly — unless
+ * the reader has asked their system for less movement, in which case they get
+ * the whole snap-scrolling animation and the one control they have does
+ * nothing.
+ */
+describe('checkSmoothScrollArgument', () => {
+  it('reports a scroll that asks for smooth by argument', () => {
+    const source = `scenes[index].scrollIntoView({ behavior: 'smooth' });`;
+    const violations = checkSmoothScrollArgument(source, 'src/pages/index.astro');
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain('src/pages/index.astro');
+    expect(violations[0]!.detail).toContain('prefers-reduced-motion');
+  });
+
+  it('reads all three ways a string can be written', () => {
+    expect(checkSmoothScrollArgument(`el.scrollTo({behavior:"smooth"})`, 'a.ts')).toHaveLength(1);
+    expect(checkSmoothScrollArgument('el.scrollTo({behavior:`smooth`})', 'a.ts')).toHaveLength(1);
+    expect(checkSmoothScrollArgument(`el.scrollBy({ behavior : 'smooth' })`, 'a.ts')).toHaveLength(1);
+  });
+
+  it('reads a key that carries quotes of its own', () => {
+    // The one form somebody reaches for to get past a linter, and the one form
+    // this guard used to miss twice over: the pattern wanted the colon straight
+    // after the word, and the masking blanks what is inside quotes — so a
+    // quoted key was read as prose about the rule instead of the rule broken.
+    expect(checkSmoothScrollArgument(`el.scrollTo({ "behavior": "smooth" })`, 'a.ts')).toHaveLength(
+      1,
+    );
+    expect(checkSmoothScrollArgument(`el.scrollTo({'behavior':'smooth'})`, 'a.ts')).toHaveLength(1);
+  });
+
+  it('leaves the stylesheet alone', () => {
+    // The property is the fix this guard pushes towards, and it travels through
+    // the same files: a component's <style> block sits in the .astro this reads.
+    const css = `.scroller[data-smooth] { scroll-behavior: smooth; }`;
+    expect(checkSmoothScrollArgument(css, 'src/pages/index.astro')).toEqual([]);
+  });
+
+  it('allows a jump that forces itself to stay a jump', () => {
+    // The mirror image, and not the same thing: forcing motion off can never be
+    // what a reader asking for less motion is complaining about.
+    expect(checkSmoothScrollArgument(`el.scrollTo({ behavior: 'instant' })`, 'a.ts')).toEqual([]);
+  });
+
+  it('ignores the rule written about rather than broken', () => {
+    const commented = `// never write behavior: 'smooth' here\nel.scrollIntoView();`;
+    expect(checkSmoothScrollArgument(commented, 'a.ts')).toEqual([]);
+
+    const block = `/* behavior: 'smooth' beats the stylesheet */\nel.scrollIntoView();`;
+    expect(checkSmoothScrollArgument(block, 'a.ts')).toEqual([]);
+
+    const prose = `const why = "behavior: 'smooth' cannot be overridden";`;
+    expect(checkSmoothScrollArgument(prose, 'a.ts')).toEqual([]);
+  });
+
+  it('says nothing about a file that scrolls nothing', () => {
+    expect(checkSmoothScrollArgument(`const a = 1;`, 'a.ts')).toEqual([]);
   });
 });

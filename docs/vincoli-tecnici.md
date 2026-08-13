@@ -137,8 +137,12 @@ emulazione.
 è storicamente instabile su Safari: lo snap interrompe lo scorrimento morbido.
 
 Il design se n'era già accorto — nel suo codice c'è una guardia con un flag
-`bersaglio` e un timer da 1200 ms. Va replicata, e va provata su un iPhone
-vero.
+`bersaglio` e un timer da 1200 ms. È replicata dalla PR 8, con un compito
+spostato: il salto da una tacca lo fa il browser sul frammento, e la guardia
+serve a impedire che `aria-current`, l'accento e la finestra di tacche
+lampeggino attraverso le serate attraversate. Resta da provare su un iPhone
+vero, e la prova è rimandata alla PR 13 —
+[questioni-aperte.md](questioni-aperte.md).
 
 ## Movimento ridotto
 
@@ -167,7 +171,9 @@ impongano — ma il sito va reso il più accessibile possibile.
 Perimetro concordato:
 
 - Navigazione da tastiera esplicita sullo scroller: frecce, PagSu/PagGiù,
-  Home/Fine
+  Home/Fine. Esplicita perché i motori non concordano: Chrome e Firefox
+  rispondono alle frecce su un contenitore scorrevole a colpi di pixel e non di
+  serata, Safari non risponde finché il fuoco non è dentro
 - Link "salta al programma"
 - `aria-current` sulla tacca attiva della Timeline
 - Messa a fuoco visibile (è già nei token: `:focus-visible` con riga

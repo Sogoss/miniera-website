@@ -63,7 +63,7 @@ sostituisce un telefono vero.
 | 5 | Layout di base e forme di ritaglio | `layout-base` | fatta |
 | 6 | Gli otto componenti del design system | `design-system-astro` | fatta |
 | 7 | Lo scroller del programma | `scroller-programma` | fatta |
-| 8 | Timeline e navigazione da tastiera | `timeline` | da fare |
+| 8 | Timeline e navigazione da tastiera | `timeline` | fatta |
 | 9 | Le pagine delle serate | `pagine-serata` | da fare |
 | 10 | La prenotazione dentro il modale | `modale-prenotazione` | da fare |
 | 11 | Chi siamo, contatti, rassegna disabilitata | `pagine-istituzionali` | da fare |
@@ -1105,30 +1105,202 @@ Per esteso in [decisioni.md](decisioni.md), sotto *Lo scroller*. In breve:
 
 **Branch:** `timeline` · **Dipende da:** 7
 
+L'ultimo pezzo dello scroller. La PR 7 aveva lasciato scritto cosa mancava:
+l'accento è per sezione e statico, e i link `#serata-N` «li distribuisce la
+Timeline della PR 8».
+
+### Decisioni prese scrivendo la PR
+
+Per esteso in [decisioni.md](decisioni.md), sotto *La Timeline*. In breve:
+
+- **Le tacche sono ancore, non bottoni.** L'export scrive `<button onClick>`, e
+  quel bottone fa quello che qualcuno gli scrive; `<a href="#serata-81">` è
+  l'elemento per una cosa che porta a un punto del documento, e arriva con
+  l'indirizzo condivisibile, il tasto indietro, l'apri-in-nuova-scheda,
+  l'annuncio da screen reader e il salto che il browser fa da sé. Costa **meno**
+  del bottone: che funzioni senza script non è il motivo della scelta, è quello
+  che la scelta più economica regala
+- **Lo scorrimento morbido si dichiara come proprietà, mai come argomento.**
+  `behavior: 'smooth'` passato a una chiamata batte il `scroll-behavior: auto
+  !important` che `global.css` mette sotto `prefers-reduced-motion` — l'argomento
+  vince sulla proprietà — e in `dist/` non se ne vede niente
+- **L'accento globale sta su `<html>`**, che è il giorno previsto dal commento
+  di `:where(:root)` in `colors.css`. Le scene continuano a vincere dentro di sé,
+  perché le proprietà personalizzate ereditano dall'antenato più vicino
+- **Una finestra di tacche, non tutte e ottantuno**, e la tacca porta la
+  **distanza vera** dalla corrente: è ciò che permette al solo CSS di stringere
+  la finestra a tre sul telefono, senza un secondo numero in uno script e quindi
+  senza un markup sbagliato per chi gli script non li esegue
+- **`aria-current` lo scrive la build**, sulla tacca della serata di apertura:
+  in `dist/` non gira nessuno script, e una rotaia che aspettasse il suo
+  arriverebbe senza niente marcato
+- **La guardia `bersaglio` resta, con un compito diverso**: con le ancore non
+  protegge più lo scorrimento — quello lo fa il browser — ma impedisce che
+  `aria-current`, l'accento e la finestra lampeggino attraverso quaranta serate
+  mentre lo scorrimento morbido le attraversa
+
 ### Obiettivi
 
-- [ ] Timeline verticale a destra su desktop, orizzontale in basso su mobile
-- [ ] Nessun divisore «oggi», come deciso
-- [ ] Token nuovi per le tacche: nell'export erano `color-mix` al 60% e al 34%
-      sul crema, e oggi non hanno un equivalente
-- [ ] `aria-current` sulla tacca della serata a schermo
-- [ ] Navigazione da tastiera: frecce, PagSu/PagGiù, Home/Fine
-- [ ] Guardia `bersaglio` con timer da 1200 ms sullo scorrimento morbido, come
+- [x] Timeline verticale a destra su desktop, orizzontale in basso su mobile
+- [x] Nessun divisore «oggi», come deciso
+- [x] Token nuovi per le tacche: nell'export erano `color-mix` al 60% e al 34%
+      sul crema, e oggi non hanno un equivalente — `--tick-near` e `--tick-far`,
+      scritti `rgba(var(--cream-100-rgb), …)`. Il secondo non tiene il valore
+      dell'export: il 34% compone 2,66:1 sul blu, ed è stato portato a 0,44
+- [x] `aria-current` sulla tacca della serata a schermo
+- [x] Navigazione da tastiera: frecce, PagSu/PagGiù, Home/Fine
+- [x] Guardia `bersaglio` con timer da 1200 ms sullo scorrimento morbido, come
       nel codice del design
+- [x] Le tacche sono ancore a `#serata-N` e funzionano con gli script spenti
+- [x] L'accento globale segue la serata a schermo
+- [x] La Timeline non introduce un secondo contenitore scorrevole
+- [x] La finestra di tacche regge 81 serate senza sfondare la schermata
 
 ### Test automatici
 
-- Tante tacche quanti sono gli eventi, e `aria-current` su una sola
-- I token nuovi esistono e nessun `color-mix` è rientrato
+- Tante tacche quanti sono gli eventi e nell'ordine del sito, ricavato dai
+  contenuti
+- Una sola tacca con `aria-current` in `dist/`, ed è quella della serata su cui
+  il programma si apre
+- Il rango di ogni tacca è la sua distanza vera dalla corrente
+- `<html>` porta il ciclo della serata di apertura, ricavato dalla collection
+- I due token nuovi arrivano in `dist/` come `rgba` sulla terna del crema, e
+  nessun `color-mix` è rientrato
 - Sotto `prefers-reduced-motion` il CSS pubblicato azzera scroll-snap e
   scorrimento morbido
+- **Guardia** `checkTimelineLinks`: una tacca è un `<a href>` e non un
+  `<button>`, e non è un `<a>` senza indirizzo
+- **Guardia** `checkTimelineTargets`: ogni tacca punta a un `id` che esiste
+  nella pagina — non a uno che gli somiglia, e non a uno chiuso in un
+  `<template>`, dove `getElementById` non arriva
+- **Guardia** `checkSmoothScrollArgument`: nessun `scrollTo`, `scrollBy` o
+  `scrollIntoView` di `src/` passa `behavior: 'smooth'`. Legge il sorgente e
+  lascia stare il foglio di stile, che è la forma corretta: la differenza sono
+  le virgolette
+- `checkSingleScroller` continua a passare con la rotaia in pagina, e la rotaia
+  dichiara `overflow: hidden`
+- Le guardie delle PR precedenti continuano a passare, e `npm run test:mutate`
+  con loro: **45 su 45**
+
+> **Trovato nel controllo manuale, e in nessun altro modo.** Due difetti, tutti
+> e due invisibili con i quattro contenuti d'esempio e tutti e due fatali con
+> l'archivio vero. È la ragione per cui il contenuto finto da 81 serate era a
+> piano.
+>
+> - **Ottanta `gap` di niente.** La finestra nasconde la *tacca*, ma l'`<li>`
+>   che la contiene resta un elemento flex, vuoto e alto zero — e il `gap` si
+>   disegna fra elementi flex anche quando non contengono niente. Con 81 serate
+>   erano mille pixel di rotaia vuota che spingevano le undici tacche visibili
+>   sotto il bordo dello schermo. Adesso la spaziatura la porta la tacca, e
+>   sparisce esattamente quando sparisce lei
+> - **`justify-content: center` non centra quando non ci sta.** La barra del
+>   telefono doveva ritagliare le undici tacche simmetricamente ai due lati; una
+>   riga flex che trabocca viene invece allineata all'inizio — i motori si
+>   rifiutano di perdere contenuto dal bordo iniziale — quindi la barra mostrava
+>   le cinque serate più vecchie della finestra e quella corrente stava fuori
+>   dallo schermo a destra. Da qui la distanza vera al posto dei tre ranghi
+>   dell'export: la finestra si stringe a tre nel foglio di stile, dove è giusta
+>   anche prima che parta uno script
+>
+> **E la rotaia era troppo stretta per le nostre date.** L'export dichiara
+> `clamp(104px, 8.5vw, 140px)` e scrive `20 mar` sulle tacche; le nostre leggono
+> `24 set 26`, con l'anno che la PR 3 ha aggiunto perché su ottantuno serate *18
+> giugno* non identifica niente. Le date uscivano dal bordo destro dello
+> schermo. La misura nuova è misurata e non copiata: 115px è quel che chiede la
+> riga della tacca corrente, e il resto è il padding del design.
+
+> **Un falso allarme, tenuto qui perché costa mezz'ora ritrovarlo.** Provando
+> dalla console, `scrollIntoView()` sullo scroller sembrava non fare niente
+> quando `scroll-behavior: smooth` è attivo — che avrebbe voluto dire snap
+> mandatory contro scorrimento morbido, cioè il difetto che
+> [vincoli-tecnici.md](vincoli-tecnici.md) attribuisce a Safari, in Chrome. Non
+> era la pagina: erano due scroll sovrapposti nella stessa prova, uno dei quali
+> assegnava `scrollTop` mentre l'animazione dell'altro era in volo. Con
+> interazioni vere — tasto, clic, anche due frecce in rapida successione —
+> frecce e tacche arrivano dove devono.
+
+> **Trovato in revisione.** Quindici difetti, e il filo che li lega è che quasi
+> tutti stanno dove il rendering è corretto: si vedono contando, non guardando.
+>
+> Quattro sul contrasto e sulla messa a fuoco. **L'accento era sulla data della
+> tacca corrente**, cioè il colore del ciclo su una parola a 15px, mentre quello
+> che i cicli garantiscono è 3:1 — tre dei cinque colori tarati non arrivano al
+> 4,5 che una parola vuole. `Modal.astro` aveva già scritto questa decisione per
+> il link dentro il pannello, e la rotaia la contraddiceva. **Il colore delle
+> tacche lontane** stava a 2,66:1, sotto qualunque altra cosa il sito spedisca.
+> **L'anello di messa a fuoco sulla barra del telefono era ritagliato via
+> interamente** — il margine interno della barra era esattamente lo scostamento
+> dell'anello, e la barra ritaglia. **E `--timeline-bar` era un numero letto a
+> schermo**, non la somma delle parti da cui la barra è fatta: alzare il
+> bersaglio da toccare l'avrebbe fatta crescere sotto una scena che aveva
+> riservato l'altezza vecchia.
+>
+> Tre nello script. Un Ctrl-clic su una tacca — quello che apre in una scheda
+> nuova — spostava `aria-current`, l'accento e la finestra su una serata che non
+> era a schermo, e poi assordava l'osservatore per 1200 ms. `aim()` armava quel
+> timer anche quando la destinazione era già la corrente, e niente poteva più
+> disarmarlo perché nessuna scena avrebbe attraversato la linea di mezzo. E il
+> tasto Shift non era nell'elenco dei modificatori da lasciar stare, quindi
+> Shift+Freccia — cioè selezionare del testo — saltava alla serata dopo.
+>
+> Tre nelle verifiche, che è la metà peggiore. `checkSmoothScrollArgument` non
+> vedeva una chiave fra virgolette — `{ 'behavior': 'smooth' }`, la forma che si
+> scrive per far tacere un linter — e non la vedeva due volte: il motivo per cui
+> la regola 15 esiste, con la guardia che risponde «nessuna violazione». Il test
+> sulla finestra pretendeva che i ranghi presenti fossero giusti e mai che gli
+> altri non ci fossero, quindi una build che avesse marcato tutte e ottantuno le
+> tacche lo passava intero pubblicando l'archivio giù per il fianco della
+> pagina. E `test/build/` si era riscritto in casa sia il modo di trovare le
+> tacche sia `attributeOf` — il secondo senza il lookbehind che
+> `test/guards/document.ts` documenta come la sua unica ragione di esistere,
+> cioè `data-href` letto come `href`.
+>
+> **La rotaia stava dopo il programma nel documento.** È fissa, quindi a schermo
+> non cambia niente e per una tastiera cambia tutto: le tacche venivano dopo
+> ogni bottone di ogni serata.
+>
+> Due erano nell'involucro delle tacche, e una risolve l'altra. Ogni tacca
+> stava in un `<li>` che restava anche quando la tacca no: settanta elementi
+> vuoti nell'albero dell'accessibilità — «elenco, 81 elementi» per una rotaia
+> che ne mostra undici — ed è lo stesso `<li>` che aveva causato i mille pixel
+> di `gap` vuoto trovati nel controllo manuale. Tolta la lista, `gap` torna
+> corretto da sé, perché un figlio in `display: none` non è un elemento flex.
+>
+> E l'ultima riguarda l'altro scorrimento che il browser fa mentre la pagina
+> arriva: `data-smooth` si accendeva subito dopo il salto di apertura, ma chi
+> entra da `/#serata-3` lascia il frammento al motore, e un motore che ci torna
+> sopra a caricamento finito avrebbe trovato la proprietà già accesa. Adesso si
+> accende sull'evento `load`.
 
 ### Test manuali
 
-- **Su un iPhone vero**: toccare una tacca lontana e verificare che lo
-  scorrimento morbido arrivi a destinazione senza essere interrotto dallo snap
-- Tastiera completa su desktop, con la messa a fuoco sempre visibile
-- Uno screen reader annuncia la serata corrente
+- Tastiera completa su desktop: frecce, PagSu/PagGiù, Home/Fine, con la messa a
+  fuoco sempre visibile — provata anche su una tacca, dove l'anello arriva
+  intero e non lo ritaglia la rotaia; e sulla barra del telefono, dove prima
+  dell'aggiustamento del margine interno non se ne vedeva niente
+- Con un contenuto finto da 81 serate: la finestra segue lo scorrimento, undici
+  tacche sul desktop e tre sulla barra del telefono, la rotaia non sfonda la
+  schermata. È la prova che ha trovato i due difetti qui sopra
+- Sotto i 900 px la rotaia diventa la barra in basso e la nota della scena le
+  resta sopra, senza sovrapposizioni
+- Con JavaScript disattivato le tacche restano link che portano alla serata
+  giusta, e il salto è istantaneo: `scroll-behavior: smooth` lo accende lo
+  script, dopo il salto di apertura — assegnare `scrollTop` obbedisce alla
+  proprietà, quindi acceso prima avrebbe fatto scendere l'apertura in
+  animazione da cima all'archivio
+
+> **Due prove restano da fare, dichiarate e non date per buone.** Su un iPhone
+> vero: toccare una tacca lontana e verificare che lo scorrimento morbido arrivi
+> a destinazione senza essere interrotto dallo snap.
+> [questioni-aperte.md](questioni-aperte.md) la colloca già alla PR 13, per
+> nome, e per lo stesso motivo della PR 7 — prima non c'è un URL stabile e chi
+> lavora al progetto non ha un iPhone. Nel frattempo il rischio è retto dal
+> fatto che il salto è quello nativo del browser sul frammento e non uno
+> `scrollTo` scritto qui.
+>
+> E l'annuncio della serata corrente da parte di uno screen reader: il markup
+> che serve è `aria-current` su una tacca sola, che è verificato in `dist/`,
+> ma il verificare che *si senta* è un ascolto e non un'asserzione.
 
 ---
 

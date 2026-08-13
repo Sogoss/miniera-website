@@ -92,6 +92,25 @@
 
   --focus-ring: var(--orange-400);
 
+  /* The two ranks of a Timeline tick that is not the current one: how far each
+     of the others has fallen back. Written as rgba over the triple, which is
+     what this file does instead of color-mix (rule 3).
+
+     Their own tokens and not --text-secondary and --text-muted: the export
+     tuned this pair on the tick and not on running text, and borrowing would
+     tie the rail to a decision about paragraphs. On the blue ground the near
+     one composites to 5.27:1 and the far one to 3.50:1.
+
+     The far one is **not** the export's value. There it is 34% of the cream,
+     which composites to 2.66:1 — under the 3:1 this project guarantees for a
+     border, let alone for eight ticks of date text at 11px, and lower than
+     anything else the site ships. 0.44 is where --text-muted sits, which is
+     this repository's floor for text a reader is meant to be able to read, and
+     the step down from the near rank survives it: 5.27 to 3.50 is still a rank.
+     A mockup is not a contrast ratio. */
+  --tick-near: rgba(var(--cream-100-rgb), 0.6);
+  --tick-far: rgba(var(--cream-100-rgb), 0.44);
+
   /* Veil over the translucent bars (nav, timeline) */
   --veil-bar: rgba(var(--blue-900-rgb), 0.82);
   --veil-bar-strong: rgba(var(--blue-900-rgb), 0.92);
@@ -111,11 +130,16 @@
    (0,1,0) — and a tie is broken by document order, which puts the inline
    <style> of CycleAccents before the bundled stylesheet. The two selectors
    match different elements today, so nothing is wrong yet; the day a page
-   carries `data-cycle` on <html> itself — the natural place when a whole page
-   belongs to one cycle, and what PR 5 and PR 9 will want — :root would win on
-   that element and every accent of the page would render brand orange, with the
-   guard still green because a rule for that cycle does exist. At zero
-   specificity there is nothing left to win. */
+   carries `data-cycle` on <html> itself, :root would win on that element and
+   every accent of the page would render brand orange, with the guard still
+   green because a rule for that cycle does exist. At zero specificity there is
+   nothing left to win.
+
+   That day is PR 8. The programme puts the cycle of the evening on screen on
+   <html>, so that what lies outside every scene — the Timeline, and the
+   navigation of PR 11 — takes the colour of the evening being read. Written
+   `:root` this rule would have won there and the whole rail would have been
+   orange over a green evening. */
 :where(:root) {
   --accent: var(--cycle-1);
   --accent-rgb: var(--cycle-1-rgb);

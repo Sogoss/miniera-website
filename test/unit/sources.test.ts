@@ -34,6 +34,7 @@ import {
 } from '../guards/language.ts';
 import { checkDevDepsInLockfile, checkNoTailwind } from '../guards/packages.ts';
 import { checkNoClientDirectives, checkNoUiFramework } from '../guards/react.ts';
+import { checkSmoothScrollArgument } from '../guards/scroller.ts';
 import { checkHandWrittenShapes } from '../guards/shapes.ts';
 import { collectionEntries, dateOf } from '../support/frontmatter.ts';
 import { exists, filesWithExtension, read, readJson, repoRoot } from '../support/paths.ts';
@@ -216,6 +217,16 @@ describe('the code that handles dates', () => {
     expect(checkLocalDateMethods(read(path), path).map((violation) => violation.detail)).toEqual(
       [],
     );
+  });
+
+  it.each(codeFiles)('%s leaves smooth scrolling to the stylesheet', (path) => {
+    // Not about dates, and here because this is where src/ is read file by
+    // file. `behavior: 'smooth'` passed to a scroll call beats the
+    // `scroll-behavior: auto !important` that global.css sets under
+    // prefers-reduced-motion — the argument wins over the property — so the one
+    // control a reader prone to motion sickness has stops working, with nothing
+    // to see in dist/ and nothing failing.
+    expect(checkSmoothScrollArgument(read(path), path).map((v) => v.detail)).toEqual([]);
   });
 
   it.each(clocklessFiles)('%s does not read the clock', (path) => {

@@ -62,8 +62,10 @@ posizione iniziale cada di poco fuori posto, che è visibile e correggibile.
 
 Da provare, in ordine: che lo snap non salti mentre la barra si ritrae; che
 l'apertura cada esattamente sulla prima serata futura; che lo scorrimento
-morbido della Timeline arrivi a destinazione senza essere interrotto — quello è
-della PR 8.
+morbido di una tacca della Timeline arrivi a destinazione senza essere
+interrotto dallo snap — rimandato qui dalla PR 8, per lo stesso motivo e con lo
+stesso rischio retto per costruzione: il salto è quello nativo del browser sul
+frammento, non uno `scrollTo` scritto da noi.
 
 ## Da decidere prima della PR 13
 
