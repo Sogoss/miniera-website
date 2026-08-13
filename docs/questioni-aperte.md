@@ -117,6 +117,22 @@ archivio. Non blocca niente: il campo `photo` è nello schema da sempre, e la
 prima foto che arriva dal CMS passa dal ritaglio senza che si tocchi nulla.
 Vale la pena riguardare le forme quando ci saranno i ritratti veri.
 
+### Il `<title>` di una serata, e `og:type`
+
+Due mezze scelte sui meta, rimandate insieme perché si guardano meglio con dei
+contenuti veri davanti.
+
+Il titolo di una rotta serata è `Serata 81 — Chi tiene aperto il quartiere`,
+mentre quello della radice porta anche il nome dell'associazione. Nei risultati
+di ricerca è il posto dove quel nome lavorerebbe di più; in una linguetta,
+ripetuto su ottantuno pagine, è rumore. **Deciso di rivederlo quando si
+inseriscono i contenuti veri**, che è quando si vede come suonano ottantuno
+titoli di fila.
+
+`og:type` resta `website` anche sulle rotte delle serate, che sono
+semanticamente degli eventi. Sta in `Base.astro`, cioè nel layout condiviso, e
+il posto dove si tocca è la PR 13 insieme al resto dei meta.
+
 ### Link a mappa per le sedi
 
 Lo schema di `sedi` ha un campo `map` facoltativo. Non è stato deciso se
