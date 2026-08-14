@@ -73,7 +73,7 @@ sostituisce un telefono vero.
 | 9 | Le pagine delle serate | `pagine-serata` | fatta |
 | 10 | Il piano: la Timeline che raggiunge l'archivio | `piano-timeline-archivio` | fatta |
 | 11 | La Timeline raggiunge l'archivio | `timeline-archivio` | fatta |
-| 12 | La prenotazione dentro il modale | `modale-prenotazione` | da fare |
+| 12 | La prenotazione dentro il modale | `modale-prenotazione` | fatta |
 | 13 | Chi siamo, contatti, rassegna disabilitata | `pagine-istituzionali` | da fare |
 | 14 | Sveltia CMS | `cms-sveltia` | da fare |
 | 15 | Pubblicazione | `pubblicazione` | da fare |
@@ -1600,28 +1600,109 @@ chiude con Esc e con un clic fuori, la messa a fuoco resta dentro e torna al
 bottone che l'ha aperto — è `<dialog>` con `showModal()`, non codice nostro;
 presente su entrambe le larghezze.
 
+### Decisioni prese scrivendo la PR
+
+Le nove per esteso stanno in [decisioni.md](decisioni.md), sotto *La
+prenotazione*. In breve:
+
+- **Il numero sta in un modulo puro**, `src/lib/contact.ts`, che costruisce
+  anche i link: è configurazione, e una seconda copia scritta a mano è giusta il
+  giorno che la si scrive e sbagliata il giorno che il numero cambia. Non in una
+  collection, che è l'archivio delle serate e non la rubrica
+- **Il modulo rifiuta un numero che non riconosce** invece di scriverlo: senza
+  prefisso internazionale il link è valido e raggiunge un'altra persona, o
+  nessuna, e non fallisce da nessun'altra parte
+- **Il messaggio precompilato nomina la serata**, perché di serate prenotabili
+  ce ne sono due o tre alla volta; nome e numero di persone li aggiunge chi
+  scrive, come il pannello chiede
+- **Quindi il testo della prenotazione diventa uno per serata, dentro la
+  scena.** Era unico finché il pannello diceva la stessa cosa a tutte; ora
+  contiene il link, e il link nomina la serata. L'alternativa — far riscrivere
+  l'indirizzo allo script — è il modale che costruisce contenuto dai dati invece
+  di clonarlo
+- **Il bottone porta due forme e il CSS sceglie**, come il bottone e la lista
+  dei materiali. Copre anche il browser senza `<dialog>`, dove `Modal.astro` si
+  rimette `no-js` da sé
+- **Senza script si perde la spiegazione, non l'azione**: il link parte col
+  messaggio già scritto
+
 ### Obiettivi
 
-- [ ] Il testo della prenotazione dice l'informazione reale: sessanta posti, si
+- [x] Il testo della prenotazione dice l'informazione reale: sessanta posti, si
       scrive con nome e numero di persone, risposta entro sera
-- [ ] Link `wa.me` al numero vero, configurato **in un posto solo**
-- [ ] Con gli script spenti il bottone «Prenota il posto» è un link diretto a
+- [x] Link `wa.me` al numero vero, configurato **in un posto solo**, e nessun
+      altro file di `src/` può scriverne uno
+- [x] Con gli script spenti il bottone «Prenota il posto» è un link diretto a
       WhatsApp invece di un bottone morto: è il fallback che alla PR 7 non
       esisteva perché non esisteva il numero
-- [ ] Il numero esce da [questioni-aperte.md](questioni-aperte.md)
+- [x] Il numero esce da [questioni-aperte.md](questioni-aperte.md)
 
 ### Test automatici
 
-- Il link punta al numero configurato e non a un valore scritto a mano
-- Il segnaposto del design — `+39 300 000 0000` — non compare in `dist/`
-- Il bottone della prenotazione compare solo sulle serate che si possono ancora
-  prenotare, e il suo bersaglio nel modale esiste (guardia della PR 7)
+- **Guardia** `checkWhatsappSource`: nessun indirizzo WhatsApp e nessuna
+  occorrenza di quelle cifre fuori da `src/lib/contact.ts`. I commenti non
+  contano — una guardia che segnala la prosa che la spiega è una guardia che
+  qualcuno spegne — e il caso negativo prova che sotto quel commento il codice
+  continua a essere letto
+- **Guardia** `checkPlaceholderNumber` sul pubblicato: il segnaposto del design
+  non compare in `dist/` in nessuna delle sue sei scritture. Legge i numeri come
+  li scrive una persona, e si rifiuta di chiamare numero una sequenza a gruppi
+  di una cifra — un path SVG è dieci cifre e nove spazi
+- Ogni `wa.me` in `dist/` porta le cifre del numero configurato, e **l'attesa si
+  ricava importando il modulo**: un numero scritto nel test sarebbe la seconda
+  copia che questa PR esiste per vietare
+- Ogni link porta un `text=` non vuoto che nomina la serata da cui parte, e il
+  messaggio si confronta con quello che scrive il dominio — non con una frase
+  ricopiata qui, che diventerebbe rossa il giorno che qualcuno la migliora
+- Il bottone sta su **tutte e sole** le scene `data-state="upcoming"`, con le
+  due forme per ciascuna e il pannello con l'id che il bottone chiede: una
+  serata passata che offre una prenotazione è un posto venduto per una sera che
+  è già stata
+- Il link di prenotazione di ogni serata esiste **fuori** dai template:
+  `checkLinksOutsideTemplates` riceveva i soli materiali e da qui riceve anche
+  questi — è ciò che prova che il ripiego è markup vero e non una promessa
+- La rotta di una serata offre la stessa prenotazione del programma, che è poi
+  un'asserzione sul fatto che le due rotte condividano un componente
+- **Unit** su `contact.ts`: la normalizzazione, i separatori che un elaboratore
+  di testi sostituisce senza che si veda, il rifiuto di ciò che non è un numero,
+  e la codifica di apostrofi e trattini lunghi che arrivano dai titoli
+- **Guardia** `checkNoJsSwitch` sul CSS che ogni pagina riceve: le due metà
+  dell'interruttore `no-js` nascondono davvero, e con `!important` — vedi qui
+  sotto
+- `npm run test:mutate` continua a dire N su N, con le tre guardie nuove dentro
+
+> **Trovato scrivendo, e non era di questa PR.** L'interruttore che decide
+> quale delle due forme vede un lettore — `.no-js .only-js` e
+> `html:not(.no-js) .no-js-only` — **funzionava a metà dalla PR 7**, e nel
+> sorgente le due righe sono simmetriche.
+>
+> `.no-js .only-js` sono due classi, e due classi è anche quanto pesa il
+> `.button[data-astro-cid-…]` in cui si compila lo stile di un componente: un
+> pareggio, e un pareggio lo decide l'ordine dei fogli, che metteva ultimo il
+> componente. La metà che nasconde il *link* vinceva — `html:not(.no-js)` porta
+> anche un elemento, quindi sta un punto sopra — e la metà che nasconde il
+> *bottone* perdeva. Il risultato è la peggiore delle combinazioni: con gli
+> script spenti la serata 78 pubblicava un «Rivedi la serata» morto **sopra** la
+> lista di link che avrebbe dovuto sostituire, e ogni serata futura avrebbe
+> pubblicato un «Prenota il posto» morto sopra il proprio link a WhatsApp —
+> cioè esattamente il difetto che l'obiettivo 3 di questa PR dichiara di
+> chiudere.
+>
+> Trovato aprendo il sito **costruito** e rimettendo la classe a mano, non
+> leggendo `global.css`. Ora tutt'e due portano `!important`, che è il livello
+> giusto per una regola che non è stile ma «per questo lettore quell'elemento
+> non esiste» — deve battere qualunque cosa un componente dichiari sul proprio
+> `display`, compreso il giorno che qualcuno aggiunge un `display: grid` a una
+> variante. La guardia legge `dist/` e non `global.css`, perché quel che era
+> sbagliato non è mai stato in quel file: era dove quel file atterrava.
 
 ### Test manuali
 
 - Esc, clic fuori, e ritorno della messa a fuoco al bottone
 - Sul telefono, il link apre davvero WhatsApp con il messaggio precompilato
 - Con gli script spenti, il bottone porta comunque a WhatsApp
+- Il pannello su una serata di un ciclo che non sia il primo: il link prende
+  l'accento del ciclo, che è la regola già scritta in `Modal.astro`
 
 ---
 

@@ -221,6 +221,29 @@ non una preferenza.
     avere la sua rotta** — `checkEveningRoutes`, sul pubblicato: un numero senza
     pagina è un 404 che compare solo quando qualcuno ricarica o condivide.
 
+17. **Il numero della prenotazione si scrive in un posto solo, e il segnaposto
+    del design non si pubblica mai.** Non c'è un backend: tenere un posto è un
+    link a WhatsApp, quindi quel numero è configurazione e sta in
+    `src/lib/contact.ts`, modulo puro che costruisce anche i link. Una seconda
+    copia scritta a mano non è sbagliata il giorno che la si scrive — è giusta,
+    ed è per questo che la si scrive — è sbagliata il giorno che il numero
+    cambia e ne segue una sola: fra i due momenti non fallisce niente, perché un
+    `wa.me` ben formato che apre una chat con uno sconosciuto è una pagina
+    perfetta. **E il modulo rifiuta un numero che non riconosce invece di
+    scriverlo**, come il generatore dei cicli con un colore che non è un
+    esadecimale: senza prefisso internazionale il link è valido e raggiunge
+    un'altra persona. Due guardie in `test/guards/contact.ts`: la prima legge il
+    sorgente — nessun indirizzo WhatsApp e nessuna di quelle cifre fuori dal
+    modulo, con i commenti che non contano, perché una guardia che segnala la
+    prosa che la spiega è una guardia che qualcuno spegne — la seconda cerca in
+    `dist/` il segnaposto `+39 300 000 0000`, che è ancora scritto in
+    `design-export/`: quella cartella è la specifica da cui si traduce, quindi il
+    modo in cui quel numero arriva in produzione è qualcuno che ne copia la riga.
+    Tutt'e due leggono i numeri **come li scrive una persona**, perché
+    `393000000000` e `+39 300 000 0000` sono lo stesso numero — e si rifiutano di
+    chiamare numero una sequenza a gruppi di una cifra, che è come sono scritte
+    le coordinate di un path SVG.
+
 ## Lingua
 
 Due lingue, separate da un confine netto: **il codice è in inglese, quello che
@@ -261,8 +284,8 @@ src/components/    i componenti .astro
 src/layouts/       Base.astro: il documento che ogni pagina abita
 src/content/       eventi, cicli, sedi, relatori
 src/content.config.ts   schema Zod delle quattro collection
-src/lib/           il dominio: events.ts, cycles.ts e shapes.ts puri,
-                   programme.ts legge le collection
+src/lib/           il dominio: events.ts, cycles.ts, shapes.ts e contact.ts
+                   puri, programme.ts legge le collection
 src/styles/tokens/ i token del design
 src/styles/global.css   strato base del documento
 test/guards/       le guardie ai vincoli, come funzioni pure
@@ -308,8 +331,28 @@ scena: il CSS li nasconde solo dopo che lo script è partito — è la classe
 `no-js` sul documento, tolta dal primo script della testa — così con gli script
 spenti non si perde niente. **Non spostarli in un `<template>`**: lì sarebbero
 invisibili a chi non ha script, a un crawler e a Ctrl+F, e una guardia lo dice.
-Tre guardie in `test/guards/modal.ts`: il bersaglio di ogni bottone esiste nella
-pagina, di `<dialog>` ce n'è uno, i link stanno fuori dai template.
+Quattro guardie in `test/guards/modal.ts`: il bersaglio di ogni bottone esiste
+nella pagina, di `<dialog>` ce n'è uno, i link stanno fuori dai template, e
+l'interruttore fra le due forme di un controllo nasconde davvero — qui sotto.
+
+**La prenotazione è l'altra cosa che apre quel modale, e ne ha una per serata.**
+Il pannello sta in un `<template>` dentro la scena — lì va bene, perché quel
+testo non ha un posto nella pagina finché non lo si chiede — e uno per serata
+perché contiene il link, che nomina la serata nel messaggio che manda. Un
+template unico potrebbe portare solo un link che non ne nomina nessuna, e farlo
+riscrivere allo script sarebbe il modale che costruisce contenuto dai dati
+invece di clonarlo. **Il bottone porta due forme**, `only-js` e `no-js-only`,
+come il bottone e la lista dei materiali: senza script «Prenota il posto» è
+direttamente il link, e quel che si perde è la spiegazione, non l'azione.
+
+**E l'interruttore fra le due forme si dichiara `!important`.** Non è stile: è
+«per questo lettore quell'elemento non esiste», e deve battere qualunque
+`display` dichiari un componente. `.no-js .only-js` sono due classi, quante ne
+pesa il `.button[data-astro-cid-…]` in cui si compila uno stile di componente —
+un pareggio, deciso dall'ordine dei fogli, e deciso male: dalla PR 7 alla PR 12
+un bottone morto si è pubblicato sopra la lista che avrebbe dovuto sostituire.
+`checkNoJsSwitch` lo rilegge in `dist/`, che è dove il difetto stava: nel
+sorgente le due metà sono simmetriche.
 
 **Lo scroller è un solo contenitore scorrevole.** L'export rende scorrevole anche
 ogni scena, e non si copia: con due contenitori annidati né una tastiera né uno

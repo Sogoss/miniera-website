@@ -221,8 +221,16 @@ Rosselli 12`, e quello sopra). Quello sopra è il buono.
 ## Prenotazioni
 
 Non c'è un backend e non serve: il bottone "Prenota il posto" apre un modale
-che spiega come si fa e rimanda a WhatsApp con un link `wa.me`.
+che spiega come si fa e rimanda a WhatsApp con un link `wa.me`. Con gli script
+spenti quel bottone è direttamente il link, che parte con il messaggio già
+scritto — e il messaggio nomina la serata, perché di serate prenotabili ce ne
+sono due o tre alla volta.
 
 Il numero è quello del **presidente dell'associazione**, che ha scelto lui di
-pubblicarlo in questo modo. Nei file di design è ancora il segnaposto
-`+39 300 000 0000`.
+pubblicarlo in questo modo. Sta scritto in un posto solo,
+[`src/lib/contact.ts`](../src/lib/contact.ts), e ogni link lo costruisce quel
+modulo: una guardia vieta a ogni altro file di `src/` di scriverne uno. Nei file
+di design c'è ancora il segnaposto `+39 300 000 0000`, che è la ragione per cui
+una seconda guardia lo cerca in `dist/`: `design-export/` è la specifica da cui
+si traduce, quindi il modo in cui quel numero arriverebbe in produzione è
+qualcuno che ne copia la riga.

@@ -87,10 +87,27 @@ svg {
    the class off, so a page can carry both forms of a thing and show the one
    that will work: the button that opens a modal, or the plain list of links
    that needs no script. Both are in the markup — the modal is filled by cloning
-   the list, so there is one source and nothing is lost with scripting off. */
+   the list, so there is one source and nothing is lost with scripting off.
+
+   `!important` on both, and it is the difference between this working and only
+   looking as if it does. `.no-js .only-js` is two classes; so is the
+   `.button[data-astro-cid-…]` a scoped component style compiles to — a tie, and
+   a tie is decided by the order of two stylesheets, which put the component's
+   `display: inline-flex` last. So the half that hides the *link* won and the
+   half that hides the *button* lost: with scripting off, evening 78 published a
+   dead «Rivedi la serata» sitting on top of the list it was supposed to replace,
+   and every upcoming evening would have published a dead «Prenota il posto»
+   above its own WhatsApp link. Shipped at PR 7, seen at PR 12, and found by
+   opening the built site with the class put back by hand — not by reading this
+   file, where both halves look symmetrical.
+
+   Not a specificity race won by a nose: this is not styling but «for this
+   reader that element does not exist», and it has to beat whatever a component
+   declares about its own display, including the day somebody adds
+   `display: grid` to a variant. `checkNoJsSwitch` reads it back out of dist/. */
 .no-js .only-js,
 html:not(.no-js) .no-js-only {
-  display: none;
+  display: none !important;
 }
 
 /* Said, not shown.

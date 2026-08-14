@@ -19,6 +19,8 @@ import {
   checkKickerRepeatsCycle,
 } from '../guards/content.ts';
 import { checkNoShortBrandVariant } from '../guards/brand.ts';
+import { checkWhatsappSource } from '../guards/contact.ts';
+import { WHATSAPP_NUMBER } from '../../src/lib/contact.ts';
 import { checkAccentContrast, checkHandWrittenCycleRules } from '../guards/cycles.ts';
 import { cycleAccentCss, findCycleNumberConflicts } from '../../src/lib/cycles.ts';
 import {
@@ -64,6 +66,26 @@ const codeFiles = filesWithExtension(join(repoRoot, 'src'), ['.ts', '.astro']);
    clock read in programme.ts exists to prevent. */
 const CLOCK_HOLDER = 'src/lib/programme.ts';
 const clocklessFiles = codeFiles.filter((path) => path !== CLOCK_HOLDER);
+
+/* The same shape for the association's number: one file writes it, every other
+   file asks for the link. Derived from the folder like the list above, so a
+   component added tomorrow arrives guarded.
+
+   And over everything the build can ship, not over src/ alone — the same wider
+   net as the stylesheets above, and for the same reason. `public/` is copied
+   into dist/ verbatim and PR 15 puts the Sveltia shell there; `scripts/` and
+   the config are code that runs. A second copy of the number in any of them
+   ships, and drifts the day the number changes, with nothing red. Rule 12 had
+   already learnt this about `public/`; rule 17 was written knowing it and
+   pointed at src/ anyway. */
+const NUMBER_HOLDER = 'src/lib/contact.ts';
+const SHIPPED_TEXT = ['.ts', '.astro', '.mjs', '.js', '.json', '.html', '.css', '.svg', '.txt'];
+const numberlessFiles = [
+  ...filesWithExtension(join(repoRoot, 'src'), SHIPPED_TEXT),
+  ...(exists('public') ? filesWithExtension(join(repoRoot, 'public'), SHIPPED_TEXT) : []),
+  ...filesWithExtension(join(repoRoot, 'scripts'), SHIPPED_TEXT),
+  'astro.config.mjs',
+].filter((path) => path !== NUMBER_HOLDER);
 
 /* All the CSS the source has to offer, in one string: the stylesheets, the
    <style> blocks of the components, and the inline `style` attributes — which
@@ -252,6 +274,26 @@ describe('the code that handles dates', () => {
     // The other side of the exception: if loadProgramme() ever stops reading
     // the clock, the list above is guarding a rule nobody is bound by.
     expect(checkAmbientTime(read(CLOCK_HOLDER), CLOCK_HOLDER).length).toBeGreaterThan(0);
+  });
+});
+
+/* The number the booking is made of, and the one file allowed to write it.
+ *
+ * Read the same way as the clock above, and for the same reason: what makes a
+ * second copy dangerous is not that it is wrong today — it is right today —
+ * but that the day the number changes, one of the two follows and the other
+ * goes on opening a chat with a stranger, with the page around it perfect. */
+describe('the WhatsApp number', () => {
+  it.each(numberlessFiles)('%s asks the domain for the link', (path) => {
+    expect(checkWhatsappSource(read(path), WHATSAPP_NUMBER, path).map((v) => v.detail)).toEqual([]);
+  });
+
+  it('has the number in contact.ts and nowhere else in src', () => {
+    // The other side of the exception. Without this the list above could be
+    // guarding an empty rule: a number that has moved out of the module, or a
+    // guard that has stopped recognising one, both read as «all clear».
+    expect(checkWhatsappSource(read(NUMBER_HOLDER), WHATSAPP_NUMBER, NUMBER_HOLDER).length)
+      .toBeGreaterThan(0);
   });
 });
 

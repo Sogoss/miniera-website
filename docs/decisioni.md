@@ -1316,6 +1316,83 @@ romperebbe la ragione per cui la rotta esiste: lo scraper che costruisce
 l'anteprima segue i redirect e leggerebbe i meta della radice. Accettata e
 scritta; il programma resta tutto lì da scorrere. *(PR 9)*
 
+## La prenotazione
+
+**Il numero pubblicato è `+39 335 665 4599`, dato dal committente il 14 agosto
+2026**, ed è quello del presidente dell'associazione, che ha scelto lui di
+pubblicarlo in questo modo. Scritto qui perché non sta scritto in nessun altro
+posto che duri: nei file di design c'è solo il segnaposto, e chi legge il
+repository fra un anno trova dieci cifre senza provenienza — e dieci cifre senza
+provenienza in un bottone che manda messaggi a qualcuno sono esattamente ciò che
+nessuna guardia può verificare. *(PR 12)*
+
+**Il numero sta in un modulo puro, `src/lib/contact.ts`, e i link li costruisce
+lui.** È configurazione, non contenuto: una seconda copia scritta a mano in un
+componente non è sbagliata il giorno che la si scrive — è giusta, ed è per
+questo che la si scrive — è sbagliata il giorno che il numero cambia e ne segue
+una sola. Fra i due momenti non fallisce niente e non si vede niente: un link
+`wa.me` ben formato apre una chat con uno sconosciuto, e la pagina intorno è
+perfetta. Una guardia sul sorgente vieta `wa.me` e quelle cifre in ogni altro
+file di `src/`. *(PR 12)*
+
+**Non in una collection.** Le quattro collection sono l'archivio delle serate,
+non la rubrica, e il CMS della PR 14 governa quelle. Se un giorno il numero deve
+poterlo cambiare chi non scrive codice, è una file collection di Sveltia e si
+decide lì: con il modulo già isolato è una riga. *(PR 12)*
+
+**Il modulo rifiuta un numero che non riconosce invece di scriverlo.** Senza il
+prefisso internazionale, `wa.me/3356654599` è un indirizzo valido che raggiunge
+chi possiede quelle cifre sotto un altro prefisso, o nessuno. Non fallisce da
+nessun'altra parte — il link si costruisce, il markup è valido, il bottone si
+preme — quindi la build è l'ultimo posto che può dirlo. Stesso ragionamento del
+colore di un ciclo che non è un esadecimale a sei cifre. *(PR 12)*
+
+**Il messaggio precompilato nomina la serata.** Le serate prenotabili sono due
+o tre alla volta, e «vorrei prenotare» senza data è una domanda che il
+presidente deve rifare. Quello che il messaggio *non* porta è il nome e quante
+persone: li chiede il pannello, e un messaggio con dei puntini al posto del nome
+è un modulo travestito da conversazione. *(PR 12)*
+
+**Quindi il testo della prenotazione diventa uno per serata, dentro la scena.**
+Era un `<template>` unico per tutto il programma finché il pannello diceva la
+stessa cosa a ogni serata; da qui contiene il link, e il link nomina la serata.
+L'alternativa era tenere il template unico e far riscrivere l'`href` allo script
+da un attributo `data-`: è il modale che **costruisce** contenuto dai dati
+invece di clonarlo — la cosa che la PR 7 ha deciso di non fare — e un indirizzo
+scritto da uno script è un indirizzo che non esiste per chi quello script non lo
+esegue. Le serate future sono due o tre, non ottantuno. *(PR 12)*
+
+**Il bottone porta due forme e il CSS sceglie quella che funziona.** Il bottone
+`only-js` che apre il pannello, e accanto un `<a href>` con classe `no-js-only`
+che va dritto a WhatsApp: la stessa coppia che la PR 7 ha scritto per il bottone
+e la lista dei materiali. Copre anche il browser sotto la soglia, quello senza
+`<dialog>`, perché `Modal.astro` si rimette `no-js` da sé e lì il link riappare
+senza che nessuno debba ricordarsene. *(PR 12)*
+
+**Senza script si perde la spiegazione, non l'azione.** Il link parte con il
+messaggio già scritto; i sessanta posti e la risposta in serata restano nel
+`<template>`, che chi non ha script non apre. È lo stesso confine della PR 7 —
+il testo della prenotazione non è contenuto della pagina, i link di una serata
+sì — e sta scritto qui invece di essere scoperto. *(PR 12)*
+
+**Le due metà dell'interruttore `no-js` portano `!important`.** Non è una gara
+di specificità vinta di misura: quella regola non è stile, è «per questo lettore
+quell'elemento non esiste», e deve battere qualunque cosa un componente dichiari
+sul proprio `display`. Scritta senza, funzionava a metà dalla PR 7: `.no-js
+.only-js` sono due classi, come il `.button[data-astro-cid-…]` in cui si compila
+uno stile di componente, e il pareggio lo decideva l'ordine dei fogli. Con gli
+script spenti la serata 78 pubblicava un «Rivedi la serata» morto sopra la lista
+che avrebbe dovuto sostituire. Trovato aprendo il sito costruito, non leggendo
+`global.css`, dove le due righe sono simmetriche — ed è per questo che la
+guardia legge `dist/`. *(PR 12)*
+
+**Le due guardie leggono i numeri come li scrive una persona.** `+39 300 000
+0000` e `393000000000` sono lo stesso numero, e un controllo che ne conoscesse
+una sola scrittura sarebbe soddisfatto dall'altra. Quello che si rifiutano di
+chiamare numero è una sequenza a gruppi di una cifra: `M 3 0 0 0 0 0 0 0 0 0` in
+un path SVG è dieci cifre e nove separatori, e una guardia che segnala un disegno
+è una guardia che qualcuno spegne. *(PR 12)*
+
 ## Rimandate
 
 **Il dominio.** Se ne riparla a sito finito. Il design presuppone

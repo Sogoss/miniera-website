@@ -7,7 +7,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { checkBrandSignature } from '../guards/brand.ts';
-import { checkModalTargets, checkSingleModal } from '../guards/modal.ts';
+import { checkModalTargets, checkNoJsSwitch, checkSingleModal } from '../guards/modal.ts';
 import { checkTimelineLinks, checkTimelineTargets, tickTags } from '../guards/timeline.ts';
 import {
   checkDocumentBasics,
@@ -102,6 +102,38 @@ describe('every published page', () => {
       // pressed and the page stays as it was.
       expect(checkModalTargets(page.html, page.path)).toEqual([]);
       expect(checkSingleModal(page.html, page.path)).toEqual([]);
+    },
+  );
+
+  it.each(pages.map((page) => [page.path, page] as const))(
+    '%s shows one form of a control, not both',
+    (_path, page) => {
+      // Read out of the CSS this page receives, because that is where the
+      // defect was: the rule was written correctly in global.css and lost a tie
+      // to a component stylesheet the bundler put after it. Half the switch
+      // worked, so with scripting off a dead button was published on top of the
+      // links it was standing in for — and the source looked symmetrical.
+      expect(checkNoJsSwitch(page.css, page.path)).toEqual([]);
+    },
+  );
+
+  it.each(pages.map((page) => [page.path, page] as const))(
+    '%s starts as `no-js` and takes it off from the head',
+    (_path, page) => {
+      // The other half of the same switch, and the half no stylesheet can
+      // prove. `checkNoJsSwitch` reads the rule; what decides whether the rule
+      // ever applies is the class on the document and the one line of the head
+      // that removes it. Drop `class="no-js"` and
+      // `html:not(.no-js) .no-js-only` matches for everybody: the WhatsApp link
+      // and the list of recordings vanish for a reader with no scripting and
+      // the dead button is back — which is exactly the defect this PR closed,
+      // reachable again by a one-word edit with the guard still green.
+      expect(page.html, 'the document does not start as `no-js`').toMatch(
+        /<html\b[^>]*\bclass="[^"]*\bno-js\b/,
+      );
+      expect(page.html, 'nothing takes `no-js` off once a script runs').toMatch(
+        /classList\.remove\(\s*['"]no-js['"]\s*\)/,
+      );
     },
   );
 
