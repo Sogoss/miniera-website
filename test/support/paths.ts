@@ -48,8 +48,27 @@ export function filesWithExtension(dir: string, extensions: string[]): string[] 
   );
 }
 
+/* Read once per run, not once per assertion.
+ *
+ * The suite reads the same files over and over — every guard in sources.test.ts
+ * walks the same fifty sources, and half the build layer opens the same dist/ —
+ * and none of them change while it runs: the one thing that writes dist/ is the
+ * globalSetup, which has finished before the first test starts. Sixty-five
+ * blinded runs multiply whatever this costs, which is the reason it is worth
+ * caching at all; the everyday run gets it too.
+ *
+ * Deliberately not invalidated: a test that wanted to see a file change would
+ * be writing to the repository while the suite is running, and nothing here
+ * does that — the blinding of PR 15 stopped being the exception. */
+const contents = new Map<string, string>();
+
 export function read(relativePath: string): string {
-  return readFileSync(join(repoRoot, relativePath), 'utf8');
+  const cached = contents.get(relativePath);
+  if (cached !== undefined) return cached;
+
+  const text = readFileSync(join(repoRoot, relativePath), 'utf8');
+  contents.set(relativePath, text);
+  return text;
 }
 
 /** The bytes of a file, for the published artifacts that are not text. */

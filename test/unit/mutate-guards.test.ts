@@ -11,7 +11,14 @@
  * and belongs to CI; this takes milliseconds and belongs to every save.
  */
 import { describe, expect, it } from 'vitest';
-import { checksIn, failedCount, sourceFiles } from '../../scripts/mutate-guards.mjs';
+import {
+  failedCount,
+  missingFromReports,
+  parseArgs,
+  shardOf,
+  sourceFiles,
+} from '../../scripts/mutate-guards.mjs';
+import { BLIND_ENV, blindPlugin, blindSource, checksIn } from '../../scripts/blind.mjs';
 import { filesWithExtension, read, repoRoot } from '../support/paths.ts';
 import { join } from 'node:path';
 
@@ -186,5 +193,161 @@ describe('the checks the script will find in this repository', () => {
     // The paths it hands out are the paths it will write back to, so a wrong
     // one is not a missing answer but a file restored to the wrong place.
     for (const path of files) expect(() => read(path)).not.toThrow();
+  });
+});
+
+/* Blinding in memory, which is how it is done from PR 15 on.
+ *
+ * The property that matters is not «the text was changed» but «that function
+ * now returns nothing»: the whole answer of the tool rests on it, and until
+ * this PR it rested on a file being rewritten, which is a thing one can see. In
+ * memory it is not, so it is executed here — the blinded source is imported and
+ * called.
+ */
+describe('blindSource', () => {
+  it('makes the check return nothing, whatever it is handed', async () => {
+    const source = 'export function checkThing(x) {\n  return [{ rule: "r", detail: x }];\n}\n';
+    const blinded = blindSource(source, 'checkThing');
+    expect(blinded).not.toBeNull();
+
+    const loaded = await import(`data:text/javascript,${encodeURIComponent(blinded!)}`);
+    expect(loaded.checkThing('anything at all')).toEqual([]);
+
+    // And the original body is still there, after the injected line: what is
+    // being tested is that the return comes first, not that the code was
+    // deleted.
+    expect(blinded).toContain('return [{ rule: "r", detail: x }]');
+  });
+
+  it('leaves the other checks in the file alone', async () => {
+    const source =
+      'export function checkOne(x) {\n  return ["one"];\n}\n' +
+      'export function checkTwo(x) {\n  return ["two"];\n}\n';
+    const loaded = await import(
+      `data:text/javascript,${encodeURIComponent(blindSource(source, 'checkOne')!)}`
+    );
+    expect(loaded.checkOne('x')).toEqual([]);
+    expect(loaded.checkTwo('x')).toEqual(['two']);
+  });
+
+  it('answers null for a check that is not in the file', () => {
+    // Not «the text unchanged»: the caller has to tell «this is now blind» from
+    // «there was nothing to blind», or it runs the suite against an untouched
+    // file and calls the check watched.
+    expect(blindSource('export function checkOne(x) {\n  return [];\n}\n', 'checkTwo')).toBeNull();
+  });
+});
+
+describe('blindPlugin', () => {
+  const file = 'test/guards/example.ts';
+  const source = 'export function checkThing(x: string): string[] {\n  return [x];\n}\n';
+
+  it('is not there at all when nothing is being blinded', () => {
+    // The everyday `npm test` must not carry it: a plugin that is present and
+    // inert is one env var away from being present and wrong.
+    expect(blindPlugin({})).toBeNull();
+  });
+
+  it('blinds the file it names', () => {
+    const plugin = blindPlugin({ [BLIND_ENV]: `${file}::checkThing` })!;
+    const transformed = plugin.transform(source, `/repo/${file}`);
+    expect(transformed).toContain('return [];');
+  });
+
+  it('leaves every other module alone', () => {
+    const plugin = blindPlugin({ [BLIND_ENV]: `${file}::checkThing` })!;
+    expect(plugin.transform(source, '/repo/test/guards/other.ts')).toBeNull();
+  });
+
+  it('recognises the file through the query Vite appends', () => {
+    // Ids arrive as `…/example.ts?v=8a1c`. Comparing the whole string would
+    // silently blind nothing, and «nothing blinded» reads as «held up by a
+    // test».
+    const plugin = blindPlugin({ [BLIND_ENV]: `${file}::checkThing` })!;
+    expect(plugin.transform(source, `/repo/${file}?v=8a1c`)).toContain('return [];');
+  });
+
+  it('throws when the check it was asked for is not there', () => {
+    const plugin = blindPlugin({ [BLIND_ENV]: `${file}::checkVanished` })!;
+    expect(() => plugin.transform(source, `/repo/${file}`)).toThrow(/does not export it/);
+  });
+
+  it('refuses an environment variable it cannot read', () => {
+    expect(() => blindPlugin({ [BLIND_ENV]: 'test/guards/example.ts' })).toThrow(/path::checkName/);
+  });
+});
+
+/* Sharding, and the promise it has to keep.
+ *
+ * Splitting the run across CI jobs means no single job sees the whole answer,
+ * so «every check was blinded» stops being something one job can say. These two
+ * are what replaces it: the split covers everything exactly once, and the
+ * reports add back up to the list.
+ */
+describe('shardOf', () => {
+  const targets = Array.from({ length: 65 }, (_, at) => ({ name: `check${at}` }));
+
+  it.each([1, 2, 3, 4, 7])('covers every check exactly once across %i shards', (total) => {
+    const covered = Array.from({ length: total }, (_, at) => shardOf(targets, at + 1, total)).flat();
+    expect(covered).toHaveLength(targets.length);
+    expect(new Set(covered.map((target) => target.name)).size).toBe(targets.length);
+  });
+
+  it('gives no shard the whole list', () => {
+    // A split that quietly handed every shard everything would pass the check
+    // above and cost four times the machine.
+    expect(shardOf(targets, 1, 4).length).toBeLessThan(targets.length);
+  });
+
+  it('refuses a shard that is not one of n', () => {
+    expect(() => shardOf(targets, 0, 4)).toThrow(/1 ≤ i ≤ n/);
+    expect(() => shardOf(targets, 5, 4)).toThrow(/1 ≤ i ≤ n/);
+  });
+});
+
+describe('missingFromReports', () => {
+  it('says nothing when the shards add up', () => {
+    const found = missingFromReports([{ checks: ['a', 'c'] }, { checks: ['b'] }], ['a', 'b', 'c']);
+    expect(found).toEqual({ uncovered: [], twice: [], unexpected: [] });
+  });
+
+  it('names a check no shard blinded', () => {
+    // The shape this exists for: a job that never ran looks exactly like a job
+    // with nothing to do, and «65 of 65» would be printed over 48.
+    expect(missingFromReports([{ checks: ['a'] }], ['a', 'b']).uncovered).toEqual(['b']);
+  });
+
+  it('names a check two shards both blinded', () => {
+    expect(missingFromReports([{ checks: ['a'] }, { checks: ['a'] }], ['a']).twice).toEqual(['a']);
+  });
+
+  it('names a check that is in a report and no longer in the repository', () => {
+    expect(missingFromReports([{ checks: ['gone'] }], ['a']).unexpected).toEqual(['gone']);
+  });
+
+  it('treats a report with no checks at all as covering nothing', () => {
+    expect(missingFromReports([{}], ['a']).uncovered).toEqual(['a']);
+  });
+});
+
+describe('parseArgs', () => {
+  it('reads the shard, the report, the pool and the workers', () => {
+    expect(parseArgs(['--shard=2/4', '--report=out.json', '--concurrency=6', '--workers=2'])).toEqual({
+      shard: { index: 2, total: 4 },
+      report: 'out.json',
+      concurrency: 6,
+      workers: 2,
+      verify: [],
+    });
+  });
+
+  it('collects the reports to add up', () => {
+    expect(parseArgs(['--verify-reports', 'a.json', 'b.json']).verify).toEqual(['a.json', 'b.json']);
+  });
+
+  it('refuses an argument it does not know instead of ignoring it', () => {
+    // `--shard 2/4` written with a space, or a typo in `--concurrency`: ignored,
+    // the run would blind everything and look like it had sharded.
+    expect(() => parseArgs(['--shards=2/4'])).toThrow(/unknown argument/);
   });
 });

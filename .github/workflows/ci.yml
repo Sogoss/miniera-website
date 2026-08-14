@@ -42,14 +42,69 @@ jobs:
       # of the run — so a broken build fails here too.
       - run: npm test
 
-      # One level above the guards, and the only thing that can answer «are they
-      # still guarding»: each one is blinded in turn — made to return no
-      # violations — and the suite has to notice. Counting the tests that
-      # mention a guard by name does not answer it, because a guard called
-      # through a local helper is named in none of them.
-      #
-      # It reuses the dist/ the step above just built, so the cost is the suite
-      # again, once per guard: a couple of minutes for the one check that keeps
-      # the apparatus from quietly becoming decoration.
-      - name: every guard is held up by a test
-        run: npm run test:mutate
+  # One level above the guards, and the only thing that can answer «are they
+  # still guarding»: each one is blinded in turn — made to return no violations
+  # — and the suite has to notice. Counting the tests that mention a guard by
+  # name does not answer it, because a guard called through a local helper is
+  # named in none of them.
+  #
+  # Its own job, in shards, because it is the suite once per check and there are
+  # sixty-five of them: run in one place it was 786 of the 834 seconds of this
+  # workflow. A runner has four vCPU, so the parallelism inside a job runs out
+  # quickly — four jobs have sixteen.
+  guards:
+    runs-on: ubuntu-latest
+    strategy:
+      # Every shard runs even when one fails: a red guard in the first shard
+      # would otherwise cancel the other three and hide whatever they had to
+      # say.
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+
+      # The blinded runs reuse this rather than building sixty-five times.
+      - run: npm run build
+
+      - name: blind this shard of the checks
+        run: >-
+          REUSE_DIST=1 node scripts/mutate-guards.mjs
+          --shard=${{ matrix.shard }}/4
+          --report=shard-${{ matrix.shard }}.json
+          --concurrency=2 --workers=2
+
+      # What this shard actually blinded, for the job below to add up.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mutate-shard-${{ matrix.shard }}
+          path: shard-${{ matrix.shard }}.json
+
+  # Sharding costs the thing this whole tool exists to protect: no single job
+  # sees the answer any more, and a shard that never ran looks exactly like one
+  # with nothing to do. So the shards are added back up against a list of checks
+  # derived here, freshly — a name covered twice, or not at all, is red.
+  #
+  # This is the job to require for merging: `guards` alone would pass with three
+  # shards silently missing.
+  guards-complete:
+    runs-on: ubuntu-latest
+    needs: guards
+    if: always()
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: mutate-shard-*
+          path: shards
+      - name: every check was blinded by exactly one shard
+        run: node scripts/mutate-guards.mjs --verify-reports shards/*/shard-*.json

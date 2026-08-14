@@ -22,7 +22,7 @@
  *    a placeholder that loses its mark is a placeholder that starts passing for
  *    content;
  * 3. with `site` set in astro.config.mjs — that is, the day the site has an
- *    address of its own — a `data-placeholder` in dist/ is a violation. PR 15
+ *    address of its own — a `data-placeholder` in dist/ is a violation. PR 16
  *    cannot publish this. That is the point of it, and it is written down in
  *    docs/questioni-aperte.md so that it is not a surprise then.
  *

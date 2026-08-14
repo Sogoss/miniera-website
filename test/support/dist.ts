@@ -27,7 +27,11 @@ const TEXT_EXTENSIONS = ['.html', '.css', '.js', '.mjs', '.json', '.svg', '.xml'
  * survived the whole suite. Whatever an attribute declares or reads reaches
  * the browser like the rest, and every guard here is better off seeing it.
  */
+let publishedCss: string | null = null;
+
 export function readPublishedCss(): string {
+  if (publishedCss !== null) return publishedCss;
+
   const pieces: string[] = [];
 
   for (const path of filesWithExtension(distDir, ['.css'])) {
@@ -40,7 +44,8 @@ export function readPublishedCss(): string {
     pieces.push(styleAttributesOf(html));
   }
 
-  return pieces.join('\n');
+  publishedCss = pieces.join('\n');
+  return publishedCss;
 }
 
 /**
@@ -53,8 +58,12 @@ export function readPublishedCss(): string {
  * carry the component, so «the rules exist somewhere in dist/» would pass on a
  * page that has none of them.
  */
+let pages: { path: string; html: string; css: string }[] | null = null;
+
 export function publishedPages(): { path: string; html: string; css: string }[] {
-  return filesWithExtension(distDir, ['.html'])
+  if (pages !== null) return pages;
+
+  pages = filesWithExtension(distDir, ['.html'])
     .filter((path) => !copiedFromPublic(path))
     .map((path) => {
       const html = read(path);
@@ -64,6 +73,7 @@ export function publishedPages(): { path: string; html: string; css: string }[] 
         css: [...linkedStylesheets(html, path), ...extractStyleBlocks(html)].join('\n'),
       };
     });
+  return pages;
 }
 
 /**
@@ -145,11 +155,19 @@ export function decodeEntities(html: string): string {
     .replace(/&([a-z]+);/gi, (whole, name: string) => NAMED_ENTITIES[name.toLowerCase()] ?? whole);
 }
 
+/* Computed once, like the two above: half the build layer asks for these, and
+   dist/ is finished before the first test runs — the globalSetup builds it.
+   Sixty-five blinded runs are what makes the difference worth having. */
+let publishedFiles: { path: string; text: string }[] | null = null;
+
 /** Every published text file, with its contents. */
 export function readPublishedFiles(): { path: string; text: string }[] {
-  return walk(distDir)
+  if (publishedFiles !== null) return publishedFiles;
+
+  publishedFiles = walk(distDir)
     .filter((path) => TEXT_EXTENSIONS.some((extension) => path.endsWith(extension)))
     .map((path) => ({ path, text: read(path) }));
+  return publishedFiles;
 }
 
 /** Every published file, including the binary ones. */

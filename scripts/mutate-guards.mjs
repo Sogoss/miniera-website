@@ -14,28 +14,36 @@
  * helper appears nowhere in the `it()` that covers it. Blinding *is* the
  * question, so there is nothing left to approximate.
  *
- * Not part of `npm test`: it runs the whole suite once per check, which is the
- * wrong cost to pay on every save. CI runs it after the tests, where dist/ has
- * just been built and reusing it is free.
+ * **The blinding happens in memory** — scripts/blind.mjs, through a Vite plugin
+ * this hands one environment variable. Until PR 15 it edited the file on disk
+ * and put it back, which worked and cost: a mark left in blinded files so an
+ * interrupted run could be recognised, signal handlers, a restore in a
+ * `finally`, and a read-back at the end that refused to finish quietly. All of
+ * that was apparatus to make a dangerous method safe, and it forced the runs to
+ * happen one at a time — two blindings would have fought over the same file. It
+ * is gone: nothing on disk changes, so there is nothing to put back, and the
+ * runs go in parallel.
  *
- * It edits source files in place and puts them back, and everything about that
- * is made safe here: the originals are held in memory, the restore runs in a
- * `finally` and on a signal, every blinded file carries a mark so an
- * interrupted run is recognisable at the next start, and the last thing this
- * does is read the files back and refuse to end quietly if any of them differs
- * from what it was.
+ * What has not changed is what each run does: **the whole suite, per blinding**.
+ * Running only the tests that name a guard would be twice as fast and would
+ * answer the question this tool was written to refuse.
+ *
+ * Not part of `npm test`: it is the suite once per check, which is the wrong
+ * cost to pay on every save. CI runs it in shards, after the tests, where dist/
+ * has just been built and reusing it is free.
  */
 import { execFile } from 'node:child_process';
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { cpus } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
+import { BLIND_ENV, checksIn } from './blind.mjs';
 
 const execFileAsync = promisify(execFile);
 const repoRoot = fileURLToPath(new URL('../', import.meta.url));
 
-/** Left in a blinded file, so an interrupted run is recognisable next time. */
-const MARK = 'blinded by scripts/mutate-guards.mjs';
+export { checksIn };
 
 /* Where the checks live: the guards, and the pure modules of the domain whose
    functions stop a build. Both read from the folder and never from a list
@@ -57,49 +65,6 @@ export function sourceFiles(folders = ['test/guards', 'src/lib']) {
           : [],
     ),
   );
-}
-
-/**
- * Every exported `check…`/`find…` in a file, with the offset its body starts
- * at.
- *
- * The body is the first `{` after the balanced argument list that is followed
- * by a newline: a return type written as an object literal — `): { n: number }`
- * — would otherwise be mistaken for the body, and the injected line would land
- * inside a type.
- *
- * That search is **bounded by the next declaration**, and the bound is the
- * whole point. Unbounded it ran to the end of the file, so a function whose
- * body does not open on a new line silently took the offset of the *next*
- * function's body: that next function got blinded twice and this one, never
- * touched, was reported as held up by a test — a guard with no coverage
- * certified as covered, which is the one answer this script must never give.
- * Bounded, such a function is simply not found, and not-found is loud: the
- * cross-count in its own test compares these names against a second, differently
- * derived list and goes red. An argument list that never closes — an unbalanced
- * `(` inside a comment — drops out the same way, for the same reason.
- */
-export function checksIn(source) {
-  const found = [];
-  const signature = /^export function ((?:check|find)\w+)\s*\(/gm;
-  let match;
-
-  while ((match = signature.exec(source)) !== null) {
-    let depth = 0;
-    let at = source.indexOf('(', match.index);
-    for (; at < source.length; at++) {
-      if (source[at] === '(') depth++;
-      else if (source[at] === ')' && --depth === 0) break;
-    }
-    if (at >= source.length) continue;
-
-    const next = source.slice(at).search(/\n\s*export function /);
-    const window = next === -1 ? source.slice(at) : source.slice(at, at + next);
-    const brace = /\{\s*\n/.exec(window);
-    if (brace) found.push({ name: match[1], body: at + brace.index + 1 });
-  }
-
-  return found;
 }
 
 /* Colour codes out of the reading.
@@ -133,6 +98,69 @@ export function failedCount(output) {
 }
 
 /**
+ * The slice of the checks a given shard is responsible for.
+ *
+ * Round robin rather than a contiguous block: the cost of a blinding is the
+ * cost of the suite, so any split balances — but taking every nth means each
+ * shard touches every file, and a shard whose whole file has gone missing
+ * cannot look complete on its own.
+ *
+ * Deterministic, pure, and exported, because the promise being made is «between
+ * them the shards cover every check exactly once» and that is a property of
+ * this function, provable without running anything.
+ */
+export function shardOf(targets, index, total) {
+  if (!Number.isInteger(index) || !Number.isInteger(total) || total < 1 || index < 1 || index > total) {
+    throw new Error(`--shard wants \`i/n\` with 1 ≤ i ≤ n, and got \`${index}/${total}\``);
+  }
+  return targets.filter((_, at) => at % total === index - 1);
+}
+
+/** `--shard=2/4 --report=out.json --concurrency=3`, and the modes. */
+export function parseArgs(argv) {
+  const options = { shard: null, report: null, concurrency: null, workers: null, verify: [] };
+
+  for (const arg of argv) {
+    const shard = /^--shard=(\d+)\/(\d+)$/.exec(arg);
+    const report = /^--report=(.+)$/.exec(arg);
+    const concurrency = /^--concurrency=(\d+)$/.exec(arg);
+
+    if (shard) options.shard = { index: Number(shard[1]), total: Number(shard[2]) };
+    else if (report) options.report = report[1];
+    else if (concurrency) options.concurrency = Number(concurrency[1]);
+    else if (/^--workers=(\d+)$/.test(arg)) options.workers = Number(/^--workers=(\d+)$/.exec(arg)[1]);
+    else if (arg === '--verify-reports') options.verifying = true;
+    else if (options.verifying) options.verify.push(arg);
+    else throw new Error(`unknown argument \`${arg}\``);
+  }
+
+  return options;
+}
+
+/**
+ * What the shards, put back together, cover.
+ *
+ * The point of sharding is that no single job sees the whole answer any more,
+ * and a job that never ran is indistinguishable from one that found nothing to
+ * do — which is the «18 of 18» this tool exists not to print, moved up a level
+ * into the CI configuration. So the reports are added up against a list of
+ * checks derived here, freshly: a name covered twice or not at all is a
+ * failure, and so is a total that has drifted.
+ */
+export function missingFromReports(reports, expected) {
+  const covered = new Map();
+  for (const report of reports) {
+    for (const name of report.checks ?? []) covered.set(name, (covered.get(name) ?? 0) + 1);
+  }
+
+  return {
+    uncovered: expected.filter((name) => !covered.has(name)),
+    twice: [...covered.entries()].filter(([, times]) => times > 1).map(([name]) => name),
+    unexpected: [...covered.keys()].filter((name) => !expected.includes(name)),
+  };
+}
+
+/**
  * What the suite says about a blinded guard.
  *
  * Three answers, not two. A suite that passes means nobody noticed. A suite
@@ -141,23 +169,30 @@ export function failedCount(output) {
  * reporting one — a syntax error, a dependency that would not load — and that
  * has to be said, with its reason, rather than counted either way.
  */
-async function runSuite({ reuseDist = true } = {}) {
+async function runSuite({ blind = null, reuseDist = true, workers = null } = {}) {
   const env = { ...process.env, NO_COLOR: '1' };
   // Deleted rather than left alone: the baseline has to build, and REUSE_DIST
   // may well be exported in the shell that started this.
   if (reuseDist) env.REUSE_DIST = '1';
   else delete env.REUSE_DIST;
 
+  if (blind) env[BLIND_ENV] = `${blind.path}::${blind.name}`;
+  else delete env[BLIND_ENV];
+
   try {
     // The installed vitest, run by this node, rather than `npx vitest`: npx
     // resolves a name against a PATH and a registry, and neither is something
-    // this needs to depend on twenty-two times in a row.
-    //
-    // Awaited, not execFileSync: a synchronous loop never yields to the event
-    // loop, so the signal handlers registered below could not run — and
-    // registering them had already replaced Node's default terminate-on-signal,
-    // leaving Ctrl-C unable to stop anything at all.
-    await execFileAsync(process.execPath, [join(repoRoot, 'node_modules/vitest/vitest.mjs'), 'run'], {
+    // this needs to depend on sixty-five times in a row.
+    const args = [join(repoRoot, 'node_modules/vitest/vitest.mjs'), 'run'];
+    /* How many workers *this* suite may use. The blinded runs go several at a
+       time, and vitest spreads the forty-odd test files over workers of its
+       own: left to itself every run asks for the whole machine, so six runs
+       ask for it six times over and spend the difference queueing. What is
+       wanted is the product — runs times workers — to be about the core count,
+       and the two halves are set together in main(). */
+    if (workers) args.push(`--maxWorkers=${workers}`);
+
+    await execFileAsync(process.execPath, args, {
       cwd: repoRoot,
       // Well above what the suite prints. At the 1 MB default an overflow
       // arrives as a failure with the output truncated — which reads exactly
@@ -195,42 +230,63 @@ function tail(output, lines = 25) {
     .join('\n');
 }
 
-async function main() {
-  /* The one file blinded right now, and nothing else.
-     An earlier version held a snapshot of every file and rewrote them all at
-     the end, which silently threw away anything edited while the run was going
-     — over a minute during which a developer has no reason to think their
-     editor is unsafe. What is put back now is only what this actually
-     changed. */
-  let inFlight = null;
-  const restore = () => {
-    if (!inFlight) return;
-    writeFileSync(join(repoRoot, inFlight.path), inFlight.text);
-    inFlight = null;
+/** Runs `work` over `items`, `limit` at a time, in the order they finish. */
+async function pool(items, limit, work) {
+  const results = [];
+  let next = 0;
+
+  const runner = async () => {
+    while (next < items.length) {
+      const at = next++;
+      results[at] = await work(items[at]);
+    }
   };
 
-  for (const signal of ['SIGINT', 'SIGTERM']) {
-    process.on(signal, () => {
-      restore();
-      process.exit(130);
-    });
-  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, runner));
+  return results;
+}
 
-  const files = sourceFiles();
+/** Every check in the repository, in a stable order. */
+function allTargets() {
   const targets = [];
-  for (const path of files) {
+  for (const path of sourceFiles()) {
     const source = readFileSync(join(repoRoot, path), 'utf8');
-    if (source.includes(MARK)) {
-      console.error(
-        `${path} still carries a blinding from an interrupted run.\n` +
-          'Put it back — `git checkout -- .` — before running this again.',
-      );
-      process.exit(1);
-    }
     for (const check of checksIn(source)) targets.push({ path, name: check.name });
   }
+  return targets;
+}
 
-  if (targets.length === 0) {
+function verifyReports(paths) {
+  const expected = allTargets().map((target) => target.name);
+  const reports = paths.map((path) => JSON.parse(readFileSync(path, 'utf8')));
+  const { uncovered, twice, unexpected } = missingFromReports(reports, expected);
+
+  console.log(
+    `[mutate] ${reports.length} shards, ${expected.length} checks in the repository`,
+  );
+
+  if (uncovered.length === 0 && twice.length === 0 && unexpected.length === 0) {
+    console.log(`\nevery one of the ${expected.length} checks was blinded by exactly one shard`);
+    return 0;
+  }
+
+  if (uncovered.length) console.error(`Never blinded by any shard: ${uncovered.join(', ')}`);
+  if (twice.length) console.error(`Blinded by more than one shard: ${twice.join(', ')}`);
+  if (unexpected.length) console.error(`Blinded but no longer in the repository: ${unexpected.join(', ')}`);
+  return 1;
+}
+
+async function main() {
+  const options = parseArgs(process.argv.slice(2));
+
+  if (options.verify.length > 0) {
+    process.exitCode = verifyReports(options.verify);
+    return;
+  }
+
+  const everything = allTargets();
+
+  if (everything.length === 0) {
     // The failure this script exists to make impossible, happening to the
     // script itself: finding nothing and reporting success. Losing *some* of
     // them would be quieter still, and that is what its own test is for.
@@ -238,11 +294,15 @@ async function main() {
     process.exit(1);
   }
 
+  const targets = options.shard
+    ? shardOf(everything, options.shard.index, options.shard.total)
+    : everything;
+
   /* The suite has to be green before anything is blinded, and this builds to
      make sure of it.
      Without this the whole answer is worthless in the most ordinary situation
      there is: a stale dist/ leaves the build layer red, every blinding then
-     looks «noticed», and the script prints a confident «22/22 held up» having
+     looks «noticed», and the script prints a confident «65/65 held up» having
      asked nothing. It is the same failure it accuses the guards of. */
   console.log('[mutate] running the suite once, untouched, to have something to compare against…');
   const baseline = await runSuite({ reuseDist: false });
@@ -255,62 +315,60 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`[mutate] blinding ${targets.length} checks, one at a time\n`);
+  /* Two cores left alone. The suites underneath spawn workers of their own, so
+     the useful number here is well under the core count — measured, not
+     assumed: past that the runs start queueing on each other and the wall clock
+     stops improving. */
+  /* Measured on eight cores rather than assumed. A blinded run on its own is
+     3,7s using every worker and 24s using one, so the suite's own parallelism
+     is worth four times and handing the pool a single-worker run would be
+     paying for parallelism twice. Several runs each holding a couple of workers
+     is what came out fastest — nine checks in 24s at six-by-two, against 27s at
+     four-by-two and 27s at three-by-three. Two cores are left to the machine. */
+  const concurrency = Math.max(1, options.concurrency ?? Math.max(2, cpus().length - 2));
+  const workers = options.workers ?? 2;
+  const where = options.shard ? ` (shard ${options.shard.index}/${options.shard.total})` : '';
+  console.log(
+    `[mutate] blinding ${targets.length} of ${everything.length} checks${where}, ` +
+      `${concurrency} at a time with ${workers} workers each\n`,
+  );
 
   const survivors = [];
   const broken = [];
 
-  try {
-    for (const { path, name } of targets) {
-      /* Read fresh, and the offset worked out here rather than earlier: the
-         file may have been edited since the scan, and an offset from a stale
-         copy would inject the blinding into the middle of something else. */
-      const full = join(repoRoot, path);
-      const original = readFileSync(full, 'utf8');
-      const check = checksIn(original).find((candidate) => candidate.name === name);
-      if (!check) {
-        console.log(`  UNRUN    ${name.padEnd(34)} vanished from ${path} since the scan`);
-        broken.push(name);
-        continue;
-      }
+  const results = await pool(targets, concurrency, async ({ path, name }) => {
+    const result = await runSuite({ blind: { path, name }, workers });
 
-      inFlight = { path, text: original };
-      writeFileSync(
-        full,
-        `${original.slice(0, check.body)}\n  return []; // ${MARK}${original.slice(check.body)}`,
-      );
-
-      const result = await runSuite();
-      restore();
-
-      if (result.noticed) {
-        console.log(`  seen     ${name.padEnd(34)} ${result.failed} tests red`);
-      } else if (result.broken) {
-        console.log(`  UNRUN    ${name.padEnd(34)} the suite never reported ${result.why}`);
-        console.log(tail(result.output));
-        broken.push(name);
-      } else {
-        console.log(`  UNSEEN   ${name.padEnd(34)} nothing noticed`);
-        survivors.push(name);
-      }
+    if (result.noticed) {
+      console.log(`  seen     ${name.padEnd(34)} ${result.failed} tests red`);
+    } else if (result.broken) {
+      console.log(`  UNRUN    ${name.padEnd(34)} the suite never reported ${result.why}`);
+      console.log(tail(result.output));
+      broken.push(name);
+    } else {
+      console.log(`  UNSEEN   ${name.padEnd(34)} nothing noticed`);
+      survivors.push(name);
     }
-  } finally {
-    restore();
-  }
 
-  /* Read back rather than assumed: this is only allowed to exist because it
-     always puts things back, and asking the file system is cheaper than
-     trusting it. The mark is what it asks about — comparing against the
-     start-of-run text would also flag an edit made meanwhile, which is the
-     developer's work and not this script's business. */
-  const blinded = files.filter((path) => readFileSync(join(repoRoot, path), 'utf8').includes(MARK));
-  if (blinded.length > 0) {
-    console.error(`\nNOT RESTORED: ${blinded.join(', ')} — restore by hand.`);
-    process.exit(1);
+    return { name, result };
+  });
+
+  if (options.report) {
+    writeFileSync(
+      options.report,
+      `${JSON.stringify(
+        {
+          shard: options.shard ? `${options.shard.index}/${options.shard.total}` : '1/1',
+          checks: results.map(({ name }) => name),
+        },
+        null,
+        2,
+      )}\n`,
+    );
   }
 
   const held = targets.length - survivors.length - broken.length;
-  console.log(`\n${held}/${targets.length} checks held up by at least one test`);
+  console.log(`\n${held}/${targets.length} checks held up by at least one test${where}`);
 
   if (survivors.length > 0) console.error(`Nothing notices: ${survivors.join(', ')}`);
   if (broken.length > 0) console.error(`Could not be answered for: ${broken.join(', ')}`);
@@ -319,6 +377,6 @@ async function main() {
 }
 
 /* Only when run as a command. Its own test imports the functions above, and
-   importing a module that blinds twenty-two guards on the way in would be a
+   importing a module that blinds sixty-five guards on the way in would be a
    surprising thing for a test file to do. */
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) await main();

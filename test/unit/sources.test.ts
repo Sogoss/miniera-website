@@ -99,7 +99,7 @@ const clocklessFiles = codeFiles.filter((path) => path !== CLOCK_HOLDER);
 
    And over everything the build can ship, not over src/ alone — the same wider
    net as the stylesheets above, and for the same reason. `public/` is copied
-   into dist/ verbatim and PR 15 puts the Sveltia shell there; `scripts/` and
+   into dist/ verbatim and PR 16 puts the Sveltia shell there; `scripts/` and
    the config are code that runs. A second copy of the number in any of them
    ships, and drifts the day the number changes, with nothing red. Rule 12 had
    already learnt this about `public/`; rule 17 was written knowing it and
