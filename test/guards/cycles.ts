@@ -161,10 +161,13 @@ export function checkAccentContrast(
 
   if (ratio >= minimum) return [];
 
+  /* The threshold asked for and not the one this branch was written around: a
+     third caller passing 4 would otherwise be told a colour at 3.5:1 is «below
+     the 3:1», which names a floor the colour clears. */
   const because =
     minimum >= MINIMUM_TEXT_CONTRAST
-      ? 'below the 4.5:1 a word needs: the current voice of the navigation is a label written on this colour, and the booking link in the modal is another'
-      : 'below the 3:1 an accent needs to be read at all. The five tuned colours of the design are between 3.88 and 5.55; a colour this close to the ground publishes a kicker and a scene border nobody can see';
+      ? `below the ${minimum}:1 a word needs: the current voice of the navigation is a label written on this colour, and the booking link in the modal is another`
+      : `below the ${minimum}:1 an accent needs to be read at all. The five tuned colours of the design are between 3.88 and 5.55; a colour this close to the ground publishes a kicker and a scene border nobody can see`;
 
   return [
     {

@@ -60,13 +60,29 @@ export function checkEveningRoutes(
 
 /* --- Links that lead somewhere --------------------------------------------- */
 
-/** Every `<a href>` of a page, with where it is.
+/**
+ * The markup a link can actually be in.
  *
- *  Comments out first: a link left commented while something is being tried is
- *  not a published link, and a guard that reported it would be reporting work
- *  in progress. */
+ * Comments out: a link left commented while something is being tried is not a
+ * published link, and a guard that reported it would be reporting work in
+ * progress. Script bodies with them, for the reason `checkAnchorsWithoutHref`
+ * gives — Astro ships a script verbatim, so `const row = '<a href="/rassegna">'`
+ * would be read as a link to a page that is not there, and the guard would fire
+ * on every page over a string. Templates stay: a link inside one is a real link
+ * in the modal it fills.
+ *
+ * Blanked and not removed, so every index still points where it did.
+ */
+function readableMarkup(markup: string): string {
+  return stripMarkupComments(markup).replace(
+    /<script\b[^>]*>[\s\S]*?<\/script>/gi,
+    (block) => block.replace(/[^\n]/g, ' '),
+  );
+}
+
+/** Every `<a href>` of a page, with where it is. */
 export function pageLinks(markup: string): { href: string; index: number }[] {
-  const clean = stripMarkupComments(markup);
+  const clean = readableMarkup(markup);
   const pattern = /<a\b[^>]*?\shref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/gi;
 
   return [...clean.matchAll(pattern)].map((match) => ({
@@ -141,9 +157,12 @@ export function checkInternalLinks(
   const known = new Set([...routes].map((route) => tidy(route)));
   const violations: Violation[] = [];
   const reported = new Set<string>();
-  const clean = stripMarkupComments(markup);
+  /* Cleaned once and handed on: the line a violation names has to be counted in
+     the same text the index came out of, and `readableMarkup` is idempotent —
+     what `pageLinks` does to this again is nothing. */
+  const clean = readableMarkup(markup);
 
-  for (const { href, index } of pageLinks(markup)) {
+  for (const { href, index } of pageLinks(clean)) {
     const target = linkTarget(href, path);
     if (target === null || known.has(target) || reported.has(target)) continue;
     reported.add(target);

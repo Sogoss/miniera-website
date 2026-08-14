@@ -74,6 +74,10 @@ const EMAIL_SUBJECT = 'Scrivo dal sito della Miniera Culturale';
       <div class="page-actions">
         <Button href={contactLink()} size="lg" target="_blank" rel="noopener">
           Scrivici su WhatsApp
+          {/* Said, as beside every other `target="_blank"` of this site: a new
+              tab is a thing that happens to a reader, and one who cannot see it
+              happen is left pressing back on a page that never went anywhere. */}
+          <span class="visually-hidden">— si apre in una nuova scheda</span>
         </Button>
       </div>
     </section>

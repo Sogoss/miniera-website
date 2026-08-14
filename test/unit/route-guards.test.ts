@@ -167,6 +167,21 @@ describe('checkInternalLinks', () => {
     expect(checkInternalLinks('<!-- <a href="/rassegna">presto</a> -->', ROUTES)).toEqual([]);
   });
 
+  it('does not read a script as markup', () => {
+    // Astro ships an inline script verbatim, so a string that looks like a link
+    // is still a string. Reported, it would be a broken link on every page of
+    // the site over something no reader can follow — a guard firing on correct
+    // work, which is the half that gets switched off.
+    const scripted = `<script>const row = '<a href="/rassegna">presto</a>';</script>`;
+    expect(checkInternalLinks(scripted, ROUTES)).toEqual([]);
+    expect(pageLinks(scripted)).toEqual([]);
+  });
+
+  it('still reads a link inside a template, which is one waiting to be cloned', () => {
+    expect(checkInternalLinks('<template><a href="/rassegna">presto</a></template>', ROUTES))
+      .toHaveLength(1);
+  });
+
   it('reads the links of a page whatever order the attributes are in', () => {
     const found = pageLinks('<a class="x" href="/uno">1</a><a href=\'/due\' id="y">2</a>');
     expect(found.map((link) => link.href)).toEqual(['/uno', '/due']);

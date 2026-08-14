@@ -21,8 +21,13 @@ import {
 import { checkStaleVenue } from '../guards/venue.ts';
 import { decodeEntities, publishedPages, readPublishedFiles } from '../support/dist.ts';
 import { collectionEntries } from '../support/frontmatter.ts';
-import { EMAIL, PLACEHOLDER_PHONE, contactMessage, whatsappDigits } from '../../src/lib/contact.ts';
-import { WHATSAPP_NUMBER } from '../../src/lib/contact.ts';
+import {
+  EMAIL,
+  PLACEHOLDER_PHONE,
+  WHATSAPP_NUMBER,
+  contactMessage,
+  whatsappDigits,
+} from '../../src/lib/contact.ts';
 import { placeholderTexts } from '../../src/lib/placeholder.ts';
 import { FORMER_ADDRESSES, fullAddress } from '../../src/lib/venues.ts';
 import astroConfig from '../../astro.config.mjs';
@@ -30,6 +35,10 @@ import astroConfig from '../../astro.config.mjs';
 const pages = publishedPages();
 const about = pages.find((page) => page.path === 'dist/chi-siamo/index.html');
 const contacts = pages.find((page) => page.path === 'dist/contatti/index.html');
+
+/* Read once: `readPublishedFiles()` walks dist/ and reads every text file in
+   it, and the two assertions below want the same list. */
+const publishedFiles = readPublishedFiles();
 
 const withDomain = Boolean((astroConfig as { site?: string }).site);
 
@@ -69,7 +78,7 @@ describe('the institutional pages', () => {
     expect(addresses.some((address) => html.includes(address))).toBe(true);
   });
 
-  it.each(readPublishedFiles().map((file) => [file.path, file] as const))(
+  it.each(publishedFiles.map((file) => [file.path, file] as const))(
     '%s does not carry the address of the design',
     (_path, file) => {
       // Written five times in design-export/, which is the specification this
@@ -80,7 +89,7 @@ describe('the institutional pages', () => {
     },
   );
 
-  it.each(readPublishedFiles().map((file) => [file.path, file] as const))(
+  it.each(publishedFiles.map((file) => [file.path, file] as const))(
     '%s does not publish the landline of the design either',
     (_path, file) => {
       // `011 000 0000` is a well-formed Turin number that rings somewhere that

@@ -16,24 +16,27 @@
 import Label from './Label.astro';
 import { PLACEHOLDER_HINT, PLACEHOLDER_NOTE } from '../lib/placeholder.ts';
 
+/* A `<div>` and no choice of element. The `as` prop this was written with had
+   no caller: every block it wraps sits inside a section that already has its
+   heading, so a `<section>` here would be a second region with no name of its
+   own. A prop nobody passes is a prop nobody tries — and the day one of these
+   really is a section, the element is one word away. */
 interface Props {
-  /** The element this wraps — a section of its own, or a block inside one. */
-  as?: 'div' | 'section';
   /** The whole sentence rather than the two words. Once per page is enough. */
   hint?: boolean;
   class?: string;
 }
 
-const { as: Tag = 'div', hint = false, class: className }: Props = Astro.props;
+const { hint = false, class: className }: Props = Astro.props;
 ---
 
-<Tag class:list={['placeholder', className]} data-placeholder>
+<div class:list={['placeholder', className]} data-placeholder>
   <p class="placeholder-mark">
     <Label tone="outline">{PLACEHOLDER_NOTE}</Label>
     {hint && <span class="placeholder-hint">{PLACEHOLDER_HINT}</span>}
   </p>
   <slot />
-</Tag>
+</div>
 
 <style>
   .placeholder {

@@ -105,6 +105,16 @@ describe('the published navigation', () => {
         // The component gallery is in no voice: a service page, out of the
         // index and out of the navigation.
         expect(marked, `${page.route} marks a voice it is not on`).toHaveLength(0);
+
+        /* And the summary says «Menu», which is the same question asked of the
+           control that has to carry a name. Looked up as «the voice whose href
+           is the current one», nothing matches nothing — and `undefined` is the
+           href of «Rassegna stampa», the one voice with no page: the phone's
+           menu named a page that does not exist, on a page the reader was not
+           on, and nothing about it failed. */
+        expect(page.nav, `${page.route} names a voice in its summary`).toMatch(
+          /<summary[^>]*>\s*<span[^>]*>Menu<\/span>/,
+        );
         return;
       }
 

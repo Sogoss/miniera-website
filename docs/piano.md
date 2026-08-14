@@ -1838,6 +1838,42 @@ Sul pubblicato:
 > diversa da un ramo che nessun parametro raggiunge, e la differenza è scritta
 > accanto.
 
+> **Trovato in revisione.** Dieci difetti, e il primo è di quelli che questa PR
+> esiste per intercettare. Il riassunto della tendina si ricava con «la voce il
+> cui `href` è quello corrente», e su una pagina che non sta in nessuna voce
+> — la rassegna dei componenti — quello corrente è `undefined`: il confronto
+> `item.href === undefined` è vero di **«Rassegna stampa»**, l'unica voce senza
+> indirizzo. Il menu del telefono nominava lì una pagina che non esiste, su una
+> pagina su cui il lettore non era, e il commento del componente prometteva
+> «Menu». Niente falliva, e nessun test guardava quel ramo: ora ce n'è uno
+> dentro l'`if` che già distingueva quel caso.
+>
+> **Lo spegnimento dei `pointer-events` era a metà.** L'involucro non basta,
+> perché la pillola è a sua volta un riquadro fisso sopra lo scroller — e sul
+> telefono è larga quanto lo schermo, cioè una fascia di 54 pixel in cima al
+> programma dove il dito non scorre. La risposta è quella che la Timeline aveva
+> già scritto: spegnerli anche sulla pillola e restituirli a ciò che si preme.
+> La prova manuale di questa PR aveva guardato il punto giusto e concluso il
+> contrario — «sopra la pillola no, che è come deve essere» — perché sulla
+> pillola c'era una voce sotto il puntatore.
+>
+> **`checkInternalLinks` leggeva i corpi degli script come markup**, quando la
+> guardia gemella nello stesso strato li annerisce da sempre e per la ragione
+> scritta lì: Astro spedisce uno script verbatim, e una stringa che somiglia a un
+> link avrebbe fatto segnalare `/rassegna` su ogni pagina del sito. Una guardia
+> che scatta sul lavoro giusto è la metà che qualcuno spegne.
+>
+> Il resto: il bottone WhatsApp della pagina contatti apriva una scheda nuova
+> senza dirlo, mentre la riga venti righe più su e tutte e tre le uscite di
+> `Scene.astro` lo dicono; la lettura di `--text-on-accent` prendeva la prima
+> dichiarazione e basta, quindi il giorno che il tema chiaro la ridichiara la
+> verifica nuova misurerebbe in silenzio il nero dell'altro tema; le righe di
+> contatto si sottolineavano al passaggio del mouse e non al fuoco, cioè per una
+> tastiera erano l'unico link senza affordance delle due pagine; il messaggio di
+> `checkAccentContrast` sceglieva la spiegazione con una soglia binaria, e a un
+> terzo chiamante avrebbe detto «sotto il 3:1» di un colore che il 3:1 lo supera;
+> e `Placeholder` portava una prop `as` che non passava nessuno.
+
 ### Test manuali
 
 Fatti sul sito **costruito**, non in `npm run dev`:
@@ -1851,8 +1887,10 @@ Fatti sul sito **costruito**, non in `npm run dev`:
 - Il clic fuori **non** chiude il menu: è il costo dichiarato di non avere uno
   script, ed è stato verificato che sia quello e non altro
 - L'ordine di tabulazione è salta-a, marchio, tendina, voci
-- La pillola non mangia lo scorrimento: sopra il suo involucro il colpo di
-  rotella arriva alla scena sotto, sopra la pillola no — che è come deve essere
+- La pillola non mangia lo scorrimento: nel vuoto fra due voci il colpo di
+  rotella arriva alla scena sotto, mentre marchio, voci e riassunto restano
+  premibili — provato con `elementFromPoint` prima e dopo la correzione della
+  revisione
 - L'accento della navigazione segue la serata a schermo: sul programma la
   pillola è verde come il ciclo 3, sulle due pagine è l'arancio predefinito
 - L'indirizzo pubblicato è quello della collection, con la città

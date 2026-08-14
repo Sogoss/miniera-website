@@ -40,7 +40,14 @@ import { NAVIGATION, currentHref } from '../lib/navigation.ts';
    given wrong, and every page already knows its own address. `Astro.url` is the
    route being rendered, which in a build is the page's own path. */
 const current = currentHref(Astro.url.pathname);
-const currentLabel = NAVIGATION.find((item) => item.href === current)?.label;
+
+/* Asked only once there is a voice to name. `current` is nothing on a page that
+   is in none — the component gallery — and `item.href === current` is then
+   `item.href === undefined`, which is true of «Rassegna stampa»: the one voice
+   with no address. The summary read «Rassegna stampa» there, naming a page that
+   does not exist, on a page the reader is not on. */
+const currentLabel =
+  current === undefined ? undefined : NAVIGATION.find((item) => item.href === current)?.label;
 ---
 
 {/* Two boxes and not one: the outer one spans the screen so that the pill can
@@ -48,7 +55,9 @@ const currentLabel = NAVIGATION.find((item) => item.href === current)?.label;
     hit-tested first, and a wheel over it looks for a scrolling ancestor of its
     own — finding the document, which is one screen tall and does not move. That
     is a strip across the top of the programme where scrolling does nothing, and
-    it is the trap the Timeline already paid for. */}
+    it is the trap the Timeline already paid for. The pill inside is a fixed box
+    too, so it turns them off in turn and hands them back to the voices — see
+    the rule on `.site-nav`. */}
 <div class="site-nav-wrap">
   {/* `data-navigation` is the handle the build assertions take hold of, like
       `data-timeline` and `data-scene`: a class is styling and can be renamed by
@@ -145,6 +154,24 @@ const currentLabel = NAVIGATION.find((item) => item.href === current)?.label;
     border-radius: var(--radius-pill);
     background: var(--veil-bar);
     box-shadow: var(--shadow-lift-lg);
+
+    /* Off on the pill and on again for the things you press, which is the
+       Timeline's answer to the same trap and not a second one. The wrap alone
+       is not enough: the pill is itself a fixed box over the scroller, hit
+       first, and a wheel or a drag on it looks for a scrolling ancestor of its
+       own — finding the document, which is one screen tall and does not move.
+       Left on, it is a band across the top of the programme where scrolling
+       does nothing, the whole width of the screen on a phone. */
+    pointer-events: none;
+  }
+
+  /* The hit area is as wide as what it is for. The panel is given it whole
+     because `pointer-events` inherits: while the menu is open, everything
+     inside it is solid. */
+  .site-nav-home,
+  a.site-nav-voice,
+  .site-nav-summary,
+  .site-nav-panel {
     pointer-events: auto;
   }
 

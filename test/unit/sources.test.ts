@@ -519,6 +519,19 @@ describe('src/content', () => {
     expect(ink, 'colors.css no longer declares --text-on-accent as a hex').toMatch(
       /^#[0-9a-fA-F]{6}$/,
     );
+
+    /* And once, because the reading above takes the first declaration and no
+       other. colors.css already carries a `[data-theme="paper"]` block that
+       flips six ink tokens; the day it flips this one too, every assertion
+       below would go on measuring the dark theme's black and the paper theme
+       would be checked by nothing — the same silence the line above is for. */
+    const declarations = [...read('src/styles/tokens/colors.css').matchAll(
+      /--text-on-accent\s*:/g,
+    )];
+    expect(
+      declarations.length,
+      'a second block declares --text-on-accent and only the first one is measured',
+    ).toBe(1);
   });
 
   it.each(cycleEntries.map((cycle) => [cycle.id, cycle] as const))(

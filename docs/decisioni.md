@@ -1506,8 +1506,13 @@ token, risolvendo il `var()` con cui è dichiarato. *(PR 13)*
 **La pillola non mangia lo scorrimento.** Un riquadro fisso sopra lo scroller
 viene colpito per primo, e una rotellina sopra di esso cerca un antenato
 scorrevole suo — trovando il documento, alto una schermata e fermo. È la trappola
-che la Timeline ha già pagato: `pointer-events: none` sull'involucro e `auto`
-sulla pillola. *(PR 13)*
+che la Timeline ha già pagato, e la risposta è la sua: `pointer-events: none`
+sull'involucro **e sulla pillola**, e `auto` restituito alle cose che si premono
+— il marchio, le voci, il riassunto, il pannello. Spegnerlo sul solo involucro
+non basta e la revisione l'ha detto: la pillola è a sua volta un riquadro fisso,
+e sul telefono è larga quanto lo schermo — una fascia di 54 pixel in cima al
+programma dove il dito non scorre. Provato sul costruito, prima e dopo: nel vuoto
+fra due voci adesso il colpo di rotella raggiunge la scena. *(PR 13)*
 
 **I `clamp()` delle due pagine nuove sono in `rem`.** La PR 16 esiste anche per
 togliere i px da quelli delle scene, copiati dal design: un `clamp()` che non
