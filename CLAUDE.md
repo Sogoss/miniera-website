@@ -285,6 +285,51 @@ non una preferenza.
     rende una violazione un solo blocco marcato**. È l'interruttore di `og:url`:
     la PR 15 non chiude finché i testi veri non ci sono, ed è voluto.
 
+21. **Il CMS e lo schema sono lo stesso elenco visto da due parti.**
+    `public/admin/config.yml` e `src/content.config.ts` descrivono gli stessi
+    campi a due lettori diversi, e niente nei due file li tiene d'accordo. Le
+    tre forme in cui divergono sono tutte silenziose: un campo che il form non
+    offre non lo compila nessuno, un campo che il form ha in più viene scritto
+    nel file e **buttato via alla build senza una parola**, e un campo
+    obbligatorio in Zod e facoltativo nel form è una build rossa su una serata
+    che il redattore ha già salvato. La parità non si rilegge: `test/guards/cms.ts`
+    carica lo schema Zod vero — `src/content.config.ts` importato con un alias per
+    `astro:content` — e confronta nomi, `required`, widget, bersaglio delle
+    relazioni e opzioni degli enum. Un elenco di nomi scritto in un test sarebbe
+    la terza copia di ciò che le guardie tengono insieme. **E la regola 11 vale
+    anche lì**: il campo data dichiara `input_timezone: Europe/Rome` — senza, il
+    fuso è quello del browser di chi compila, ed è l'unico posto in cui questa
+    regola si perde senza che nessuno scriva una riga di codice. **Ogni campo
+    immagine ha un tetto** prima del commit, perché git non dimentica una foto da
+    4 MB. **Il nome di un file di contenuto lo decide il modello di slug del
+    CMS** — `81.md`, non `081.md` — perché da qui in poi le mani che scrivono in
+    `src/content/` sono due e una sola legge il `config.yml`. **E un file di
+    contenuto non porta un corpo**: nessuna pagina lo rende, quindi il CMS non
+    offre il campo, e la prosa scritta lì sarebbe cancellata al primo
+    salvataggio. **E il `config.yml` si convalida contro lo schema JSON che
+    Sveltia pubblica**, `checkCmsConfigAgainstSchema`: tutte le altre guardie
+    leggono le chiavi che scriviamo noi, quindi un `input_timzone` scritto male
+    verrebbe controllato sotto il nome sbagliato e approvato, mentre il CMS
+    torna al fuso del browser. La terza parte dell'accordo è Sveltia, e l'unica
+    cosa che parla per lei è il suo schema.
+
+22. **Il bundle del CMS lo serviamo noi, e non sta in git.** Non da un CDN — la
+    ragione dei caratteri, più una che vale solo qui: quel JavaScript ha i
+    permessi di scrittura sul repository, quindi quali byte siano lo decide
+    `package-lock.json`. Non committato, perché 1,9 MB di minificato per ogni
+    aggiornamento resterebbero nella storia per sempre, che è il motivo scritto
+    in `docs/contenuti.md` per le foto. Lo copia `npm run cms:sync`, che gira
+    dentro `dev` e `build`, e un test dello strato `build` confronta i byte
+    pubblicati con quelli installati — è il patto della favicon, applicato a un
+    artefatto che in git non c'è. Perciò **`@sveltia/cms` sta fra le
+    `dependencies`**: la build ne ha bisogno davvero. Ed è **escluso dal
+    `tsconfig.json`**, perché con `allowJs` acceso `astro check` lo analizza e
+    muore per esaurimento di memoria. Quel bundle non è sorgente nostro: le
+    guardie sul sorgente lo saltano — `isVendored` in `test/support/paths.ts` —
+    come quelle sul pubblicato saltano ciò che arriva da `public/`. Contiene
+    `mailto:` e `GMT` perché è un CMS, e una guardia che scatta su un lavoro
+    giusto è la metà che qualcuno spegne.
+
 ## Lingua
 
 Due lingue, separate da un confine netto: **il codice è in inglese, quello che
@@ -319,7 +364,8 @@ incontra: nel CMS ogni campo porta la sua etichetta italiana.
 ```
 design-export/     export di Claude Design — la specifica, non si spedisce
 docs/              documentazione di progetto
-scripts/           utilità (sincronizzazione dei caratteri)
+public/admin/      il CMS: index.html e config.yml; il bundle lo copia la build
+scripts/           utilità (caratteri, favicon, bundle del CMS)
 src/assets/fonts/  woff2 self-hostati e licenze OFL
 src/components/    i componenti .astro
 src/layouts/       Base.astro: il documento che ogni pagina abita
@@ -446,11 +492,14 @@ npm run build        # build statica in dist/
 npm run preview      # anteprima della build
 npm test             # guardie e test, con una build dentro
 npm run test:mutate  # acceca ogni guardia a turno e pretende che la suite se
-                     # ne accorga — un minuto abbondante, la gira la CI
+                     # ne accorga — sei o sette minuti, la gira la CI: è la
+                     # suite intera una volta per guardia, e le guardie sono 65
 npm run check        # astro check, typecheck
 npm run fonts:sync   # ricopia i caratteri dai pacchetti @fontsource
 npm run favicon:build  # rigenera public/favicon.ico da public/favicon.svg —
                        # lo fa già `npm run build`, e un test lo pretende
+npm run cms:sync     # ricopia il bundle di Sveltia in public/admin/ — lo fanno
+                     # già `npm run dev` e `npm run build`, e un test lo pretende
 ```
 
 `REUSE_DIST=1 npm test` salta la build quando `dist/` è già fresco.

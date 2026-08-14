@@ -75,7 +75,7 @@ sostituisce un telefono vero.
 | 11 | La Timeline raggiunge l'archivio | `timeline-archivio` | fatta |
 | 12 | La prenotazione dentro il modale | `modale-prenotazione` | fatta |
 | 13 | Chi siamo, contatti, rassegna disabilitata | `pagine-istituzionali` | fatta |
-| 14 | Sveltia CMS | `cms-sveltia` | da fare |
+| 14 | Sveltia CMS | `cms-sveltia` | fatta |
 | 15 | Pubblicazione | `pubblicazione` | da fare |
 | 16 | Proporzioni su schermo piccolo | `proporzioni-mobile` | da fare |
 
@@ -1913,29 +1913,182 @@ Fatti sul sito **costruito**, non in `npm run dev`:
 
 ## PR 14 — Sveltia CMS
 
-**Branch:** `cms-sveltia` · **Dipende da:** 9
+**Branch:** `cms-sveltia` · **Dipende da:** 3, 9
+
+Fino a qui una serata si aggiunge scrivendo un file. Da qui si aggiunge da un
+form, e chi la scrive non sa che esiste git.
+
+Il pezzo grosso non è il form — quello lo disegna Sveltia — è **il confine fra
+il form e lo schema**: due elenchi di campi che devono dire la stessa cosa e che
+non hanno niente che li tenga insieme. Un campo che il CMS non offre non lo
+compila nessuno; un campo che offre in più la build lo scarta in silenzio; un
+campo obbligatorio in Zod e facoltativo nel form è una build rossa che il
+redattore non sa leggere. È deriva che si scopre in produzione, perché in locale
+i file li scrive una mano che lo schema ce l'ha sotto gli occhi.
+
+E c'è una promessa già scritta da mantenere: [contenuti.md](contenuti.md) dice
+«**Il CMS scrive lo scostamento da sé**» dalla PR 3. Non la teneva niente. Il
+fuso è il quarto posto in cui la regola 11 si perde, e il primo in cui si
+perderebbe **senza che nessuno scriva una riga di codice**: basta che il campo
+data non dichiari il fuso, e a decidere l'ora pubblicata è dove si trovava chi
+ha compilato il form.
+
+### Decisioni prese scrivendo la PR
+
+Le otto per esteso stanno in [decisioni.md](decisioni.md), sotto *Il CMS*. In
+breve:
+
+- **Il bundle di Sveltia lo serviamo noi, e non lo committiamo.** Non da un CDN,
+  per la ragione dei caratteri — il sito non dipende da nessun altro — e per una
+  in più: quel JavaScript ha i permessi di scrittura sul repository, quindi la
+  versione la fissa il lockfile. Non committato, perché 1,9 MB di minificato per
+  ogni aggiornamento resterebbero nella storia per sempre, che è la ragione già
+  scritta per le foto. Lo copia la build, e un test confronta i byte pubblicati
+  con quelli installati. `@sveltia/cms` passa quindi fra le `dependencies`
+- **L'accesso in questa PR è con token personale**, e l'OAuth entra fra gli
+  obiettivi della PR 15: ha bisogno di un'origine registrata su GitHub e di un
+  relay, e l'origine non esiste finché il sito non è pubblicato
+- **Il fuso si dichiara nel CMS** — `input_timezone: Europe/Rome`,
+  `output_utc: false`, `format: YYYY-MM-DDTHH:mm:ssZ` — con la sua guardia
+- **Niente campo corpo**: nessuna pagina rende il `body` di un'entry. Offrirlo
+  sarebbe un campo che scrive testo che non compare da nessuna parte; non
+  offrirlo lasciando i corpi nei file sarebbe un salvataggio che li cancella
+  senza dirlo. Escono dai quattro file d'esempio che ne avevano uno
+- **Il nome del file lo decide il numero**: `81.md`, non `081.md`. Sveltia non
+  ha un filtro che imbottisce di zeri, e due convenzioni in una cartella sono
+  due mani che cominciano a non capirsi
+- **Le immagini si ridimensionano nel browser**, 1600px sul lato lungo e 800×800
+  i ritratti, in webp: è il secondo dei due punti di controllo di `contenuti.md`
+  e l'unico che vale a regime
+- **Le etichette sono italiane, la scocca del CMS è inglese**: Sveltia ha
+  diciassette traduzioni e nessuna italiana
+- **I facoltativi vuoti non si scrivono** e **non c'è pannello di anteprima**:
+  un `attendance: ''` fermerebbe la build, e un'anteprima che non somiglia al
+  sito è una promessa che il sito non mantiene
+- **Il `config.yml` si convalida contro lo schema JSON che Sveltia pubblica**:
+  è l'unica cosa che vede un'opzione scritta male, perché ogni altra guardia
+  legge le chiavi che scriviamo noi
 
 ### Obiettivi
 
-- [ ] `public/admin/` configurato con le quattro collection e i loro campi
-- [ ] Autenticazione con GitHub funzionante
-- [ ] Ridimensionamento delle immagini al caricamento: 1600px sul lato lungo
-      per le foto tema, 800×800 per i ritratti
-- [ ] Un redattore riesce a creare una serata senza sapere che esiste git
+- [x] `/admin` si apre, in sviluppo e sul costruito, con il bundle servito da
+      noi e la versione fissata dal lockfile
+- [x] Le quattro collection con **tutti** i campi dello schema, etichette e
+      aiuti in italiano, obbligatori dove lo schema li vuole
+- [x] Il campo data scrive lo scostamento italiano, sempre, indipendentemente da
+      dove si trova chi compila
+- [x] Le immagini si ridimensionano al caricamento, con i due tetti diversi per
+      foto tema e ritratti
+- [x] Un redattore crea una serata senza sapere che esiste git — con l'accesso
+      col token come sola eccezione, dichiarata
+- [x] CMS e schema non possono divergere: la parità è un test, non una
+      rilettura
+- [x] `npm test`, `npm run check` e `npm run test:mutate` verdi, con le otto
+      guardie nuove dentro: **65 su 65**
 
 ### Test automatici
 
-- Il `config.yml` copre tutti i campi dello schema Zod e nessuno in più — è il
-  test che impedisce la deriva fra CMS e schema, che altrimenti si scopre in
-  produzione
-- I campi obbligatori nello schema sono obbligatori anche nel CMS
+Guardie nuove, ognuna con il suo caso negativo. Le prime tre leggono **lo schema
+Zod vero**, importato con un alias per `astro:content`, e non un elenco di nomi
+scritto a mano: sarebbe una terza copia che deriva, cioè il difetto che questa
+PR chiude.
+
+- **`checkCmsFieldCoverage`** — ogni campo dello schema ha il suo campo nel CMS,
+  e nessuno in più. Nelle due direzioni, perché falliscono in modi diversi, e
+  dentro le liste: un `role` che manca dal form è invisibile quanto un `title`
+- **`checkCmsRequiredParity`** — obbligatorio in Zod, obbligatorio nel form. Un
+  campo con `.default()` è facoltativo, ed è giusto
+- **`checkCmsFieldKinds`** — il widget corrisponde al tipo: un
+  `reference('cicli')` è una relazione **verso `cicli`**, l'enum `format` ha
+  esattamente le sue tre opzioni, un `image()` è un campo immagine. È la metà
+  che un controllo sui soli nomi non vede — una data scritta come stringa è la
+  regola 11 persa
+- **`checkCmsDateTimezone`** — il campo data dichiara `Europe/Rome`, non
+  converte in UTC e scrive un formato che porta l'offset
+- **`checkCmsImageLimits`** — nessun campo immagine senza tetto, risolto come lo
+  risolve Sveltia: la libreria del campo **sostituisce** quella globale invece di
+  aggiungersi
+- **`checkEntryFileNames`** — ogni file di contenuto si chiama come lo
+  chiamerebbe il CMS, espandendo il modello di slug della sua collection con la
+  funzione con cui Astro ricava gli id
+- **`checkNoEntryBody`** — nessun file di contenuto porta un corpo che nessuna
+  pagina rende
+- **`checkCmsConfigAgainstSchema`** — il `config.yml` è configurazione che
+  Sveltia accetta, convalidata contro lo schema JSON del pacchetto installato.
+  È la sola che vede un'opzione **scritta male**: tutte le altre leggono le
+  chiavi che scriviamo noi, quindi un `input_timzone` verrebbe controllato sotto
+  il nome sbagliato e approvato, mentre il CMS torna al fuso del browser. Legge
+  gli errori di ajv come vanno letti — una chiave sbagliata dentro un `anyOf` ne
+  produce sessanta, e la metà sono falsi
+
+Sullo strato `build`:
+
+- `dist/admin/` esiste, l'`index.html` chiede di non essere indicizzato e carica
+  il bundle **da questo sito e da nessun altro**
+- Il bundle pubblicato è **byte per byte** quello installato, e la licenza MIT
+  gli sta accanto: è il patto della favicon, applicato a un artefatto che in git
+  non c'è
+- Il `config.yml` pubblicato è identico a quello che leggono le guardie, si
+  legge come YAML e porta le quattro collection
+
+> **Trovato scrivendo, e sono tutti della stessa famiglia.** Tre guardie
+> esistenti hanno cominciato a scattare su un lavoro giusto appena il bundle è
+> comparso in `public/`: `checkEmailSource` ha trovato sei `mailto:` dentro il
+> minificato, e `checkMachineDateText` due `GMT` — un CMS contiene tutt'e due
+> perché è un CMS. La risposta non è restringere le guardie: è che quel file non
+> è sorgente nostro, come `copiedFromPublic()` dice già del pubblicato. Ora c'è
+> `isVendored`, e l'elenco lo importa dallo script che copia, non lo riscrive.
+>
+> Il terzo era più grosso: `astro check` muore per **esaurimento di memoria**.
+>
+> E la guardia nuova sullo schema ha trovato sé stessa: la chiave con cui conta
+> gli errori di ajv era costruita in due posti, e i due erano diversi di un
+> carattere invisibile. Il confronto non trovava mai niente, la guardia ripiegava
+> in silenzio sul suo ramo generico e diceva la cosa sbagliata su un difetto
+> vero. L'ha detto il caso negativo che pretende **una** violazione per un
+> errore; adesso la chiave la costruisce una funzione sola, che è la stessa
+> lezione di sempre — la forma scritta due volte è la forma che diverge.
+> `allowJs` è acceso e `include` è `**/*`, quindi TypeScript analizza 1,9 MB di
+> minificato — un comando che smette di funzionare per un file che nessuno qui
+> ha scritto, e con un errore che non nomina il file. Escluso nel
+> `tsconfig.json`, con il motivo accanto.
 
 ### Test manuali
 
-- Accesso a `/admin`, login con GitHub
-- Creazione di una serata di prova dal CMS: il commit compare nel repository e
-  la build parte
-- Caricamento di una foto grande: viene ridimensionata prima del commit
+Fatti qui, sul sito **costruito** (`npm run preview`):
+
+- `/admin` si apre, il CMS parte e il `config.yml` si legge senza errori. La
+  pagina d'ingresso offre **solo** l'accesso col token — nessun bottone OAuth
+  che finirebbe da nessuna parte — e su localhost anche «Work with Local
+  Repository», che è di Sveltia e vale solo lì
+- Le quattro collection compaiono con i nomi e le descrizioni italiane, e la
+  serata ha tutti e quattordici i campi con le loro etichette e i loro aiuti:
+  gli obbligatori portano l'asterisco, i facoltativi no — occhiello, foto,
+  presenze, interventi, annullata, nota
+- **Sotto il campo data si legge `(+02:00) Rome`**: è Sveltia che dice di aver
+  letto `input_timezone`, cioè la riga da cui dipende tutto il resto
+- Il ciclo è una scelta fra i cicli esistenti e si legge «3 — Terra di nessuno»,
+  il colore ha la casella e il campo da scrivere a mano, e l'elenco delle voci
+  porta il riassunto che il `config.yml` gli dà
+- Salvataggio di un ciclo: passa dalla convalida e compare nell'elenco
+
+Questa parte è stata provata con il backend `test-repo` di Sveltia, che tiene
+tutto in memoria: serve a vedere le maschere senza autenticarsi, e il
+`config.yml` è tornato subito al backend vero.
+
+**Restano al committente**, perché hanno bisogno di un token o della cartella
+locale — e sono la stessa cosa della prova a 1440px della PR 13, chiesta a chi
+ne aveva lo schermo:
+
+- Accesso col token contro il repository vero e un salvataggio su un branch di
+  prova: il commit compare. Che la build parta è della PR 15, dove il sito è
+  collegato
+- **Lettura del file scritto**: campi giusti, `date` con `+02:00`, nessun corpo,
+  nome del file uguale al numero
+- **Una serata invernale**, che è l'altra metà della prova sul fuso: `+01:00`, e
+  la scena la pubblica alle 21
+- Caricamento di una foto grande: arriva ridimensionata e in webp, e il file che
+  finisce nel commit è quello ridimensionato
 
 ---
 
@@ -1948,9 +2101,17 @@ Fatti sul sito **costruito**, non in `npm run dev`:
 - [ ] Progetto collegato a Cloudflare Pages, build a ogni commit
 - [ ] Rebuild notturno alle 03:00 italiane
 - [ ] `site` impostato in `astro.config.mjs` quando il dominio esiste, con
-      sitemap e URL canonici
+      sitemap e URL canonici — e `/admin` **fuori dalla sitemap**, come
+      `/componenti`
 - [ ] Misurato il numero di file per deployment con le foto vere, come deciso
       in `vincoli-tecnici.md`
+- [ ] **L'accesso al CMS col bottone «Sign in with GitHub»**, rimandato dalla
+      PR 14 perché ha bisogno di un'origine che allora non esisteva: applicazione
+      OAuth su GitHub, relay che tiene il segreto — il Worker
+      `sveltia-cms-auth`, che è di Sveltia — e in `public/admin/config.yml`
+      `auth_methods: [oauth, token]` con il `base_url` accanto. È la riga che
+      rende vero «un redattore senza sapere che esiste git» anche per chi non ha
+      un token
 
 ### Test automatici
 

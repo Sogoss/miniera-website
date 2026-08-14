@@ -37,6 +37,7 @@ almeno una volta.
 | la data distesa ("gio 24 set 26, ore 21") | idem |
 | il nome del ciclo | viene dal riferimento al ciclo |
 | `soloAudio` | **eliminato**: nel design era un bottone senza URL, quell'audio non esiste |
+| il corpo del file markdown | nessuna pagina lo rende: il CMS non offre il campo, e una guardia tiene i file senza |
 
 Nei file di design la data era testo libero e senza anno. Non va replicato:
 tutto tipizzato, il redattore inserisce una data vera e il sito genera le
@@ -63,6 +64,14 @@ Se due eventi finissero con lo stesso numero la build fallisce da sola, perché
 due rotte reclamerebbero lo stesso percorso. È una rete di sicurezza, non un
 controllo da aggiungere.
 
+**Il numero è anche il nome del file**: `src/content/eventi/81.md`. Lo decide il
+modello di slug del CMS, che dalla PR 14 è l'unica convenzione sui nomi — le
+serate erano `081.md`, imbottite a mano, e Sveltia non ha un filtro che
+imbottisce di zeri: due convenzioni in una cartella sono due mani che smettono
+di capirsi. Per cicli, sedi e relatori vale lo stesso ed è più delicato, perché
+lì il nome del file *è* la stringa con cui un evento li nomina.
+`checkEntryFileNames` espande il modello e confronta.
+
 ### Come si scrive la data
 
 Sempre **con lo scostamento dal fuso**, che d'estate è `+02:00` e d'inverno
@@ -75,9 +84,15 @@ date: 2026-11-05T21:00:00+01:00   # novembre, ora solare
 
 Senza, il fuso lo decide la macchina che costruisce il sito — che è quella di
 Cloudflare, in UTC — e una serata delle 21 si pubblica *ore 22*. Sul portatile
-di chi l'ha scritta si legge giusta, quindi il difetto si vede solo online. Il
-CMS scrive lo scostamento da sé; scrivendo il file a mano va messo, e una
-guardia della suite lo pretende.
+di chi l'ha scritta si legge giusta, quindi il difetto si vede solo online.
+Scrivendo il file a mano lo scostamento va messo, e una guardia della suite lo
+pretende.
+
+**Il CMS lo scrive da sé, e dalla PR 14 è una cosa verificata invece che una
+frase.** Il campo data dichiara `input_timezone: Europe/Rome`: senza quella riga
+il fuso sarebbe quello del browser di chi compila — giusto per caso a Torino
+d'estate, sbagliato per chiunque compili da altrove — e non fallirebbe niente da
+nessuna parte. `checkCmsDateTimezone` la rilegge.
 
 Le due date non sono intercambiabili: conta lo scostamento che l'Italia aveva
 **quella sera**, non quello di oggi.
@@ -186,7 +201,13 @@ Due punti di controllo, servono entrambi:
 1. **Migrazione, una tantum.** Uno script con sharp che processa la cartella
    delle foto originali prima del primo commit.
 2. **CMS, a regime.** Sveltia ridimensiona al caricamento, così il redattore
-   non può committare un file enorme nemmeno volendo.
+   non può committare un file enorme nemmeno volendo. **Fatto alla PR 14**: la
+   trasformazione è dichiarata in `public/admin/config.yml` — 1600px sul lato
+   lungo, 800×800 per i ritratti, webp all'85% — e `checkCmsImageLimits`
+   pretende che ogni campo immagine finisca su una trasformazione con un tetto
+   su tutt'e due i lati. Le foto entrano quindi in webp, che è una copia di una
+   copia: gli originali stanno fuori dal repository, e `astro:assets` le
+   ricodifica comunque.
 
 Tetti proposti:
 

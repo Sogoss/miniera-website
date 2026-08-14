@@ -59,6 +59,18 @@ export function frontmatterOf(
  * event resolves to it, and the lookup here finds nothing: the kicker guard
  * then compares against an empty cycle name and stops checking, silently.
  */
+/**
+ * The way Astro turns one path segment into part of an id.
+ *
+ * Exported so that a check about file names can be written against the very
+ * function the framework uses, instead of one that resembles it: `Città
+ * Aperta` and `citta-aperta` differ in exactly the ways a hand-rolled
+ * slugifier gets wrong.
+ */
+export function slugifySegment(value: string): string {
+  return githubSlug(value);
+}
+
 export function entryId(
   relativePath: string,
   data: Record<string, unknown> = {},

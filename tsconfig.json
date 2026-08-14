@@ -1,5 +1,9 @@
 {
   "extends": "astro/tsconfigs/strict",
   "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["dist"]
+  // The Sveltia bundle is 1.9 MB of minified JavaScript that `npm run cms:sync`
+  // copies into public/. `allowJs` is on, so left in the project it is type
+  // checked like anything else: `astro check` walks it and dies with «heap out
+  // of memory» — a command that stops working over a file nobody here wrote.
+  "exclude": ["dist", "public/admin/sveltia-cms.js"]
 }
