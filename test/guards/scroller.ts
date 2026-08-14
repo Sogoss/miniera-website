@@ -25,6 +25,10 @@ import { innermostBlocks, stripComments } from './css.ts';
 import { inComment, maskStrings } from './source.ts';
 import { type Violation, lineNumber } from './types.ts';
 
+/** A rule that makes a box scrollable: what it is called, where it is, and
+ *  whether what it scrolls is the axis the programme uses. */
+export type Scrolling = { selector: string; index: number; vertically: boolean };
+
 /** `overflow: auto` and friends, in the forms that make a box scrollable. */
 const SCROLLABLE = /(?:^|[;{])\s*overflow(-[xy])?\s*:\s*([^;}]+)/gi;
 
@@ -36,17 +40,33 @@ const SCROLLABLE = /(?:^|[;{])\s*overflow(-[xy])?\s*:\s*([^;}]+)/gi;
  * are, and `overlay` — deprecated, but still understood by some engines as a
  * scrolling box.
  */
-export function scrollableRules(css: string): { selector: string; index: number }[] {
+export function scrollableRules(css: string): Scrolling[] {
   const clean = stripComments(css);
-  const found: { selector: string; index: number }[] = [];
+  const found: Scrolling[] = [];
 
   for (const { body, index } of innermostBlocks(clean)) {
     SCROLLABLE.lastIndex = 0;
     let declaration: RegExpExecArray | null;
     let scrolls = false;
+    let vertically = false;
 
     while ((declaration = SCROLLABLE.exec(body)) !== null) {
-      if (/\b(auto|scroll|overlay)\b/i.test(declaration[2] ?? '')) scrolls = true;
+      const axis = declaration[1] ?? '';
+      const value = declaration[2] ?? '';
+      if (!/\b(auto|scroll|overlay)\b/i.test(value)) continue;
+      scrolls = true;
+
+      /* Which axis, because one exception below turns on it. `overflow-x` never
+         scrolls vertically; `overflow-y` always does; the shorthand takes one
+         value for both or two, x first — so `overflow: hidden auto` is vertical
+         and `overflow: auto hidden` is not. */
+      if (axis === '-y') vertically = true;
+      else if (axis === '-x') continue;
+      else {
+        const parts = value.trim().split(/\s+/);
+        const y = parts.length > 1 ? (parts[1] ?? '') : (parts[0] ?? '');
+        if (/^(auto|scroll|overlay)$/i.test(y)) vertically = true;
+      }
     }
     if (!scrolls) continue;
 
@@ -54,7 +74,11 @@ export function scrollableRules(css: string): { selector: string; index: number 
        whole prelude, so a rule listing three selectors is named by all three. */
     const before = clean.slice(0, index);
     const from = Math.max(before.lastIndexOf('}'), before.lastIndexOf('{')) + 1;
-    found.push({ selector: clean.slice(from, index).trim().replace(/\s+/g, ' '), index });
+    found.push({
+      selector: clean.slice(from, index).trim().replace(/\s+/g, ' '),
+      index,
+      vertically,
+    });
   }
 
   return found;
@@ -71,6 +95,18 @@ export function scrollableRules(css: string): { selector: string; index: number 
    does not get the exception. */
 const IN_A_DIALOG = /(^|[\s,>+~])dialog\b|\[data-modal\b/i;
 
+/* The other exception, and it costs two conditions rather than one.
+   The Timeline's bar on a phone scrolls sideways through eighty-one evenings:
+   it is fixed, it sits outside the programme, and it moves along the axis the
+   programme does not use — so it takes no gesture the scroller wanted, and none
+   of the ambiguity above applies to it.
+   Named in the selector for the same reason as the dialog — from the CSS you
+   cannot see that a box is a horizontal bar — and **checked** on the axis
+   rather than believed on the name: `[data-timeline] { overflow-y: auto }`
+   would be a second vertical scroller wearing the right label, and that is the
+   thing this guard exists for. */
+const HORIZONTAL_BAR = /\[data-timeline\b/i;
+
 /**
  * More than one scrolling container on a page that is a scroller.
  *
@@ -82,7 +118,11 @@ const IN_A_DIALOG = /(^|[\s,>+~])dialog\b|\[data-modal\b/i;
  * carries.
  */
 export function checkSingleScroller(css: string, path = 'the page'): Violation[] {
-  const rules = scrollableRules(css).filter((rule) => !IN_A_DIALOG.test(rule.selector));
+  const rules = scrollableRules(css).filter(
+    (rule) =>
+      !IN_A_DIALOG.test(rule.selector) &&
+      !(HORIZONTAL_BAR.test(rule.selector) && !rule.vertically),
+  );
   if (rules.length <= 1) return [];
 
   const clean = stripComments(css);

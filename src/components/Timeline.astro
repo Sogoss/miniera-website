@@ -120,7 +120,6 @@ function rank(index: number): string | undefined {
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: var(--space-2);
   }
 
   /* The rail the ticks sit on, faded at both ends so the window does not read
@@ -141,12 +140,21 @@ function rank(index: number): string | undefined {
     );
   }
 
-  /* Outside the window by default: `[data-near]` is what the build and the
-     observer put on the ones that show. */
+  /* Every evening is on the rail. What the window decides is which of them
+     carry their date: `[data-near]` is the labelled few around the current one,
+     and everything else is a bare mark — the archive, present and reachable in
+     one press.
+
+     It used to be `display: none` out there, and with eighty-one evenings that
+     made the rail a «previous / next»: from the eleven on screen there was no
+     way to reach the twelfth except scrolling seventy screens past it. The
+     export has the same limit and never met it, because its design files hold
+     six evenings. */
   .timeline-tick {
-    display: none;
+    display: flex;
     align-items: center;
     gap: var(--space-2);
+    margin-block: var(--space-1);
     pointer-events: auto;
     color: var(--tick-far);
     font: var(--type-mono);
@@ -159,8 +167,23 @@ function rank(index: number): string | undefined {
       font-size var(--dur-base) var(--ease-out);
   }
 
-  .timeline-tick[data-near] {
-    display: flex;
+  /* A bare mark: no date, and a pitch small enough that the whole archive fits
+     a column one screen tall — eighty-one of these at six pixels come to about
+     five hundred, next to three hundred for the eleven that are labelled.
+     Spacing carried by the tick and not by a `gap` on the strip, because the
+     two ranks need different spacing and a gap is one number for everybody.
+
+     And carried as **padding**, which is inside the box and takes the click,
+     rather than as margin, which is outside it and does not: written as margin
+     the pitch was the same six pixels and the target was the two the mark is
+     tall, which is a link nobody can hit on purpose. */
+  .timeline-tick:not([data-near]) {
+    margin-block: 0;
+    padding-block: 2px;
+  }
+
+  .timeline-tick:not([data-near]) .tick-date {
+    display: none;
   }
 
   .timeline-tick[data-near='1'] {
@@ -236,28 +259,44 @@ function rank(index: number): string | undefined {
       pointer-events: auto;
     }
 
+    /* The bar scrolls, and the exception is written into the selector.
+       `checkSingleScroller` asks a page to have one scrolling box, and the
+       reason it gives is nesting: two of them one inside the other and neither
+       a keyboard nor a screen reader can tell which the arrow keys are driving.
+       This one is neither nested nor vertical — it is fixed, it sits outside
+       the programme, and it moves along the other axis, so it takes no gesture
+       the scroller wanted. From the CSS none of that is visible in
+       `.timeline-strip`, so the rule says `[data-timeline]` out loud and the
+       guard exempts a box that scrolls **horizontally** and carries that
+       attribute. `overflow-y: hidden` is part of the claim, not tidiness. */
+    .timeline[data-timeline] {
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+    }
+
+    .timeline[data-timeline]::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+    }
+
+    /* From the start and not centred: a row that overflows a box is aligned to
+       its start whatever `justify-content` says — the engines refuse to lose
+       content off the leading edge — and here the strip is meant to overflow,
+       because all eighty-one evenings are in it. Where the reader is looking is
+       set by scrolling the bar, which the observer does. */
     .timeline-strip {
       flex-direction: row;
-      justify-content: center;
+      justify-content: flex-start;
+      width: max-content;
     }
 
-    /* The window closes to three on a phone.
-       Centring was supposed to make the eleven of the desktop clip evenly on
-       both sides, and it does not: a flex row that overflows its box is aligned
-       to its start instead — the engines refuse to lose content off the leading
-       edge — so the bar showed the five oldest evenings of the window and the
-       current one sat off the right of the screen. Narrowed here rather than in
-       the script, so it is already right for a reader whose scripts never run.
-
-       Written against the two ranks that are kept, not against the ones
-       dropped: the width of the window is one constant in the frontmatter and
-       this rule must not become a second place that knows it. */
-    .timeline-tick[data-near]:not([data-near='0']):not([data-near='1']) {
-      display: none;
-    }
-
-    .timeline-strip::before {
-      display: none;
+    /* Every evening keeps its date here: on a phone the bar scrolls, so there
+       is no reason to spend a rank on hiding it, and a bare two-pixel mark is
+       not something a finger can aim at. That is the whole reason this bar
+       scrolls and the rail does not. */
+    .timeline-tick:not([data-near]) .tick-date {
+      display: inline;
     }
 
     .timeline-tick {
@@ -265,6 +304,8 @@ function rank(index: number): string | undefined {
          raised here alone it would grow the bar under a scene that had already
          reserved the old height, and the note would go under the pills. */
       min-height: var(--timeline-tick-height);
+      margin-block: 0;
+      margin-inline: var(--space-1);
       padding: 0 var(--space-2);
       border-radius: var(--radius-pill);
       color: var(--tick-near);

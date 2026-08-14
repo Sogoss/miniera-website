@@ -62,6 +62,40 @@ describe('checkSingleScroller', () => {
     expect(checkSingleScroller(unwritten)).toHaveLength(1);
   });
 
+  it('lets the Timeline bar scroll sideways, and only sideways', () => {
+    // The second exception, and it costs two conditions. The bar on a phone is
+    // fixed, sits outside the programme and moves along the axis the programme
+    // does not use, so it takes no gesture the scroller wanted. Written into
+    // the selector like the dialog's, because the CSS does not show that a box
+    // is a horizontal bar.
+    const bar = `${SCROLLER}\n.timeline[data-timeline] { overflow-x: auto; overflow-y: hidden; }`;
+    expect(checkSingleScroller(bar)).toEqual([]);
+
+    // And checked on the axis rather than believed on the name: the same
+    // attribute over a vertical scroll is a second scroller wearing the right
+    // label, which is the thing this guard is for.
+    const vertical = `${SCROLLER}\n.timeline[data-timeline] { overflow-y: auto; }`;
+    expect(checkSingleScroller(vertical)).toHaveLength(1);
+
+    // The shorthand says the same thing, and the y value is the second one.
+    expect(
+      checkSingleScroller(`${SCROLLER}\n[data-timeline] { overflow: auto hidden; }`),
+    ).toEqual([]);
+    expect(
+      checkSingleScroller(`${SCROLLER}\n[data-timeline] { overflow: hidden auto; }`),
+    ).toHaveLength(1);
+    // One value is both axes, so it is vertical too.
+    expect(checkSingleScroller(`${SCROLLER}\n[data-timeline] { overflow: auto; }`)).toHaveLength(1);
+  });
+
+  it('reads which axis an ordinary rule scrolls', () => {
+    expect(scrollableRules('.a { overflow-x: auto; }')[0]!.vertically).toBe(false);
+    expect(scrollableRules('.b { overflow-y: scroll; }')[0]!.vertically).toBe(true);
+    expect(scrollableRules('.c { overflow: auto; }')[0]!.vertically).toBe(true);
+    expect(scrollableRules('.d { overflow: hidden auto; }')[0]!.vertically).toBe(true);
+    expect(scrollableRules('.e { overflow: auto hidden; }')[0]!.vertically).toBe(false);
+  });
+
   it('ignores what is only in a comment', () => {
     expect(checkSingleScroller(`${SCROLLER}\n/* .scene { overflow: auto; } */`)).toEqual([]);
   });

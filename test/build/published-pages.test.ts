@@ -109,7 +109,7 @@ describe('every published page', () => {
     '%s leads nowhere from a tick that is not a link',
     (_path, page) => {
       // Asked of every page and not only of the programme: the rail belongs to
-      // the scroller today, and PR 12 puts navigation on the institutional
+      // the scroller today, and PR 13 puts navigation on the institutional
       // pages. A page with no ticks passes over an empty list, which is what
       // the assertion below is for.
       expect(checkTimelineLinks(page.html, page.path)).toEqual([]);

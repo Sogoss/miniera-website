@@ -12,7 +12,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { attributeOf } from '../guards/document.ts';
-import { checkSingleScroller } from '../guards/scroller.ts';
+import { checkSingleScroller, scrollableRules } from '../guards/scroller.ts';
 import { checkTimelineLinks, checkTimelineTargets, tickTags } from '../guards/timeline.ts';
 import { publishedPages } from '../support/dist.ts';
 import { collectionEntries } from '../support/frontmatter.ts';
@@ -134,12 +134,49 @@ describe('the published Timeline', () => {
     expect(home!.css).toMatch(/--tick-far:\s*rgba\(var\(--cream-100-rgb\),\s*\.?0?\.?44\)/);
   });
 
+  it('shows every evening, and hides only the dates of the far ones', () => {
+    /* The assertion that was missing, and its absence is what let PR 8 publish
+       a rail that could not reach the archive: the ticks were all in the markup
+       — which the count above proves — and seventy of them were `display:
+       none`, so from the eleven on screen there was no way to the twelfth.
+
+       Read on the published CSS, because «visible» is not something the markup
+       says. Hiding what is *inside* a tick is legitimate and is how the two
+       ranks are told apart; hiding the tick is not. */
+    const hidden = [...home!.css.matchAll(/([^{}]*timeline-tick[^{}]*)\{([^}]*)\}/g)].filter(
+      ([, selector, body]) =>
+        /display:\s*none/.test(body ?? '') && !/tick-date|tick-mark/.test(selector ?? ''),
+    );
+    expect(hidden.map(([, selector]) => selector)).toEqual([]);
+
+    // And the window still decides which ones carry their date: without this
+    // the rule above is satisfied by a rail that labels all eighty-one.
+    expect(home!.css).toMatch(/:not\(\[data-near\]\)[^{]*tick-date[^{]*\{[^}]*display:\s*none/);
+  });
+
   it('is clipped and not a second scrolling container', () => {
     // The export centres a strip of eighty-one pills by translating it, and a
     // rail that scrolled instead would be the nested scroller of rule 1 in
     // another costume — with the arrow keys ambiguous between the two.
     expect(checkSingleScroller(home!.css, HOME)).toEqual([]);
     expect(home!.css).toMatch(/\.timeline[^{]*\{[^}]*overflow:\s*hidden/);
+
+    /* The one exception, and it has to be the horizontal one: the bar on a
+       phone scrolls sideways through the archive, and says so in its selector
+       because the CSS cannot show that a box is a bar.
+
+       Read with the guard's own parser and not with a pattern of its own: the
+       source writes `overflow-x: auto; overflow-y: hidden` and the minifier
+       publishes `overflow: auto hidden`, so an assertion spelled the way a
+       person types CSS fails over a stylesheet that is exactly right. It is the
+       collapsed fallback of rule 4 in its mildest form — here nothing is lost,
+       only rewritten — and the answer is the same: read dist/, and read it the
+       way the code does. */
+    const bar = scrollableRules(home!.css).filter((rule) =>
+      /\[data-timeline\b/.test(rule.selector),
+    );
+    expect(bar.length, 'the bar declares no scrolling at all').toBeGreaterThan(0);
+    expect(bar.every((rule) => !rule.vertically)).toBe(true);
   });
 
   it('animates no jump, and can still be asked for less movement', () => {

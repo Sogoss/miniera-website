@@ -109,7 +109,7 @@ const { scenes, openIndex } = Astro.props;
 
       The number to write to is not here yet: it is the president's, the design
       only ever had a placeholder, and publishing a wrong one is worse than
-      publishing none. PR 11 puts it in, and with it the direct link that gives
+      publishing none. PR 12 puts it in, and with it the direct link that gives
       this button something to do with scripting off. */}
   <template id="booking">
     <p>
@@ -176,6 +176,26 @@ const { scenes, openIndex } = Astro.props;
          called with no argument at all: `behavior: 'smooth'` passed by hand
          would put the animation back where no stylesheet could reach it. */
 
+      /* The bar on a phone scrolls sideways through every evening there is, so
+         the current pill has to be brought into sight as the reader moves. The
+         rail on a desktop shows the whole archive at once and does not scroll,
+         and asks nothing of this: hence the first line, which is the question
+         «does this box scroll at all» rather than a guess about screen widths.
+
+         Measured rather than computed, like the opening jump: asking the two
+         elements where they are gets the same answer as arithmetic over widths
+         and paddings, and goes on getting it when a pill changes size.
+
+         `scrollLeft` and not `scrollIntoView()`, which walks up every scrollable
+         ancestor and would move the programme itself to show a tick. */
+      function reveal(index) {
+        if (timeline.scrollWidth <= timeline.clientWidth) return;
+
+        var bar = timeline.getBoundingClientRect();
+        var tick = ticks[index].getBoundingClientRect();
+        timeline.scrollLeft += tick.left - bar.left - (bar.width - tick.width) / 2;
+      }
+
       /* The window of ticks around `centre`, put on or taken off. The value is
          the distance itself, which is what lets the stylesheet decide how much
          of the window a screen this size can hold — the bar on a phone keeps
@@ -220,6 +240,8 @@ const { scenes, openIndex } = Astro.props;
            bookmark still opens the eighty-first, which by then is behind us.
            `/` is the one address that does not age, and it stays until the
            reader moves. */
+        reveal(index);
+
         var number = scenes[index].getAttribute('data-number');
         if (number && history.replaceState) {
           try {
@@ -295,6 +317,13 @@ const { scenes, openIndex } = Astro.props;
       );
 
       for (var s = 0; s < scenes.length; s++) observer.observe(scenes[s]);
+
+      /* Where the build could not put it: `scrollLeft` is not something a
+         stylesheet sets, so the bar arrives showing the oldest evening while
+         `aria-current` sits on one out of sight. This is the first thing that
+         puts it right, and with no scripting it is what a reader is left with —
+         declared in docs/piano.md rather than papered over. */
+      reveal(current);
 
       // The jump itself is the browser's: this only says where it is going, so
       // that the rail does not read the forty evenings it passes over.

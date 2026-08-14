@@ -29,7 +29,7 @@ describe('what the build publishes', () => {
     // all, so anything of the sort is a decision reversed in silence.
     //
     // Files copied out of public/ are left out, the way publishedPages() leaves
-    // them out of the document guards: PR 13 puts the compiled Sveltia bundle
+    // them out of the document guards: PR 14 puts the compiled Sveltia bundle
     // at public/admin/, and asking that not to be a framework is asking it not
     // to be the CMS.
     const files = readPublishedFiles().filter(({ path }) => !copiedFromPublic(path));
