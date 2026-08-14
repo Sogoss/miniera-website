@@ -244,6 +244,47 @@ non una preferenza.
     chiamare numero una sequenza a gruppi di una cifra, che è come sono scritte
     le coordinate di un path SVG.
 
+18. **La navigazione è fatta di link, e la voce che non ha una pagina non è un
+    link.** Sta in `Base.astro` con `CycleAccents` e `ClipShapes`, per lo stesso
+    criterio: dimenticarla non fa fallire niente, pubblica una pagina che si
+    legge benissimo e da cui non si esce. Le voci sono `<a href>` e non i
+    `<button onClick>` dell'export — è la regola 14 sulla seconda rotaia del
+    sito — l'indicatore scorrevole del design è `aria-current="page"`, e la
+    tendina del telefono è `<details>/<summary>`, che si apre senza script.
+    **«Rassegna stampa» è testo**: un `<a>` senza indirizzo ha il ruolo generico
+    e non l'annuncio di un link, e in un menu è una voce che sembra attiva e non
+    lo è. Due guardie: `checkAnchorsWithoutHref` — con la sola eccezione scritta
+    *e verificata*, il link disabilitato di `Button`, che porta `role="link"` **e**
+    `aria-disabled="true"`, perché metà di quella coppia non annuncia niente — e
+    `checkInternalLinks`, che pretende che ogni indirizzo interno pubblicato
+    trovi la sua pagina in `dist/`: è ciò che tiene quella voce a essere testo,
+    senza doverlo ridire. L'elenco è reso due volte, riga e tendina, da
+    `NAVIGATION`: è impaginazione, una delle due è sempre `display: none`, e le
+    marcature pubblicate sono quindi due.
+
+19. **L'indirizzo della sede si compone in un posto solo**, `src/lib/venues.ts`,
+    modulo puro come `contact.ts`. La collection teneva l'indirizzo da sempre;
+    quello che si scriveva a mano era la *scrittura*, e ce n'erano già due che
+    non concordavano. `fullAddress()` rifiuta una sede con un campo vuoto invece
+    di pubblicare una virgola sospesa. **E gli indirizzi del design non
+    compaiono da nessuna parte**: `checkStaleVenue` legge il sorgente e `dist/`,
+    e l'elenco sta accanto a quello buono, in `venues.ts`, come
+    `PLACEHOLDER_NUMBER` sta accanto al numero.
+
+20. **Un segnaposto si dichiara, sta in un posto solo, e non sopravvive al
+    dominio.** I testi che l'associazione non ha ancora scritto sono lorem ipsum,
+    `Nome Cognome` e cifre a `0000`: un segnaposto credibile — quattro persone
+    con nome e cognome, «1.400 persone in sala» — è una pagina che rende
+    perfettamente, dice il falso e non fallisce da nessuna parte. Stanno tutti in
+    `src/lib/placeholder.ts`, e ogni blocco che ne porta uno si scrive con il
+    componente `Placeholder`, che mette insieme la cornice che il lettore vede e
+    il `data-placeholder` che la guardia legge — separati, quello che si dimentica
+    è sempre l'invisibile. Tre guardie in `test/guards/placeholder.ts`:
+    `checkPlaceholderText` sul pubblicato, `checkPlaceholderSource` sul sorgente,
+    e `checkNoPlaceholders`, che **con `site` impostato in `astro.config.mjs`
+    rende una violazione un solo blocco marcato**. È l'interruttore di `og:url`:
+    la PR 15 non chiude finché i testi veri non ci sono, ed è voluto.
+
 ## Lingua
 
 Due lingue, separate da un confine netto: **il codice è in inglese, quello che
@@ -284,8 +325,9 @@ src/components/    i componenti .astro
 src/layouts/       Base.astro: il documento che ogni pagina abita
 src/content/       eventi, cicli, sedi, relatori
 src/content.config.ts   schema Zod delle quattro collection
-src/lib/           il dominio: events.ts, cycles.ts, shapes.ts e contact.ts
-                   puri, programme.ts legge le collection
+src/lib/           il dominio: events.ts, cycles.ts, shapes.ts, contact.ts,
+                   venues.ts, navigation.ts e placeholder.ts puri,
+                   programme.ts legge le collection
 src/styles/tokens/ i token del design
 src/styles/global.css   strato base del documento
 test/guards/       le guardie ai vincoli, come funzioni pure
@@ -375,6 +417,14 @@ non sono un dettaglio di configurazione: senza, il minificatore riscrive
 soglia dichiarata di 15.4 — e su iOS 15.4–16.3 ogni media query dello scroller
 smette di applicarsi, con il telefono che riceve il layout desktop e il sorgente
 che ha ragione. `checkMediaRangeSyntax` legge il CSS pubblicato.
+
+**Le due pagine istituzionali sono `src/pages/chi-siamo.astro` e
+`src/pages/contatti.astro`**, e sono fatte di prosa: il loro guscio — colonne,
+sezioni, cifre, righe di contatto — sta in `src/styles/pages.css` e non nel
+layout, perché in Astro il markup scritto in una pagina e passato a un layout
+tiene lo scope della pagina, quindi le regole dichiarate nel layout non lo
+raggiungerebbero. Non in `global.css`, che è lo strato del documento e lo paga
+ogni pagina: lo scroller non ha niente da farsene.
 
 `src/pages/componenti.astro` è invece **una pagina che resta**: la rassegna
 degli otto componenti, con tutte le loro varianti. È pubblicata e `noindex`, e

@@ -38,6 +38,66 @@ export function attributeOf(tag: string, name: string): string | undefined {
   return match[1] ?? match[2] ?? match[3] ?? '';
 }
 
+/* Elements that cannot have children, so cannot contain anything. */
+const VOID_ELEMENTS = new Set([
+  'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta',
+  'param', 'source', 'track', 'wbr',
+]);
+
+/** An element carrying some attribute, and where its content begins and ends. */
+export type ElementRange = { tag: string; index: number; from: number; to: number };
+
+/**
+ * Every element carrying a given attribute, with the span of what is inside it.
+ *
+ * Scanned with the tags balanced rather than up to the first closing one: a
+ * mark is three nested spans and a marked section is a page's worth of them, so
+ * stopping at the first `</span>` would call the first child «the content» —
+ * a guard that answers about the wrong text is a guard that fires on correct
+ * work, and this one has already been written that way once.
+ *
+ * An element with no closing tag contains nothing, and saying so is the whole
+ * of it: counting `</tag>` from a void or self-closed element never gets back
+ * to zero, so the scan ran to the end of the document and called the rest of
+ * the page its content. `<img data-brand>` — a raster logo — passed the
+ * signature check that way, by borrowing the words of a band further down.
+ */
+export function elementsWith(markup: string, attribute: string): ElementRange[] {
+  const found: ElementRange[] = [];
+  const opening = /<([a-z][a-z0-9-]*)\b([^>]*)>/gi;
+  const carries = new RegExp(`\\s${attribute}(?=[\\s=>/]|$)`, 'i');
+  let match: RegExpExecArray | null;
+
+  while ((match = opening.exec(markup)) !== null) {
+    const [whole, tag = '', attributes = ''] = match;
+    if (!carries.test(attributes)) continue;
+
+    const from = match.index + whole.length;
+    if (VOID_ELEMENTS.has(tag.toLowerCase()) || /\/\s*$/.test(attributes)) {
+      found.push({ tag, index: match.index, from, to: from });
+      continue;
+    }
+
+    let depth = 1;
+    let to = markup.length;
+
+    const nested = new RegExp(`</?${tag}\\b`, 'gi');
+    nested.lastIndex = from;
+    let step: RegExpExecArray | null;
+    while ((step = nested.exec(markup)) !== null) {
+      depth += step[0].startsWith('</') ? -1 : 1;
+      if (depth === 0) {
+        to = step.index;
+        break;
+      }
+    }
+
+    found.push({ tag, index: match.index, from, to });
+  }
+
+  return found;
+}
+
 /**
  * Comments blanked, and the contents of `<script>` and `<template>` with them.
  *
@@ -303,6 +363,70 @@ export function checkSkipLink(markup: string, path = 'the page'): Violation[] {
   }
 
   return [];
+}
+
+/* --- Links that are not links --------------------------------------------- */
+
+/**
+ * An `<a>` with no address, and nothing said about why.
+ *
+ * Without `href` an anchor is not a link: it takes no focus, it maps to the
+ * generic role rather than to `link`, and Enter never reaches it. On a page it
+ * looks exactly like the links around it, which is the whole defect — a voice a
+ * reader tries once. The navigation is where it comes from: «Rassegna stampa»
+ * has no page, and the obvious way to write a voice that leads nowhere is an
+ * `<a>` with the href left off. It is text instead, and this is what says so.
+ *
+ * There is one honest anchor without an address, and it is in this repository:
+ * the disabled link of `Button`, decided at PR 6. It carries `role="link"`,
+ * because an anchor with no href is not one and `aria-disabled` on a generic
+ * element qualifies nothing, and `aria-disabled="true"`, because being
+ * unreachable and being *announced* as switched off are different things.
+ *
+ * So the exception is written and then **checked**, in the way this project
+ * writes exceptions: both attributes or neither. Half of it — `aria-disabled`
+ * on its own — is the export's version, which announces nothing at all and is
+ * exactly what PR 6 took out; the other half is a link that says it is a link
+ * and does nothing.
+ *
+ * Templates are read like the rest of the page, unlike in the guards above: a
+ * `<template>` is markup waiting to be cloned, and a dead link inside one is a
+ * dead link in the modal it fills. Scripts are not — `const a = "<a>"` is a
+ * string.
+ */
+export function checkAnchorsWithoutHref(markup: string, path = 'the page'): Violation[] {
+  const clean = stripMarkupComments(markup).replace(
+    /<script\b[^>]*>[\s\S]*?<\/script>/gi,
+    (block) => block.replace(/[^\n]/g, ' '),
+  );
+
+  const violations: Violation[] = [];
+  for (const match of clean.matchAll(/<a\b([^>]*)>/gi)) {
+    const tag = match[0];
+    const attributes = (match[1] ?? '').trim();
+    if (attributeOf(tag, 'href') !== undefined) continue;
+
+    /* The other legitimate one: the old-style named anchor, which is a target
+       and not a link. Nothing here uses one — ids do that job — but reporting
+       it would be reporting correct markup. */
+    if (attributeOf(tag, 'name') !== undefined) continue;
+
+    const role = (attributeOf(tag, 'role') ?? '').trim().toLowerCase();
+    const disabled = (attributeOf(tag, 'aria-disabled') ?? '').trim().toLowerCase();
+    if (role === 'link' && disabled === 'true') continue;
+
+    const because =
+      role === 'link' || disabled === 'true'
+        ? 'it says half of what a switched-off link has to say: `role="link"` **and** `aria-disabled="true"`, or it announces nothing, or it announces a link that does nothing'
+        : 'no focus, no announcement, no Enter. It looks like the links beside it and does nothing: either give it an address or write it as text';
+
+    violations.push({
+      rule: 'document',
+      detail: `${path}: \`<a${attributes ? ` ${attributes}` : ''}>\` on line ${lineNumber(clean, match.index)} has no \`href\`, so it is not a link — ${because}`,
+    });
+  }
+
+  return violations;
 }
 
 /* --- The style that makes the skip link usable ---------------------------- */

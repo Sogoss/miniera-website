@@ -32,6 +32,25 @@ export const WHATSAPP_NUMBER = '+39 335 665 4599';
  *  somebody copying a line out of it. */
 export const PLACEHOLDER_NUMBER = '+39 300 000 0000';
 
+/** The other one, on the contacts page of the design.
+ *
+ *  `011 000 0000` is a well-formed Turin landline, which is the whole problem:
+ *  dialled, it reaches somebody who is not the association, or nobody, and the
+ *  page around it is perfect. The association has no landline to publish — the
+ *  number above is the one way in — so this exists only to be hunted, and
+ *  `checkPlaceholderNumber` takes it the same way it takes the other. */
+export const PLACEHOLDER_PHONE = '011 000 0000';
+
+/** The association's address, which does not receive yet.
+ *
+ *  Kept from the design by a decision already taken in
+ *  docs/questioni-aperte.md — it goes with the domain — and published marked as
+ *  a placeholder for exactly that reason: a `mailto:` nobody reads is the
+ *  telephone placeholder wearing an at sign, and the one honest thing to do
+ *  with it until the domain arrives is to say so beside it. It lives here and
+ *  not in the page for the same reason as the number: one copy. */
+export const EMAIL = 'ciao@laminieraculturale.it';
+
 /* What can stand between the groups of a written number: a space, a dot, and
    the hyphen — each with the look-alike a word processor substitutes for it.
    Written as escapes and not as the characters themselves: a non-breaking space
@@ -96,4 +115,48 @@ export function bookingMessage(number: number, title: string): string {
 /** The booking link of one evening, which is the only kind this site has. */
 export function bookingLink(number: number, title: string): string {
   return whatsappLink(bookingMessage(number, title));
+}
+
+/**
+ * What somebody writing from the contacts page says first.
+ *
+ * It names no evening, and that is the difference from `bookingMessage`: this
+ * is not a seat being held, it is a person writing to the association. A
+ * message that named one would put an evening into the mouth of a reader who
+ * came to ask something else.
+ */
+export function contactMessage(): string {
+  return 'Ciao! Vi scrivo dal sito della Miniera Culturale.';
+}
+
+/** The WhatsApp link of the contacts page, which is that message and no more. */
+export function contactLink(): string {
+  return whatsappLink(contactMessage());
+}
+
+/* An address, as loosely as an address can be checked without arguing with the
+   specification: something, an at sign, something with a dot in it, and no
+   spaces anywhere. Anything stricter rejects addresses that exist. */
+const ADDRESS = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/;
+
+/**
+ * A `mailto:` for the association, with a subject already written.
+ *
+ * Refuses what it does not recognise, like `whatsappDigits` above: a `mailto:`
+ * built from a typo is a link that opens a composer, addressed to nothing, and
+ * fails at no point a build could see — the reader finds out when the message
+ * bounces, if they notice at all.
+ *
+ * `encodeURIComponent`, because a subject in Italian carries apostrophes and
+ * accents and a space is not a space in a URL.
+ */
+export function mailtoLink(subject?: string, address: string = EMAIL): string {
+  const trimmed = address.trim();
+  if (!ADDRESS.test(trimmed)) {
+    throw new Error(
+      `the email address \`${address}\` is not an address: a mailto built from it opens a composer addressed to nobody, and nothing else fails`,
+    );
+  }
+
+  return subject ? `mailto:${trimmed}?subject=${encodeURIComponent(subject)}` : `mailto:${trimmed}`;
 }

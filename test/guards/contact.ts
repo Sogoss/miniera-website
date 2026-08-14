@@ -126,6 +126,46 @@ export function checkWhatsappSource(source: string, number: string, path: string
 }
 
 /**
+ * The address is written in one place too, and this is every other place.
+ *
+ * The same rule as the number above and for the same reason, with one thing
+ * more: this address does not receive yet — the mailbox arrives with the
+ * domain. A second copy of it is therefore a second thing to change on a day
+ * when somebody is already changing the first, and the one that is forgotten
+ * goes on offering a way of writing to nobody.
+ *
+ * Both halves are hunted, `mailto:` and the address itself, because they fail
+ * apart: a link can be built without ever writing the address out — a
+ * `mailto:` with a variable in it — and the address can be printed without a
+ * link. Comments do not count, as above.
+ */
+export function checkEmailSource(source: string, email: string, path: string): Violation[] {
+  const violations: Violation[] = [];
+  const masked = maskStrings(source);
+
+  const links = /mailto:/gi;
+  let match: RegExpExecArray | null;
+  while ((match = links.exec(source)) !== null) {
+    if (inComment(masked, match.index)) continue;
+    violations.push({
+      rule: 'contact',
+      detail: `${path}:${lineNumber(source, match.index)} builds a \`mailto:\` of its own. The address lives in src/lib/contact.ts and the links come from \`mailtoLink()\`, which also refuses what is not an address instead of writing it out`,
+    });
+  }
+
+  const written = new RegExp(email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+  while ((match = written.exec(source)) !== null) {
+    if (inComment(masked, match.index)) continue;
+    violations.push({
+      rule: 'contact',
+      detail: `${path}:${lineNumber(source, match.index)} writes the association's address out. It is configuration, like the number: one copy, in src/lib/contact.ts`,
+    });
+  }
+
+  return violations;
+}
+
+/**
  * The placeholder of the design does not reach the reader.
  *
  * `+39 300 000 0000` is still written in design-export/, which is the

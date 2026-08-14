@@ -1,0 +1,61 @@
+---
+/* A block of text the association has not written yet, saying so.
+ *
+ * Two things at once, and neither works without the other. On screen it is a
+ * dashed frame and a chip reading «Testo di prova», so that nobody opening the
+ * page — the client, a visitor, whoever picks this up in six months — can read
+ * what is inside it as a claim. In the markup it is `data-placeholder`, which
+ * is what `checkPlaceholderText` reads back out of dist/: every placeholder
+ * sentence has to be inside one of these, and with `site` set in
+ * astro.config.mjs none of these may exist at all.
+ *
+ * Which is why the mark is a component and not an attribute anybody writes by
+ * hand: written by hand it is two things to remember and one of them is
+ * invisible, and the one that goes missing is always the invisible one.
+ */
+import Label from './Label.astro';
+import { PLACEHOLDER_HINT, PLACEHOLDER_NOTE } from '../lib/placeholder.ts';
+
+/* A `<div>` and no choice of element. The `as` prop this was written with had
+   no caller: every block it wraps sits inside a section that already has its
+   heading, so a `<section>` here would be a second region with no name of its
+   own. A prop nobody passes is a prop nobody tries — and the day one of these
+   really is a section, the element is one word away. */
+interface Props {
+  /** The whole sentence rather than the two words. Once per page is enough. */
+  hint?: boolean;
+  class?: string;
+}
+
+const { hint = false, class: className }: Props = Astro.props;
+---
+
+<div class:list={['placeholder', className]} data-placeholder>
+  <p class="placeholder-mark">
+    <Label tone="outline">{PLACEHOLDER_NOTE}</Label>
+    {hint && <span class="placeholder-hint">{PLACEHOLDER_HINT}</span>}
+  </p>
+  <slot />
+</div>
+
+<style>
+  .placeholder {
+    padding: var(--space-4);
+    border: var(--border-width-hairline) dashed rgba(var(--cream-100-rgb), 0.3);
+    border-radius: var(--radius-sm);
+  }
+
+  .placeholder-mark {
+    display: flex;
+    max-width: none;
+    align-items: center;
+    gap: var(--space-3);
+    margin: 0 0 var(--space-4);
+    flex-wrap: wrap;
+  }
+
+  .placeholder-hint {
+    color: var(--text-muted);
+    font: var(--type-small);
+  }
+</style>

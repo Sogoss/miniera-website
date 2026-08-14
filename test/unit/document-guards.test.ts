@@ -8,10 +8,12 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  checkAnchorsWithoutHref,
   checkDocumentBasics,
   checkOpenGraph,
   checkSkipLink,
   checkSkipLinkStyle,
+  elementsWith,
 } from '../guards/document.ts';
 
 const HEAD =
@@ -281,5 +283,93 @@ describe('checkSkipLinkStyle', () => {
       '.skip-link[data-astro-cid-hkbrpulz]{transform:translateY(calc(-100% - 16px))}' +
       '.skip-link[data-astro-cid-hkbrpulz]:focus{transform:translateY(0)}';
     expect(checkSkipLinkStyle(scoped, 'dist/')).toEqual([]);
+  });
+});
+
+/* An `<a>` with no address, which is the shape a voice that leads nowhere
+   takes when somebody writes it as a link anyway. It looks like the links
+   beside it, and it is not one: no focus, no announcement, no Enter. */
+describe('checkAnchorsWithoutHref', () => {
+  it('accepts a navigation whose voices are links and whose text is text', () => {
+    const nav =
+      '<nav><a href="/">Programma</a><span data-soon>Rassegna stampa</span></nav>';
+    expect(checkAnchorsWithoutHref(nav, 'dist/index.html')).toEqual([]);
+  });
+
+  it('reports the voice written as a link with the address left off', () => {
+    const nav = '<nav><a href="/">Programma</a><a data-soon>Rassegna stampa</a></nav>';
+    const violations = checkAnchorsWithoutHref(nav, 'dist/index.html');
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain('data-soon');
+  });
+
+  it('is not fooled by an attribute that merely ends in href', () => {
+    // `data-href` is a string somebody's script reads, not an address a
+    // browser follows, and this is the anchor with nothing behind it.
+    expect(checkAnchorsWithoutHref('<a data-href="/rassegna">Rassegna</a>')).toHaveLength(1);
+  });
+
+  it('reads inside a template, where the modal takes its content from', () => {
+    // A dead link in a <template> is a dead link in the panel it fills.
+    const template = '<template id="booking-81"><a class="button">Prenota</a></template>';
+    expect(checkAnchorsWithoutHref(template)).toHaveLength(1);
+  });
+
+  it('leaves a script alone, where an `<a>` is a string', () => {
+    const script = '<script>const html = "<a>" + label + "</a>";</script>';
+    expect(checkAnchorsWithoutHref(script)).toEqual([]);
+  });
+
+  it('leaves alone a link commented out and the old named anchor', () => {
+    expect(checkAnchorsWithoutHref('<!-- <a>presto</a> -->')).toEqual([]);
+    expect(checkAnchorsWithoutHref('<a name="alto"></a>')).toEqual([]);
+  });
+
+  it('accepts the one anchor with no address that says why', () => {
+    // `Button` renders a disabled link this way, decided at PR 6: without href
+    // it is out of the tab order, `role="link"` gives it back the role an
+    // anchor with no address loses, and `aria-disabled` is what makes it
+    // announced as off rather than merely inert. It is in the gallery, which is
+    // where this guard met it.
+    const off = '<a role="link" aria-disabled="true" class="button">Prenota</a>';
+    expect(checkAnchorsWithoutHref(off, 'dist/componenti/index.html')).toEqual([]);
+  });
+
+  it('reports each half of that on its own', () => {
+    // `aria-disabled` alone is the export's version, which PR 6 took out: on an
+    // element with the generic role the attribute qualifies nothing, so a
+    // screen reader says neither that it is a link nor that it is off. And
+    // `role="link"` alone is a link that announces itself and does nothing.
+    expect(checkAnchorsWithoutHref('<a aria-disabled="true">Prenota</a>')).toHaveLength(1);
+    expect(checkAnchorsWithoutHref('<a role="link">Prenota</a>')).toHaveLength(1);
+    expect(
+      checkAnchorsWithoutHref('<a role="link" aria-disabled="false">Prenota</a>'),
+    ).toHaveLength(1);
+  });
+});
+
+/* The scanner both the brand guard and the placeholder guard read the page
+   with. Its two failure modes are the ones that made it a shared function:
+   stopping at the first closing tag, which reads the first child instead of
+   the element, and never stopping at all on an element that has no closing tag
+   — which is how `<img data-brand>` once borrowed the signature of a band
+   further down the page. */
+describe('elementsWith', () => {
+  it('spans an element that contains elements of the same name', () => {
+    const markup = '<div data-x><div>uno</div><div>due</div></div><p>fuori</p>';
+    const [found] = elementsWith(markup, 'data-x');
+    expect(markup.slice(found!.from, found!.to)).toBe('<div>uno</div><div>due</div>');
+  });
+
+  it('gives a void element an empty span instead of the rest of the document', () => {
+    const markup = '<img data-x><p>fuori</p>';
+    const [found] = elementsWith(markup, 'data-x');
+    expect(found!.from).toBe(found!.to);
+  });
+
+  it('reads the attribute however it is written, and not one that contains it', () => {
+    expect(elementsWith('<div data-x>a</div>', 'data-x')).toHaveLength(1);
+    expect(elementsWith('<div data-x="true">a</div>', 'data-x')).toHaveLength(1);
+    expect(elementsWith('<div data-xyz>a</div>', 'data-x')).toEqual([]);
   });
 });

@@ -141,6 +141,32 @@ async function readProgramme(now: Date): Promise<Programme> {
 }
 
 /**
+ * The hall the institutional pages talk about: the one the programme opens on.
+ *
+ * «Dove siamo» is a question about the evenings and not a field of its own, so
+ * it is answered the way every other fact of this site is — by reading the
+ * collections. If the association ever moves, the pages follow the archive with
+ * nothing to remember; written into the page instead, the address would be
+ * right until the day it was not, and nothing would fail.
+ *
+ * The evening the programme opens on and not the first venue in the folder:
+ * `sedi` is a list of places some evening has been held in, and the first file
+ * of it is whichever name sorts first.
+ */
+export async function loadHomeVenue(): Promise<CollectionEntry<'sedi'>['data']> {
+  const { scenes, nextIndex } = await loadProgramme();
+  const scene = scenes[nextIndex];
+
+  if (!scene) {
+    throw new Error(
+      'src/content/eventi/ has no evenings, so there is no venue to say the association meets in',
+    );
+  }
+
+  return scene.venue;
+}
+
+/**
  * The accent rules of the cycles, as CSS ready to be written into a <style>.
  *
  * Every cycle in the collection is emitted, not only the ones an evening points
