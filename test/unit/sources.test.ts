@@ -69,9 +69,23 @@ const clocklessFiles = codeFiles.filter((path) => path !== CLOCK_HOLDER);
 
 /* The same shape for the association's number: one file writes it, every other
    file asks for the link. Derived from the folder like the list above, so a
-   component added tomorrow arrives guarded. */
+   component added tomorrow arrives guarded.
+
+   And over everything the build can ship, not over src/ alone — the same wider
+   net as the stylesheets above, and for the same reason. `public/` is copied
+   into dist/ verbatim and PR 15 puts the Sveltia shell there; `scripts/` and
+   the config are code that runs. A second copy of the number in any of them
+   ships, and drifts the day the number changes, with nothing red. Rule 12 had
+   already learnt this about `public/`; rule 17 was written knowing it and
+   pointed at src/ anyway. */
 const NUMBER_HOLDER = 'src/lib/contact.ts';
-const numberlessFiles = codeFiles.filter((path) => path !== NUMBER_HOLDER);
+const SHIPPED_TEXT = ['.ts', '.astro', '.mjs', '.js', '.json', '.html', '.css', '.svg', '.txt'];
+const numberlessFiles = [
+  ...filesWithExtension(join(repoRoot, 'src'), SHIPPED_TEXT),
+  ...(exists('public') ? filesWithExtension(join(repoRoot, 'public'), SHIPPED_TEXT) : []),
+  ...filesWithExtension(join(repoRoot, 'scripts'), SHIPPED_TEXT),
+  'astro.config.mjs',
+].filter((path) => path !== NUMBER_HOLDER);
 
 /* All the CSS the source has to offer, in one string: the stylesheets, the
    <style> blocks of the components, and the inline `style` attributes — which
