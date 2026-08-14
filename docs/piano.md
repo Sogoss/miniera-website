@@ -1896,14 +1896,18 @@ Fatti sul sito **costruito**, non in `npm run dev`:
 - L'indirizzo pubblicato è quello della collection, con la città
 - I segnaposto si vedono che sono segnaposto: cornice tratteggiata, targhetta, e
   un lorem ipsum che nessuno può leggere come una frase dell'associazione
+- **La riga di voci del desktop a larghezza vera**, con le due pagine e il
+  programma: la riga entra nella pillola senza andare a capo, la voce corrente si
+  legge, le sezioni a due colonne reggono, la pillola non copre il titolo di una
+  serata e sopra il suo vuoto la rotella scorre il programma
 
-> **Quello che non è stato provato**, e va fatto quando c'è uno schermo largo:
-> la riga di voci del desktop **a larghezza vera**. La finestra del browser su
-> questa macchina non passa i 521px, quindi la riga è stata guardata forzando le
-> due regole di `display` a quella larghezza — si vede che rende, che la voce
-> corrente prende l'accento e che «Rassegna stampa» resta spenta, ma non come
-> respira a 1440. Le proporzioni delle due pagine su schermo largo restano da
-> guardare, e la PR 16 le guarda comunque.
+> **Fatto dal committente, non qui.** La finestra del browser guidato da questa
+> macchina non passa i 521px — `resize_window` risponde «fatto» e
+> `window.innerWidth` non si muove, e le media query non rispondono allo zoom
+> CSS — quindi la riga desktop era stata guardata forzando le due regole di
+> `display` a quella larghezza: si vedeva che rende, non come respira a 1440. È
+> il caso in cui l'emulazione non sostituisce lo schermo, come il telefono vero
+> della PR 15: la prova è stata chiesta a chi ne aveva uno.
 
 ---
 
