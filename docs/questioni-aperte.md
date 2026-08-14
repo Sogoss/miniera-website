@@ -73,6 +73,26 @@ che non hanno testo, non togliere il marcatore.
 
 ## Da fare alla PR 15
 
+### L'accesso al CMS col bottone, invece che col token
+
+**Aperta il 14 agosto 2026, alla PR 14.** `/admin` funziona e commetta sul
+repository, ma si entra con un **token personale di GitHub**: si genera dalle
+impostazioni dell'account, si incolla una volta, e da lì in poi il redattore
+vede solo il form. È l'unico punto in cui l'obiettivo «senza sapere che esiste
+git» non è ancora vero.
+
+La via normale — «Sign in with GitHub» — è un authorization code flow, e ha
+bisogno di due cose che alla PR 14 non esistono: un'**applicazione OAuth**
+registrata su GitHub, che si registra su un'origine, e un **relay** che tenga il
+segreto del client, perché una pagina statica non può tenerlo. L'origine è il
+sito pubblicato. Il relay è un Worker, `sveltia-cms-auth`, che Sveltia pubblica
+apposta e che sta su Cloudflare come il resto.
+
+Serve dal committente, alla PR 15 e in una volta sola: l'applicazione OAuth
+sull'account GitHub dell'associazione, e il Worker sul suo account Cloudflare.
+Quello che cambia qui dentro è una riga di `public/admin/config.yml` —
+`auth_methods: [oauth, token]` con il `base_url` accanto.
+
 ### L'anteprima di un link su WhatsApp e su Facebook
 
 Rimandata dalla PR 9, che è la PR in cui gli indirizzi delle serate esistono e i
@@ -205,6 +225,7 @@ perché non vadano dimenticate.
 - **Dominio e casella di posta**: a sito finito
 - **Limiti di Cloudflare Pages**: si misura alla prima build con le foto vere
 - **Delega a redattori non tecnici**: si sceglie a ottobre, in fase 1 il CMS
-  lo usa una persona sola
+  lo usa una persona sola — che alla PR 14 è anche il motivo per cui l'accesso
+  col token basta
 - **Prestazioni dello scroller con tutte le serate**: si misura su un telefono
   vero, non in emulazione

@@ -1520,6 +1520,90 @@ dipende in nessuno dei suoi termini dal corpo di base non dà niente a chi
 ingrandisce il testo dal sistema, e il pubblico di questo sito ha cinquanta e
 sessant'anni. Quelli scritti qui non devono essere sistemati due volte. *(PR 13)*
 
+## Il CMS
+
+**Il bundle di Sveltia lo serviamo noi, e non sta in git.** Tre strade, due
+scartate. Un CDN è fuori per la ragione dei caratteri — il sito non dipende da
+nessun altro — e per una che vale solo qui: quel JavaScript riceve i permessi di
+scrittura sul repository, quindi quali byte siano lo deve decidere
+`package-lock.json` e non ciò che unpkg risponde quel giorno. Committarlo è
+fuori perché sono 1,9 MB di minificato altrui, e git non dimentica: ogni
+aggiornamento resterebbe nella storia per sempre, che è il ragionamento già
+scritto in [contenuti.md](contenuti.md) per le fotografie. Lo copia
+`npm run cms:sync` dentro `dev` e `build`, ed è gitignorato. Quello che si perde
+committando — la garanzia che i byte serviti siano quelli riletti — si ricompra
+con un test che li confronta con quelli installati, come la favicon con il suo
+disegno. *(PR 14)*
+
+**`@sveltia/cms` passa fra le `dependencies`.** La build adesso ne ha bisogno
+davvero. Lasciarlo fra le `devDependencies` sarebbe la mezza verità dei
+`@fontsource` della PR 1 vista dall'altro lato: quelli sono di sviluppo perché i
+woff2 sono committati, questo no. *(PR 14)*
+
+**L'accesso è con token personale, e l'OAuth arriva col dominio.**
+L'authorization code flow ha bisogno di un'origine registrata su GitHub e di un
+relay che tenga il segreto, e l'origine non esiste finché il sito non è
+pubblicato. `auth_methods: [token]` dichiara una via sola invece di lasciare
+acceso un bottone che finisce sull'endpoint di Netlify e fallisce lì. È anche
+l'unico punto in cui «un redattore senza sapere che esiste git» non è ancora
+vero, ed è la fase a un redattore solo già decisa qui sotto. *(PR 14)*
+
+**Il fuso si dichiara nel CMS.** `input_timezone: Europe/Rome`,
+`output_utc: false`, `format: YYYY-MM-DDTHH:mm:ssZ`. Senza, il campo scrive il
+fuso del browser: a Torino d'estate esce `+02:00` per caso e non per costruzione,
+e chi compila da altrove scrive l'offset sbagliato su una serata che si svolge a
+Torino. È il quarto posto in cui la regola 11 si perde e il primo in cui si
+perde senza che nessuno scriva codice — e rende vera la frase che
+[contenuti.md](contenuti.md) stampava dalla PR 3. *(PR 14)*
+
+**Niente campo corpo, e i corpi escono dai file.** Nessuna pagina rende il
+`body` di un'entry. Offrire il campo vuol dire un posto in cui si scrive testo
+che non compare da nessuna parte; non offrirlo lasciando i corpi nei file vuol
+dire un salvataggio dal CMS che li cancella senza dirlo. Il giorno che un corpo
+avrà dove andare diventa un campo dello schema, con il suo campo nel form
+accanto. *(PR 14)*
+
+**Il nome del file lo decide il modello di slug del CMS**, quindi `81.md` e non
+`081.md`. Sveltia non ha un filtro che imbottisce di zeri: l'alternativa era due
+convenzioni nella stessa cartella dal primo giorno, quelle scritte a mano
+imbottite e quelle del CMS no. I cinque file d'esempio sono stati rinominati, e
+una guardia pretende che ogni file di `src/content/` si chiami come lo
+chiamerebbe il CMS. *(PR 14)*
+
+**Le immagini si ridimensionano nel browser, prima del commit**: 1600px sul lato
+lungo, 800×800 i ritratti, webp all'85%. È il secondo dei due punti di controllo
+di [contenuti.md](contenuti.md) e l'unico che vale a regime. webp perché il file
+che entra nel repository è comunque una copia — gli originali stanno fuori — e
+`astro:assets` lo ricodifica lo stesso. Una guardia pretende che ogni campo
+immagine finisca su una trasformazione con un tetto su **tutt'e due** i lati: la
+libreria di un campo sostituisce quella globale invece di aggiungersi, quindi un
+campo che dichiara la sua e dimentica le misure resta senza limite sotto una
+regola globale che dice che ce n'è uno. *(PR 14)*
+
+**Le etichette sono italiane, la scocca del CMS è in inglese.** Sveltia ha
+diciassette traduzioni e nessuna italiana. Le etichette e gli aiuti dei campi
+sono nostri e seguono la regola sulla lingua; «Save» e i menù sono suoi. Non è
+un compromesso nascosto: sta scritto qui e in [architettura.md](architettura.md)
+perché non sia una sorpresa al primo accesso. *(PR 14)*
+
+**Il `config.yml` si convalida anche contro lo schema JSON di Sveltia**, che il
+pacchetto pubblica e che quindi è quello della versione fissata dal lockfile.
+Tutte le guardie qui sopra confrontano i nostri due file fra loro, e leggono le
+chiavi che *noi* scriviamo: un `input_timzone` scritto male verrebbe controllato
+sotto il nome sbagliato, trovato e approvato, mentre Sveltia — che quella chiave
+non l'ha mai vista — torna al fuso del browser. La terza parte dell'accordo è il
+CMS, e l'unica cosa che parla per lui è il suo schema, che dichiara
+`additionalProperties: false` quasi dappertutto. Costa una dipendenza di
+sviluppo, `ajv`. *(PR 14)*
+
+**I facoltativi vuoti non si scrivono, e non c'è anteprima.**
+`omit_empty_optional_fields: true`, perché `attendance: ''` non è un numero e
+Zod ha ragione a fermare la build. `editor.preview: false`, perché l'anteprima
+di Sveltia è una resa generica dei campi e questo sito è uno scroller a schermo
+pieno con lo snap e un accento per ciclo: un'anteprima che non gli somiglia è
+una promessa che il sito non mantiene. Quella vera è il deploy preview della
+PR 15. *(PR 14)*
+
 ## Rimandate
 
 **Il dominio.** Se ne riparla a sito finito. Il design presuppone

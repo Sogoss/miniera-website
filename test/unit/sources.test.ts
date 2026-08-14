@@ -19,6 +19,21 @@ import {
   checkKickerRepeatsCycle,
 } from '../guards/content.ts';
 import { checkNoShortBrandVariant } from '../guards/brand.ts';
+import {
+  checkCmsConfigAgainstSchema,
+  checkCmsDateTimezone,
+  checkCmsFieldCoverage,
+  checkCmsFieldKinds,
+  checkCmsImageLimits,
+  checkCmsRequiredParity,
+  checkEntryFileNames,
+  checkNoEntryBody,
+  cmsCollection,
+  collectionsOf,
+  slugTemplate,
+} from '../guards/cms.ts';
+import { cmsConfig, cmsSchema } from '../support/cms.ts';
+import { schemaCollections, schemaFields } from '../support/schema.ts';
 import { checkEmailSource, checkWhatsappSource } from '../guards/contact.ts';
 import { EMAIL, WHATSAPP_NUMBER } from '../../src/lib/contact.ts';
 import { checkPlaceholderSource } from '../guards/placeholder.ts';
@@ -43,8 +58,15 @@ import { checkNoClientDirectives, checkNoUiFramework } from '../guards/react.ts'
 import { checkHistoryPush } from '../guards/routes.ts';
 import { checkSmoothScrollArgument } from '../guards/scroller.ts';
 import { checkHandWrittenShapes } from '../guards/shapes.ts';
-import { collectionEntries, dateOf } from '../support/frontmatter.ts';
-import { exists, filesWithExtension, read, readJson, repoRoot } from '../support/paths.ts';
+import { collectionEntries, dateOf, slugifySegment } from '../support/frontmatter.ts';
+import {
+  exists,
+  filesWithExtension,
+  isVendored,
+  read,
+  readJson,
+  repoRoot,
+} from '../support/paths.ts';
 import { componentCss } from '../support/styles.ts';
 
 const styleFiles = filesWithExtension(join(repoRoot, 'src/styles'), ['.css']);
@@ -56,7 +78,7 @@ const styleFiles = filesWithExtension(join(repoRoot, 'src/styles'), ['.css']);
 const shippedCss = [
   ...filesWithExtension(join(repoRoot, 'src'), ['.css']),
   ...(exists('public') ? filesWithExtension(join(repoRoot, 'public'), ['.css']) : []),
-];
+].filter((path) => !isVendored(path));
 const astroFiles = filesWithExtension(join(repoRoot, 'src'), ['.astro']);
 /* Everything in src/ that can format a date: the modules and the frontmatter
    of the components. */
@@ -89,7 +111,7 @@ const shippedText = [
   ...(exists('public') ? filesWithExtension(join(repoRoot, 'public'), SHIPPED_TEXT) : []),
   ...filesWithExtension(join(repoRoot, 'scripts'), SHIPPED_TEXT),
   'astro.config.mjs',
-];
+].filter((path) => !isVendored(path));
 const numberlessFiles = shippedText.filter((path) => path !== NUMBER_HOLDER);
 
 /* The same shape twice more, for the two facts PR 13 added to the same family.
@@ -589,6 +611,99 @@ describe('src/content', () => {
       expect(checkKickerRepeatsCycle(event.data, name, event.path)).toEqual([]);
     },
   );
+
+  it.each(
+    schemaCollections().flatMap((collection) =>
+      collectionEntries(collection).map((entry) => [entry.path, entry] as const),
+    ),
+  )('%s carries no body under its frontmatter', (_path, entry) => {
+    // Nothing renders one, and the form has no field for it: prose written
+    // there reaches nobody and is dropped the first time the entry is saved
+    // from /admin.
+    expect(checkNoEntryBody(read(entry.path), entry.path)).toEqual([]);
+  });
+});
+
+describe('public/admin/config.yml', () => {
+  /* The other half of rule 21. The fixtures next door prove these can fail;
+     this is the pair they exist for — the real form against the real schema,
+     read out of src/content.config.ts rather than out of a list written here,
+     which would be the third copy of the thing being kept in step. */
+  const config = cmsConfig();
+  const collections = schemaCollections();
+
+  it('has the four collections of the schema, and no fifth', () => {
+    expect(collections.length).toBeGreaterThan(0);
+    expect(collectionsOf(config).map((collection) => collection.name).sort()).toEqual(
+      [...collections].sort(),
+    );
+  });
+
+  it.each(collections)('offers every field of %s, and nothing else', (collection) => {
+    const fields = cmsCollection(config, collection)?.fields;
+    expect(checkCmsFieldCoverage(schemaFields(collection), fields, collection)).toEqual([]);
+  });
+
+  it.each(collections)('agrees with %s about what may be left empty', (collection) => {
+    const fields = cmsCollection(config, collection)?.fields;
+    expect(checkCmsRequiredParity(schemaFields(collection), fields, collection)).toEqual([]);
+  });
+
+  it.each(collections)('writes every field of %s with a widget that fits it', (collection) => {
+    const fields = cmsCollection(config, collection)?.fields;
+    expect(checkCmsFieldKinds(schemaFields(collection), fields, collection)).toEqual([]);
+  });
+
+  it('has a field for each kind the checks above can tell apart', () => {
+    // Otherwise the three assertions above would be passing over a schema with
+    // nothing in it to disagree about: a relation, an enum, a date and an image
+    // are the four the widget check has anything to say about.
+    const kinds = new Set(collections.flatMap((name) => schemaFields(name)).map((field) => field.kind));
+    expect([...kinds].sort()).toEqual(
+      expect.arrayContaining(['date', 'enum', 'image', 'list', 'reference']),
+    );
+  });
+
+  it('is configuration Sveltia itself would accept', () => {
+    // Everything else here compares our two files with each other, and all of
+    // it reads the keys this repository writes: a misspelt `input_timezone`
+    // would be found and approved under its misspelling, while the CMS — which
+    // never saw that key — falls back to the browser's zone. The third party to
+    // the agreement is Sveltia, and this is its own schema, out of the version
+    // the lockfile pins.
+    expect(checkCmsConfigAgainstSchema(config, cmsSchema())).toEqual([]);
+  });
+
+  it('makes the date field write Italian time, wherever the editor is', () => {
+    expect(checkCmsDateTimezone(config)).toEqual([]);
+  });
+
+  it('gives every image field a ceiling before the commit', () => {
+    expect(checkCmsImageLimits(config)).toEqual([]);
+  });
+
+  it.each(collections)('names the files of %s the way it would name them', (collection) => {
+    const entries = collectionEntries(collection);
+    expect(entries.length).toBeGreaterThan(0);
+    expect(
+      checkEntryFileNames(
+        entries,
+        slugTemplate(cmsCollection(config, collection)),
+        slugifySegment,
+        collection,
+      ),
+    ).toEqual([]);
+  });
+
+  it('signs in against this repository, on the branch that publishes', () => {
+    // Two strings that are configuration and not code, and the only two that
+    // decide where an editor's work lands. Pointed at a fork, or at a branch
+    // nothing builds from, everything else here is still perfectly correct.
+    const backend = (config as { backend?: Record<string, unknown> }).backend ?? {};
+    expect(backend.name).toBe('github');
+    expect(backend.repo).toBe('Sogoss/miniera-website');
+    expect(backend.branch).toBe('main');
+  });
 });
 
 describe('the clip shapes', () => {

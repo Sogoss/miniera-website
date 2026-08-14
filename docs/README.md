@@ -85,11 +85,18 @@ Fatto:
   in un modulo solo, sono marcati sulla pagina e in `dist/`, e diventano un test
   rosso il giorno che il sito prende un dominio. Vedi
   [questioni-aperte.md](questioni-aperte.md)
+- Il CMS a `/admin`: le quattro collection con i loro campi, etichette in
+  italiano, le immagini ridimensionate nel browser prima del commit e la data
+  che porta l'ora italiana ovunque si trovi chi compila. Il form e lo schema Zod
+  non possono più divergere — sette guardie leggono l'uno contro l'altro — e il
+  bundle di Sveltia lo serviamo noi senza tenerlo in git. Si entra con un token
+  personale di GitHub: l'accesso col bottone arriva col dominio, vedi
+  [questioni-aperte.md](questioni-aperte.md)
 
 Da fare: l'elenco completo dei passi, in ordine e uno per PR, sta in
-[piano.md](piano.md). In sintesi — il CMS, la pubblicazione, le proporzioni su
-schermo piccolo. La migrazione delle 81 serate storiche resta fuori dalla beta,
-vedi [questioni-aperte.md](questioni-aperte.md).
+[piano.md](piano.md). In sintesi — la pubblicazione e le proporzioni su schermo
+piccolo. La migrazione delle 81 serate storiche resta fuori dalla beta, vedi
+[questioni-aperte.md](questioni-aperte.md).
 
 Lo scroller del programma è `src/components/Programme.astro`, e le rotte che lo
 usano sono `src/pages/index.astro` e `src/pages/[number].astro`. Ogni scena porta

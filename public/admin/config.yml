@@ -1,0 +1,354 @@
+# Sveltia CMS — the editing desk at /admin.
+#
+# This file and src/content.config.ts are the same list of fields seen from two
+# sides, and nothing about YAML makes them stay that way. A field missing here
+# is a field nobody fills in; a field here that the schema does not have is
+# written to the file and thrown away at build time without a word; a field
+# required there and optional here is a red build the editor cannot read. So the
+# parity is not left to a re-reading: test/guards/cms.ts loads the real Zod
+# schema, reads this file, and reports every name, every `required` and every
+# widget that has come apart.
+#
+# Labels and hints are Italian because an editor reads them; these comments are
+# English because they are code, which is the language rule of CLAUDE.md. The
+# chrome around them — «Save», the menus — belongs to Sveltia, which has
+# seventeen translations and no Italian one.
+
+backend:
+  name: github
+  repo: Sogoss/miniera-website
+  branch: main
+
+  # Personal access token only, for as long as there is no site.
+  #
+  # The other way in — «Sign in with GitHub», the one for somebody who does not
+  # know what a token is — is an OAuth authorization code flow, and it needs an
+  # origin registered with GitHub plus a relay to hold the client secret. The
+  # origin does not exist until the site is published, so both arrive with the
+  # domain in PR 15, and this line becomes `[oauth, token]` with a `base_url`
+  # next to it. Leaving OAuth on meanwhile would offer a button that goes to
+  # Netlify's endpoint and fails there.
+  auth_methods: [token]
+
+  # Italian, like every other commit message in this repository. The default
+  # ones are Sveltia's and English. `{{path}}` rather than `{{collection}}`:
+  # the collection names are Italian plurals — «Aggiunta eventi» reads as a
+  # mistake, `src/content/eventi/84.md` reads as what happened.
+  commit_messages:
+    create: 'Nuovo contenuto: {{path}}'
+    update: 'Aggiornato {{path}}'
+    delete: 'Eliminato {{path}}'
+    uploadMedia: 'Caricata l''immagine {{path}}'
+    deleteMedia: 'Eliminata l''immagine {{path}}'
+
+app_title: La Miniera Culturale in Periferia
+# The reduced mark, the same one PR 2 chose for the favicon: the extended
+# signature is illegible at this size and the short wordmark does not exist
+# (rule 7).
+logo_url: /favicon.svg
+
+# The domain arrives in PR 15, here and in astro.config.mjs. Until then there is
+# nothing to preview and no site to link to.
+# site_url: https://www.laminieraculturale.it
+
+# Where the photographs are. Every image field overrides this with a path
+# relative to its own entry — see the collections — because what has to end up
+# in the frontmatter is the relative path astro:assets resolves, and that is
+# what makes the image part of the build instead of a file served as it is.
+media_folder: src/assets/photos
+
+media_libraries:
+  default:
+    config:
+      # The second of the two barriers docs/contenuti.md asks for, and the only
+      # one that keeps working: a photograph is resized in the browser, before
+      # the commit, so nobody can put a 4 MB original into a history that never
+      # forgets. 1600px on the long side is the ceiling that document sets for a
+      # theme photo; portraits get their own, smaller one on the field itself.
+      #
+      # webp because the file that lands here is a copy anyway — the originals
+      # stay outside the repository, uncompressed — and astro:assets re-encodes
+      # it regardless.
+      transformations:
+        raster_image:
+          format: webp
+          quality: 85
+          width: 1600
+          height: 1600
+
+output:
+  # An empty optional field must not be written. `attendance: ''` is not a
+  # number and Zod is right to stop the build over it; what the file should say
+  # about an evening with no attendance recorded is nothing at all.
+  omit_empty_optional_fields: true
+
+slug:
+  encoding: ascii
+  # `Niccolò` becomes `niccolo`, not `niccol%C3%B2`. The slug of a person, a
+  # venue or a cycle is the string an event refers to it by, so it has to be
+  # something a person can also type into a file by hand.
+  clean_accents: true
+
+editor:
+  # No preview pane. Sveltia's is a generic rendering of the fields, and this
+  # site is a full-screen scroller with a snap and an accent per cycle: a
+  # preview that looks nothing like it is a promise the site does not keep. The
+  # real one is the deploy preview, which arrives with PR 15.
+  preview: false
+
+collections:
+  - name: eventi
+    label: Serate
+    label_singular: Serata
+    description: Una serata del programma. Il numero è il suo indirizzo pubblico.
+    folder: src/content/eventi
+    extension: md
+    format: yaml-frontmatter
+    create: true
+    # The file is named after the number and nothing else: the number is the
+    # identity of the evening. Written by hand it was `081.md` — Sveltia has no
+    # filter that pads with zeroes, and two conventions in one folder is how the
+    # two hands that write here start disagreeing.
+    slug: '{{fields.number}}'
+    summary: '{{fields.number}} — {{fields.title}}'
+    sortable_fields:
+      fields: [number, date, title]
+      default:
+        field: number
+        direction: descending
+    # Relative to the entry, so what is written into the frontmatter is
+    # `../../assets/photos/…` — the path astro:assets resolves from the
+    # markdown file it is written in.
+    media_folder: ../../assets/photos
+    public_folder: ../../assets/photos
+    fields:
+      - name: number
+        label: Numero della serata
+        widget: number
+        value_type: int
+        min: 1
+        hint: >-
+          È l'indirizzo pubblico della serata — /81 — e non si riassegna mai:
+          un link già condiviso porterebbe a un'altra serata. Si assegna alla
+          programmazione, non a serata avvenuta.
+      - name: title
+        label: Titolo
+        widget: string
+      - name: kicker
+        label: Occhiello
+        widget: string
+        required: false
+        hint: >-
+          La riga sopra il titolo. Non ripete il nome del ciclo, che compare
+          già accanto.
+      - name: date
+        label: Data e ora
+        widget: datetime
+        # Rule 11, in the fourth place it can be lost — and the only one where
+        # it can be lost without anybody writing a line of code. Without
+        # `input_timezone` the field writes whatever zone the browser is in, so
+        # an evening entered from abroad, or in August by somebody who set their
+        # laptop to London, is published an hour off with nothing failing
+        # anywhere. With it, what lands in the file is `+02:00` in summer and
+        # `+01:00` in winter, whoever is filling the form in and wherever they
+        # are. checkCmsDateTimezone reads these three lines back.
+        input_timezone: Europe/Rome
+        output_utc: false
+        format: YYYY-MM-DDTHH:mm:ssZ
+        hint: >-
+          Ora italiana, sempre: l'orario di inizio come sta sulla locandina. La
+          serata resta «in programma» fino alla mezzanotte del giorno dopo.
+      - name: cycle
+        label: Ciclo
+        widget: relation
+        collection: cicli
+        value_field: '{{slug}}'
+        display_fields: ['{{fields.number}} — {{fields.name}}']
+        search_fields: [name]
+        hint: >-
+          Decide il colore d'accento della serata. I cicli non sono periodi:
+          due serate consecutive possono stare in cicli diversi.
+      - name: format
+        label: Formato
+        widget: select
+        options: [incontro, proiezione, presentazione]
+      - name: description
+        label: Descrizione
+        widget: text
+      - name: venue
+        label: Sede
+        widget: relation
+        collection: sedi
+        value_field: '{{slug}}'
+        display_fields: [name]
+        search_fields: [name]
+      - name: speakers
+        label: Relatori
+        label_singular: Relatore
+        widget: list
+        required: false
+        summary: '{{fields.person}}'
+        fields:
+          - name: person
+            label: Persona
+            widget: relation
+            collection: relatori
+            value_field: '{{slug}}'
+            display_fields: [name]
+            search_fields: [name]
+          - name: role
+            label: Ruolo per questa serata
+            widget: string
+            required: false
+            hint: >-
+              Solo se diverso da quello scritto sulla persona: un ruolo cambia
+              nel tempo, e una serata del 2025 mostra quello di allora.
+      - name: photo
+        label: Foto della serata
+        widget: image
+        required: false
+        hint: >-
+          La locandina se la serata è futura, uno scatto in sala se è passata.
+          Viene ridimensionata qui, prima del salvataggio.
+      - name: attendance
+        label: Presenze
+        widget: number
+        required: false
+        value_type: int
+        min: 0
+        hint: Solo per le serate già svolte.
+      - name: materials
+        label: Interventi e materiali
+        label_singular: Intervento
+        widget: list
+        required: false
+        summary: '{{fields.label}}'
+        fields:
+          - name: label
+            label: Come si chiama
+            widget: string
+          - name: url
+            label: Indirizzo
+            widget: string
+            type: url
+      - name: cancelled
+        label: Serata annullata
+        widget: boolean
+        required: false
+        default: false
+        hint: >-
+          Una serata annullata tiene il suo numero e la sua pagina: chi aveva
+          già condiviso l'indirizzo non deve trovarci un 404.
+      - name: note
+        label: Nota
+        widget: string
+        required: false
+        hint: >-
+          Sovrascrive la nota calcolata — «Ingresso libero, posti limitati»,
+          «Puntata registrata in sala», «Serata annullata». Serve al caso che
+          non rientra: «Prenotazione obbligatoria», «Rinviata a data da
+          destinarsi».
+
+  - name: cicli
+    label: Cicli
+    label_singular: Ciclo
+    description: L'etichetta editoriale a cui una serata appartiene, con il suo colore.
+    folder: src/content/cicli
+    extension: md
+    format: yaml-frontmatter
+    create: true
+    identifier_field: name
+    slug: '{{fields.number}}-{{fields.name}}'
+    summary: '{{fields.number}} — {{fields.name}}'
+    sortable_fields:
+      fields: [number, name]
+    fields:
+      - name: number
+        label: Numero del ciclo
+        widget: number
+        value_type: int
+        min: 1
+        hint: >-
+          Non si ripete: è il nome con cui il ciclo si chiama nel foglio di
+          stile. Due cicli con lo stesso numero fermano la build.
+      - name: name
+        label: Nome
+        widget: string
+      - name: color
+        label: Colore
+        widget: color
+        allowInput: true
+        pattern: ['^#[0-9a-fA-F]{6}$', 'Serve un esadecimale a 6 cifre, es. #f26419']
+        hint: >-
+          Diventa l'accento di tutte le serate del ciclo. I colori predefiniti
+          sono tarati a luminosità e saturazione uguali perché nessun ciclo
+          prevalga: discostarsene molto rompe la taratura, e sotto il 3:1 sul
+          fondo blu la build si ferma.
+
+  - name: sedi
+    label: Sedi
+    label_singular: Sede
+    description: Dove si tiene una serata.
+    folder: src/content/sedi
+    extension: md
+    format: yaml-frontmatter
+    create: true
+    identifier_field: name
+    summary: '{{fields.name}} — {{fields.city}}'
+    fields:
+      - name: name
+        label: Nome
+        widget: string
+      - name: address
+        label: Indirizzo
+        widget: string
+        hint: Via e numero civico, senza la città.
+      - name: city
+        label: Città
+        widget: string
+      - name: map
+        label: Link alla mappa
+        widget: string
+        type: url
+        required: false
+
+  - name: relatori
+    label: Relatori
+    label_singular: Relatore
+    description: Chi interviene. La foto sta qui, e si carica una volta sola.
+    folder: src/content/relatori
+    extension: md
+    format: yaml-frontmatter
+    create: true
+    identifier_field: name
+    summary: '{{fields.name}} — {{fields.role}}'
+    media_folder: ../../assets/photos
+    public_folder: ../../assets/photos
+    fields:
+      - name: name
+        label: Nome e cognome
+        widget: string
+      - name: role
+        label: Ruolo
+        widget: string
+        hint: >-
+          Quello predefinito della persona. La singola serata può
+          sovrascriverlo.
+      - name: photo
+        label: Ritratto
+        widget: image
+        required: false
+        # Its own ceiling, and the reason the whole block is repeated: a
+        # field-level media library replaces the global one instead of adding to
+        # it, so leaving out `format` and `quality` here would quietly drop
+        # them. 800×800 is what docs/contenuti.md sets for a portrait, which is
+        # shown at 56px behind a clip shape.
+        media_libraries:
+          default:
+            config:
+              transformations:
+                raster_image:
+                  format: webp
+                  quality: 85
+                  width: 800
+                  height: 800

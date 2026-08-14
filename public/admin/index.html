@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- The editing desk is not a page of the site: it must not be indexed, and
+         it is the one address here that says so, since it is served straight
+         out of public/ and never passes through Base.astro. -->
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>Redazione — La Miniera Culturale in Periferia</title>
+  </head>
+  <body>
+    <!-- Served by us, not by a CDN: `npm run cms:sync` copies it out of
+         node_modules, so which bytes these are is decided by package-lock.json.
+         See scripts/sync-cms.mjs for the whole reasoning.
+
+         `lang="it"` above is the document before the CMS boots — the title in
+         the tab. Sveltia then writes documentElement.lang itself, with the
+         locale it picked for its own interface, and there is no Italian one
+         yet: our field labels are Italian, its chrome is English. -->
+    <script src="/admin/sveltia-cms.js"></script>
+  </body>
+</html>

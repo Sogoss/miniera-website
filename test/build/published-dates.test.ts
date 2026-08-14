@@ -30,7 +30,7 @@
 import { describe, expect, it } from 'vitest';
 import { longDate, noteOf, shortDate, sortByNumber } from '../../src/lib/events.ts';
 import { checkMachineDateText } from '../guards/dates.ts';
-import { decodeEntities, readPublishedFiles } from '../support/dist.ts';
+import { copiedFromPublic, decodeEntities, readPublishedFiles } from '../support/dist.ts';
 import { collectionEntries, dateOf } from '../support/frontmatter.ts';
 import { read } from '../support/paths.ts';
 
@@ -189,7 +189,16 @@ describe('the dates published by a build in UTC', () => {
     // `timeZone`, arriving by a route no call-shaped check can recognise, and
     // dist/ is where it becomes visible — in English, in a site written in
     // Italian.
-    for (const { path, text } of readPublishedFiles()) {
+    //
+    // What is copied out of public/ is left out, as it is for the framework
+    // check next door: this asks whether one of *our* dates reached a page as a
+    // string, and the Sveltia bundle of PR 14 contains `GMT` because it formats
+    // dates in a browser, which is a CMS being a CMS. A guard that fires on
+    // correct work is the half somebody switches off.
+    const files = readPublishedFiles().filter(({ path }) => !copiedFromPublic(path));
+    expect(files.length).toBeGreaterThan(0);
+
+    for (const { path, text } of files) {
       expect(checkMachineDateText(text, path).map((violation) => violation.detail)).toEqual([]);
     }
   });

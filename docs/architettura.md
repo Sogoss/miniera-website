@@ -23,6 +23,31 @@ Redattore  →  /admin  (Sveltia CMS, JavaScript statico nel browser)
 Il redattore vede un form e non sa che esiste git. Ogni salvataggio è un
 commit, ogni commit fa partire una build, la build pubblica.
 
+### Come sta insieme, in pratica
+
+`public/admin/` contiene due file scritti da noi — `index.html`, che è solo un
+`<script>` e un `noindex`, e `config.yml`, che è la redazione intera — e un
+terzo che nessuno scrive: il bundle di Sveltia, copiato da `node_modules` da
+`npm run cms:sync` (lo eseguono `npm run dev` e `npm run build`) e tenuto fuori
+da git. Non arriva da un CDN perché il sito non dipende da nessun altro, e
+perché quel JavaScript ha i permessi di scrittura sul repository: quali byte
+siano lo decide `package-lock.json`, e un test dello strato `build` confronta
+quelli pubblicati con quelli installati.
+
+`config.yml` e `src/content.config.ts` dicono la stessa cosa a due lettori
+diversi, e a tenerli d'accordo non c'è la buona volontà ma sette guardie: vedi
+la regola 21 del [CLAUDE.md](../CLAUDE.md).
+
+**L'accesso, oggi, è con un token personale di GitHub** — `auth_methods:
+[token]`. Il bottone «Sign in with GitHub», che è la via per chi non sa cos'è un
+token, ha bisogno di un'applicazione OAuth registrata su un'origine e di un
+relay che ne tenga il segreto: l'origine è il sito pubblicato, quindi arriva con
+il dominio alla PR 15.
+
+**L'interfaccia del CMS è in inglese**: Sveltia ha diciassette traduzioni e
+nessuna italiana. Italiane sono le etichette e gli aiuti dei campi, che sono
+nostri.
+
 ## Stack
 
 | Ruolo | Scelta | Versione |
@@ -67,7 +92,8 @@ Cartelle:
 ```
 design-export/     export di Claude Design, versionato come specifica
 docs/              questa documentazione
-scripts/           utilità di manutenzione (sincronizzazione caratteri)
+public/admin/      il CMS: la shell e il config.yml; il bundle lo copia la build
+scripts/           utilità di manutenzione (caratteri, favicon, bundle del CMS)
 src/assets/fonts/  i woff2 self-hostati e le loro licenze
 src/content/       i contenuti: eventi, cicli, sedi, relatori
 src/styles/        i token del design e lo strato base
@@ -84,6 +110,7 @@ npm run dev          # sviluppo
 npm run build        # build statica in dist/
 npm run preview      # anteprima della build
 npm run fonts:sync   # ricopia i caratteri dai pacchetti @fontsource
+npm run cms:sync     # ricopia il bundle di Sveltia in public/admin/
 ```
 
 ### Quando si ricostruisce il sito
