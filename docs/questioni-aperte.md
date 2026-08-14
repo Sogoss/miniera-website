@@ -42,7 +42,7 @@ reversibile e prima o poi qualcuno vorrà stampare la foto di una serata.
 
 Non è ancora stato deciso dove.
 
-## Da fare alla PR 14
+## Da fare alla PR 15
 
 ### L'anteprima di un link su WhatsApp e su Facebook
 
@@ -62,7 +62,7 @@ Rimandata dalla PR 7, e non perché non conti: è la prova che regge la decision
 indirizzi di Safari si ritrae. Chi lavora al progetto non ha un iPhone, e i due
 modi di provarlo adesso — un tunnel verso il server di sviluppo, un servizio con
 device remoti — costano più attenzione di quanta ne valga finché non c'è un URL
-stabile: alla PR 14 il sito è pubblicato e lo apre chiunque, da qualunque
+stabile: alla PR 15 il sito è pubblicato e lo apre chiunque, da qualunque
 telefono.
 
 Quello che intanto regge il rischio è costruttivo e non una speranza: l'altezza
@@ -78,7 +78,7 @@ interrotto dallo snap — rimandato qui dalla PR 8, per lo stesso motivo e con l
 stesso rischio retto per costruzione: il salto è quello nativo del browser sul
 frammento, non uno `scrollTo` scritto da noi.
 
-## Da decidere prima della PR 14
+## Da decidere prima della PR 15
 
 ### L'immagine delle anteprime social
 
@@ -91,7 +91,7 @@ Va scelta, non generata a caso: il marchio su fondo blu è la strada ovvia, nel
 formato 1200×630 che le anteprime si aspettano. È una decisione di contenuto e
 di design, quindi non la prende una guardia — e per questo la suite **non**
 pretende `og:image` quando arriva il dominio: pretenderlo avrebbe aperto la
-PR 14 su un test rosso che si poteva chiudere solo inventando l'immagine.
+PR 15 su un test rosso che si poteva chiudere solo inventando l'immagine.
 Quello che la suite pretende è che, se una pagina ne pubblica una, sia assoluta.
 
 ## Minori
@@ -131,7 +131,7 @@ titoli di fila.
 
 `og:type` resta `website` anche sulle rotte delle serate, che sono
 semanticamente degli eventi. Sta in `Base.astro`, cioè nel layout condiviso, e
-il posto dove si tocca è la PR 14 insieme al resto dei meta.
+il posto dove si tocca è la PR 15 insieme al resto dei meta.
 
 ### Link a mappa per le sedi
 

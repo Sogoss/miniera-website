@@ -22,6 +22,11 @@ Il sito si costruisce per passi numerati, uno per PR, nell'ordine fissato in
 Ogni PR dichiara tre cose: **nome del branch**, **obiettivi da verificare prima
 della chiusura**, **test richiesti — automatici e manuali**.
 
+**Il numero di un passo è il numero della sua PR su GitHub**, e quindi ogni PR
+entra nell'elenco — anche quella che tocca solo la documentazione. Un passo
+saltato disallinea i due elenchi da lì in avanti, e da quel momento «la PR 12»
+va chiesta invece che letta.
+
 Tre regole senza eccezioni, applicate dal repository e non lasciate alla buona
 volontà:
 
@@ -334,7 +339,7 @@ la ragione per cui è pubblicata è la stessa per cui esiste lo strato `build` �
 per lo stile il sorgente non basta, quindi una rassegna viva solo in `npm run
 dev` lascerebbe le varianti di ogni componente verificate da nessuna parte.
 Prende i dati veri dal dominio: un `data-cycle` inventato lì farebbe scattare la
-guardia della PR 4. **Alla PR 14 va tenuta fuori dalla sitemap.**
+guardia della PR 4. **Alla PR 15 va tenuta fuori dalla sitemap.**
 
 ## Comandi
 

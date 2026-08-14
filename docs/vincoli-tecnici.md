@@ -148,7 +148,7 @@ Il design se n'era già accorto — nel suo codice c'è una guardia con un flag
 spostato: il salto da una tacca lo fa il browser sul frammento, e la guardia
 serve a impedire che `aria-current`, l'accento e la finestra di tacche
 lampeggino attraverso le serate attraversate. Resta da provare su un iPhone
-vero, e la prova è rimandata alla PR 14 —
+vero, e la prova è rimandata alla PR 15 —
 [questioni-aperte.md](questioni-aperte.md).
 
 ## Movimento ridotto

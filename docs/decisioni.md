@@ -388,7 +388,7 @@ per come è formattato un file invece che per quello che dice.
 
 **`og:image`, invece, non lo pretende, e non è una svista.** Ha bisogno di
 un'immagine, non di un dominio, e il repository non ne ha una: chiederlo insieme
-a `og:url` avrebbe aperto la PR 14 su una suite rossa che si poteva chiudere
+a `og:url` avrebbe aperto la PR 15 su una suite rossa che si poteva chiudere
 solo inventando un asset che nessuno ha scelto — cioè un test che detta una
 decisione di contenuto. La decisione sta in
 [questioni-aperte.md](questioni-aperte.md); quello che la suite controlla è che
@@ -832,8 +832,8 @@ ciclo viene ritarato nel CMS, indicando un file di test invece del contenuto che
 `CLAUDE.md` dice che per lo stile guardare il sorgente non basta, quindi una
 rassegna viva solo in `npm run dev` lascerebbe le varianti di ogni componente
 verificate da nessuna parte. Fuori dall'indice perché è una pagina di servizio —
-e la sitemap della PR 14 dovrà escluderla. Non `/rassegna`, che è della rassegna
-stampa della PR 12.
+e la sitemap della PR 15 dovrà escluderla. Non `/rassegna`, che è della rassegna
+stampa della PR 13.
 
 ## Forme di ritaglio, la geometria
 
@@ -946,7 +946,7 @@ registrazione, e su 390×800 il secondo finiva sotto il bordo — con la scena n
 scorrevole per scelta, quello è contenuto che nessuno può raggiungere. Ora i
 materiali stanno dietro un «Rivedi la serata» e la prenotazione dietro «Prenota
 il posto», e tutt'e due aprono **lo stesso** `<dialog>`: uno per pagina, come la
-PR 11 aveva già deciso, perché con ottantuno serate un modale ciascuna sarebbero
+PR 12 aveva già deciso, perché con ottantuno serate un modale ciascuna sarebbero
 ottantuno copie della stessa cornice nel DOM.
 
 **Il modale si riempie clonando markup che è già nella pagina, mai costruendolo
@@ -967,7 +967,7 @@ lampo dell'altra. Costa due regole CSS e nessuna rotta anticipata.
 per il modale e non ha un posto nella pagina finché non lo si chiede, a
 differenza dei link di una serata, che sono contenuto. Il numero a cui scrivere
 non c'è ancora — è quello del presidente, il design aveva un segnaposto, e
-pubblicarne uno sbagliato è peggio che non pubblicarne. Arriva con la PR 11, e
+pubblicarne uno sbagliato è peggio che non pubblicarne. Arriva con la PR 12, e
 con lui il link diretto che dà a quel bottone qualcosa da fare anche senza
 script.
 
@@ -1008,7 +1008,7 @@ colonna della locandina resta vuota, il layout a due colonne è metà lavoro e
 marchio, nessun volto — e dichiarate come segnaposto nel file che le usa. Escono
 quando arrivano le foto vere: [questioni-aperte.md](questioni-aperte.md).
 
-**Le proporzioni su schermo piccolo si tarano una volta sola, alla PR 15.** Su
+**Le proporzioni su schermo piccolo si tarano una volta sola, alla PR 16.** Su
 un telefono la scena divide l'altezza con la Timeline in basso e la navigazione
 in alto, che alla PR 7 non esistono: ogni misura decisa prima va rifatta quando
 arrivano. Quello che alla PR 7 doveva essere giusto è la struttura — niente
@@ -1041,7 +1041,7 @@ parola, e la parola resta al contrasto del testo normale.
 **Le dimensioni scalano per `clamp()` con limiti fissi, non per percentuale
 pura.** Una percentuale vera dipende dal contenitore e per le altezze non ha un
 riferimento; le unità viewport da sole diventano assurde sui ventisette pollici
-e illeggibili sui 320 px. Quello che invece va corretto — ed è la PR 15 — sono i
+e illeggibili sui 320 px. Quello che invece va corretto — ed è la PR 16 — sono i
 **limiti in px** dei `clamp` tipografici: nessuno dei tre termini dipende dalla
 dimensione del carattere di base, quindi chi ingrandisce il testo dal sistema
 non ottiene niente. La scala degli spazi a passi di 4 px resta com'è: scalare
@@ -1199,23 +1199,23 @@ raggiungevano solo le vicine e per arrivare alla dodicesima si scorrevano
 settanta schermate. La rotaia non faceva la cosa per cui esiste. L'export ha lo
 stesso limite e non ci è mai arrivato, perché nei suoi file di design le serate
 sono sei — ed è il committente ad averlo visto, guardando la barra su un
-telefono, non un test. *(PR 10)*
+telefono, non un test. *(PR 11)*
 
 **Sul desktop le lontane sono marchi senza data.** Ottantuno trattini da sei
 pixel di passo stanno in circa cinquecento, accanto ai trecento delle undici
 etichettate: l'archivio intero entra in una colonna alta una schermata, e le
 date restano leggibili dove si sta. Non è un meccanismo in più — è un valore in
 più su una scala che c'era già, e la tacca porta **già** la distanza vera invece
-di un rango tagliato a due. È la decisione della PR 8 che paga adesso. *(PR 10)*
+di un rango tagliato a due. È la decisione della PR 8 che paga adesso. *(PR 11)*
 
 **E il passo lo porta il padding, non il margine.** Scritto come margine, il
 passo era lo stesso e il bersaglio erano i due pixel del trattino: il margine
-sta fuori dalla scatola e non prende il clic. *(PR 10, trovato provando)*
+sta fuori dalla scatola e non prende il clic. *(PR 11, trovato provando)*
 
 **Sul telefono la barra scorre in orizzontale.** Ottantuno trattini ci
 starebbero anche lì, ma un bersaglio da quattro pixel per un dito non è un
 bersaglio: la barra scorrevole tiene le pillole con la loro data, che è come
-funziona ogni selettore di date su un telefono. *(PR 10)*
+funziona ogni selettore di date su un telefono. *(PR 11)*
 
 **L'eccezione a «un solo contenitore scorrevole» si scrive nel selettore e si
 verifica sull'asse.** La regola esiste contro l'annidamento — due scroller
@@ -1227,7 +1227,7 @@ modale dice `dialog.modal .modal-panel`. Ma il nome da solo non basta: la
 guardia esenta un box che scorre **orizzontalmente** e porta quell'attributo,
 perché `[data-timeline] { overflow-y: auto }` sarebbe un secondo scroller
 verticale con l'etichetta giusta — cioè esattamente la cosa per cui la guardia
-esiste. *(PR 10)*
+esiste. *(PR 11)*
 
 **Senza script la barra del telefono si apre all'inizio dell'archivio.**
 `scrollLeft` non lo imposta nessun foglio di stile, quindi la posizione iniziale
@@ -1236,7 +1236,7 @@ mentre `aria-current` sta su una fuori schermo. È una degradazione **nuova** �
 prima la barra era giusta anche senza script — e si accetta perché una barra
 vive per essere toccata, e un bersaglio che un dito non prende non serve a
 nessuno. L'alternativa scartata erano i marchi nudi anche sul telefono: niente
-si degrada, e il bersaglio torna a quattro pixel. *(PR 10)*
+si degrada, e il bersaglio torna a quattro pixel. *(PR 11)*
 
 ## Le rotte delle serate
 
@@ -1295,14 +1295,14 @@ quadratico nella dimensione di un archivio che può solo crescere. Ciò che comp
 oltre ai secondi è che ogni rotta riceve le *stesse* scene, quindi un indice che
 una rotta calcola è un indice nell'array che legge la successiva. In sviluppo no:
 il modulo sopravvive al salvataggio di chi scrive, e un programma in cache
-continuerebbe a servire le serate com'erano all'avvio del server — dalla PR 13
+continuerebbe a servire le serate com'erano all'avvio del server — dalla PR 14
 quei file li scrive il CMS, e non mostrare la modifica è l'unica cosa che
 un'anteprima non può fare. E un `now` diverso da quello della build non viene
 mai messo in cache: è qualcuno che chiede di un altro giorno, e rispondergli
 dalla memoria risponderebbe a un'altra domanda. *(PR 9, in revisione)*
 
 **L'immagine da anteprima si genera solo quando c'è il dominio.** Prima si
-generava comunque, con l'argomento che alla PR 14 non ci fosse niente da
+generava comunque, con l'argomento che alla PR 15 non ci fosse niente da
 ricordarsi — e il costo si vedeva in `dist/`: un JPEG per serata che nessuna
 pagina referenziava, cioè ottantuno ridimensionamenti e ottantuno file morti in
 ogni deployment con l'archivio pieno. La promessa regge lo stesso: arriva il

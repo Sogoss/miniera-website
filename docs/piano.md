@@ -10,21 +10,27 @@ Aggiornato al 13 agosto 2026.
 
 1. **Il piano viene scritto per primo.** Prima del branch, prima della PR.
    Viene approvato, e il testo approvato diventa il corpo della PR.
-2. **Un branch per PR**, che parte da `main` aggiornato. **Su `main` non si
+2. **Il numero di un passo è il numero della sua PR su GitHub.** Sono lo stesso
+   elenco visto da due parti, e tenerli separati vuol dire che «la PR 12» non
+   identifica niente senza chiedere quale dei due si intende. La conseguenza da
+   ricordare è che **ogni** PR prende un numero, anche quella che tocca solo la
+   documentazione: quando ne serve una fuori programma, entra nell'elenco con la
+   sua riga invece di lasciare un buco.
+3. **Un branch per PR**, che parte da `main` aggiornato. **Su `main` non si
    spinge mai direttamente**: ogni modifica passa da una PR, compresa quella di
    una riga e compresa la documentazione.
-3. **Merge sempre in squash and merge.** Il repository è configurato perché sia
+4. **Merge sempre in squash and merge.** Il repository è configurato perché sia
    l'unico metodo possibile: merge commit e rebase sono disabilitati, il branch
    viene cancellato dopo il merge.
-4. **Ogni PR dichiara tre cose**: nome del branch, obiettivi da verificare prima
+5. **Ogni PR dichiara tre cose**: nome del branch, obiettivi da verificare prima
    della chiusura, test richiesti — automatici e manuali.
-5. **Una PR si chiude solo con tutti i test verdi.** Un test rosso non si
+6. **Una PR si chiude solo con tutti i test verdi.** Un test rosso non si
    aggira, non si disattiva e non si rimanda alla PR successiva: o si sistema
    il codice, o si sistema il test perché era sbagliato — dicendo perché.
-6. **Le decisioni si registrano nella PR che le prende**, in
+7. **Le decisioni si registrano nella PR che le prende**, in
    [decisioni.md](decisioni.md), e la voce corrispondente esce da
    [questioni-aperte.md](questioni-aperte.md).
-7. Quando una PR viene chiusa, la sua riga qui sotto passa a *fatta*.
+8. Quando una PR viene chiusa, la sua riga qui sotto passa a *fatta*.
 
 ## Strategia di test
 
@@ -65,12 +71,13 @@ sostituisce un telefono vero.
 | 7 | Lo scroller del programma | `scroller-programma` | fatta |
 | 8 | Timeline e navigazione da tastiera | `timeline` | fatta |
 | 9 | Le pagine delle serate | `pagine-serata` | fatta |
-| 10 | La Timeline raggiunge l'archivio | `timeline-archivio` | fatta |
-| 11 | La prenotazione dentro il modale | `modale-prenotazione` | da fare |
-| 12 | Chi siamo, contatti, rassegna disabilitata | `pagine-istituzionali` | da fare |
-| 13 | Sveltia CMS | `cms-sveltia` | da fare |
-| 14 | Pubblicazione | `pubblicazione` | da fare |
-| 15 | Proporzioni su schermo piccolo | `proporzioni-mobile` | da fare |
+| 10 | Il piano: la Timeline che raggiunge l'archivio | `piano-timeline-archivio` | fatta |
+| 11 | La Timeline raggiunge l'archivio | `timeline-archivio` | fatta |
+| 12 | La prenotazione dentro il modale | `modale-prenotazione` | da fare |
+| 13 | Chi siamo, contatti, rassegna disabilitata | `pagine-istituzionali` | da fare |
+| 14 | Sveltia CMS | `cms-sveltia` | da fare |
+| 15 | Pubblicazione | `pubblicazione` | da fare |
+| 16 | Proporzioni su schermo piccolo | `proporzioni-mobile` | da fare |
 
 Fuori dalla beta, bloccate da [questioni-aperte.md](questioni-aperte.md):
 migrazione delle foto e caricamento delle 81 serate storiche.
@@ -658,7 +665,7 @@ In breve:
 - Ogni pagina porta tutte le forme che il componente dichiara, e nessun `id`
   italiano dell'export arriva in `dist/`
 - I meta Open Graph di base ci sono, e **`og:url` e `og:image` sono pretesi
-  appena `site` è impostato**: il test si accende da solo alla PR 14
+  appena `site` è impostato**: il test si accende da solo alla PR 15
 - Il salta-a è il primo link del `<body>` e punta a un `id` che esiste — non a
   uno che gli somiglia: `#programma` non è soddisfatto da `id="programma-2"`,
   ed è il primo difetto che il caso negativo ha trovato nella guardia appena
@@ -687,9 +694,9 @@ In breve:
 >
 > Due guardavano al futuro e l'avrebbero rotto: `publishedPages()` consegnava
 > alle guardie del documento anche le pagine copiate da `public/`, cioè la
-> PR 13 non avrebbe potuto chiudere verde con la shell di Sveltia in
+> PR 14 non avrebbe potuto chiudere verde con la shell di Sveltia in
 > `public/admin/`; e pretendere `og:image` all'arrivo del dominio avrebbe aperto
-> la PR 14 su una suite rossa chiudibile solo inventando un'immagine che nessuno
+> la PR 15 su una suite rossa chiudibile solo inventando un'immagine che nessuno
 > ha scelto. L'immagine è una questione aperta, non un test.
 
 ### Test manuali
@@ -994,8 +1001,8 @@ Per esteso in [decisioni.md](decisioni.md), sotto *Lo scroller*. In breve:
 > **E l'immagine restava comunque minuscola**, perché il contenuto di una
 > scena piena — due ospiti, due bottoni, presenze — non ci sta in una schermata
 > per quanto lo si stringa. Da qui il **modale**, chiesto dal committente e
-> anticipato dalla PR 11: una scena ha un bottone solo, e i link agli interventi
-> stanno dietro di esso. La PR 11 è stata riscritta di conseguenza — le resta il
+> anticipato dalla PR 12: una scena ha un bottone solo, e i link agli interventi
+> stanno dietro di esso. La PR 12 è stata riscritta di conseguenza — le resta il
 > contenuto vero della prenotazione, che è la parte che dipende da una questione
 > aperta.
 >
@@ -1059,7 +1066,7 @@ Per esteso in [decisioni.md](decisioni.md), sotto *Lo scroller*. In breve:
 > pubblichi due bottoni non è impedito nel componente: lo prende il test sul
 > conteggio, che però diventa rosso indicando il file del contenuto invece del
 > punto dove si decide — costa una regola editoriale, non una correzione. Il
-> `max-height: 80vh` del pannello passa alla PR 15, che è dove le proporzioni su
+> `max-height: 80vh` del pannello passa alla PR 16, che è dove le proporzioni su
 > schermo piccolo si tarano una volta sola. E lo **stile della serata annullata**
 > non è stato scritto: `data-state="cancelled"` si pubblica e nessuna regola lo
 > legge. La barratura passa alla PR 9, dove una serata annullata ha già fra gli
@@ -1090,7 +1097,7 @@ Per esteso in [decisioni.md](decisioni.md), sotto *Lo scroller*. In breve:
 - Con un contenuto finto da 81 serate, la pagina resta fluida su un telefono di
   qualche anno fa — è la misura rimandata in `vincoli-tecnici.md`
 
-> **I tre test su telefono sono rimandati alla PR 14**, dove il sito ha un URL
+> **I tre test su telefono sono rimandati alla PR 15**, dove il sito ha un URL
 > stabile che apre chiunque. Non è una spunta data per buona: chi lavora al
 > progetto non ha un iPhone, e provarlo adesso vorrebbe dire un tunnel verso il
 > server di sviluppo o un device remoto — più attenzione di quanta ne valga
@@ -1098,7 +1105,7 @@ Per esteso in [decisioni.md](decisioni.md), sotto *Lo scroller*. In breve:
 > costruzione, non per fiducia: `--scene-height` è `svh` con il ripiego in
 > `@supports`, e ogni scena dichiara la propria altezza intrinseca, che è ciò
 > che tiene ferme le posizioni di snap. Il debito è scritto in
-> [questioni-aperte.md](questioni-aperte.md), sotto *Da fare alla PR 14*.
+> [questioni-aperte.md](questioni-aperte.md), sotto *Da fare alla PR 15*.
 
 ---
 
@@ -1253,7 +1260,7 @@ Per esteso in [decisioni.md](decisioni.md), sotto *La Timeline*. In breve:
 > **Due prove restano da fare, dichiarate e non date per buone.** Su un iPhone
 > vero: toccare una tacca lontana e verificare che lo scorrimento morbido arrivi
 > a destinazione senza essere interrotto dallo snap.
-> [questioni-aperte.md](questioni-aperte.md) la colloca già alla PR 14, per
+> [questioni-aperte.md](questioni-aperte.md) la colloca già alla PR 15, per
 > nome, e per lo stesso motivo della PR 7 — prima non c'è un URL stabile e chi
 > lavora al progetto non ha un iPhone. Nel frattempo il rischio è retto dal
 > fatto che il salto è quello nativo del browser sul frammento e non uno
@@ -1324,7 +1331,7 @@ breve:
 - Ogni rotta pubblica titolo e descrizione della sua serata, non del sito, e
   `og:description` dice la stessa cosa del meta
 - **Quando `site` è impostato**, ogni rotta con una foto pubblica `og:image`
-  assoluto: scritto ora, si accende alla PR 14
+  assoluto: scritto ora, si accende alla PR 15
 - Gli `<h1>` di due rotte sono diversi, e quello della radice non nomina nessuna
   serata
 - **Guardia** `checkEveningRoutes`: ogni `data-number` pubblicato trova la sua
@@ -1390,7 +1397,7 @@ breve:
 > Adesso è memoizzata, **ma solo durante una build**: in `astro dev` il modulo
 > sopravvive al salvataggio di chi scrive, e un programma in cache continuerebbe
 > a servire le serate com'erano all'avvio del server. Non mostrare la modifica è
-> l'unica cosa che un'anteprima non può fare, e dalla PR 13 quei file li scrive
+> l'unica cosa che un'anteprima non può fare, e dalla PR 14 quei file li scrive
 > il CMS. Con 81 serate la build passa da 3,8 a 3,1 secondi, ma il numero che
 > conta è l'esponente.
 >
@@ -1404,14 +1411,14 @@ breve:
 > **l'immagine da anteprima si generava anche senza dominio**, cioè un JPEG per
 > serata che nessuna pagina referenziava. Con l'archivio pieno sono ottantuno
 > ridimensionamenti e ottantuno file morti in ogni deployment. Generarla solo
-> quando c'è il dominio non toglie niente alla promessa che alla PR 14 non ci
+> quando c'è il dominio non toglie niente alla promessa che alla PR 15 non ci
 > sia niente da ricordarsi: arriva il dominio e arrivano le immagini.
 >
 > **Due sono rimaste aperte, di proposito.** Il `<title>` di una serata non
 > nomina l'associazione, mentre quello della radice sì: è una scelta di testo
 > italiano e la si fa guardandola, non correggendola di nascosto. E `og:type`
 > resta `website` anche sulle rotte delle serate: cambiarlo è una decisione sul
-> layout condiviso, e il posto dove si prende è la PR 14, insieme al resto dei
+> layout condiviso, e il posto dove si prende è la PR 15, insieme al resto dei
 > meta.
 
 ### Test manuali
@@ -1429,7 +1436,7 @@ breve:
   20–25 KB di [vincoli-tecnici.md](vincoli-tecnici.md) — e 109 file in tutto,
   contro i 20.000 che Cloudflare Pages concede per deployment
 
-> **Rimandata alla PR 14**: l'anteprima di un link su WhatsApp e su Facebook.
+> **Rimandata alla PR 15**: l'anteprima di un link su WhatsApp e su Facebook.
 > Senza dominio non c'è niente da incollare in una chat e `og:image` non viene
 > emesso — il layout lo omette apposta, perché un URL relativo lì dentro
 > «sembra giusto nel markup e l'anteprima esce senza figura». Il test è scritto
@@ -1437,7 +1444,48 @@ breve:
 
 ---
 
-## PR 10 — La Timeline raggiunge l'archivio
+## PR 10 — Il piano: la Timeline che raggiunge l'archivio
+
+**Branch:** `piano-timeline-archivio` · **Dipende da:** nulla
+
+Un passo che non tocca il codice, e sta nell'elenco perché **il numero di un
+passo è il numero della sua PR su GitHub**: saltarlo vorrebbe dire che da qui in
+avanti i due elenchi non combaciano più, e a quel punto «la PR 12» non
+identifica niente senza chiedere quale dei due si intende.
+
+Ha fatto due cose. Ha aggiunto al piano il passo che mancava — la rotaia
+mostrava undici tacche su ottantuno, quindi non raggiungeva l'archivio — e ha
+rinumerato quelle dopo, 55 riferimenti in 16 file, in ordine decrescente perché
+ogni numero scritto fosse già stato liberato.
+
+L'ha trovato il committente guardando la barra su un telefono, non un test.
+
+### Perché è una PR e non una riga in un commit
+
+Su `main` non si spinge mai direttamente, «compresa quella di una riga e
+compresa la documentazione». E tenuta separata dal codice per una ragione
+pratica: mescolata all'implementazione, il diff della rinumerazione l'avrebbe
+sepolta, e un rinominare a metà è esattamente il modo in cui questa cosa
+fallisce.
+
+### Obiettivi
+
+- [x] Il passo nuovo è nel piano, con i suoi obiettivi e i suoi test
+- [x] I passi dopo di lui scalano di uno, ovunque siano nominati
+- [x] Le intestazioni vanno da 1 a N senza buchi, e non esiste nessun numero
+      oltre l'ultimo
+- [x] Le righe `Dipende da` con numeri spostati seguono il loro riferimento
+
+### Test automatici
+
+Nessuno nuovo: il codice non cambia. La suite gira lo stesso, perché i
+riferimenti spostati stanno anche nei messaggi delle guardie e nei loro test —
+`checkOpenGraph` nomina la PR che porta il dominio, e quel nome è confrontato
+con una stringa.
+
+---
+
+## PR 11 — La Timeline raggiunge l'archivio
 
 **Branch:** `timeline-archivio` · **Dipende da:** 8
 
@@ -1452,7 +1500,7 @@ sfondare la schermata», e lo fa — al prezzo di renderle irraggiungibili, che
 nessuno aveva scritto. L'export ha lo stesso limite e non ci è mai arrivato,
 perché nei file di design le serate sono sei.
 
-**Va fatta prima della 14**, la pubblicazione: pubblicare una rotaia che non
+**Va fatta prima della 15**, la pubblicazione: pubblicare una rotaia che non
 raggiunge l'archivio è pubblicare il difetto.
 
 ### Decisioni prese scrivendo il piano
@@ -1537,7 +1585,7 @@ raggiunge l'archivio è pubblicare il difetto.
 
 ---
 
-## PR 11 — La prenotazione dentro il modale
+## PR 12 — La prenotazione dentro il modale
 
 **Branch:** `modale-prenotazione` · **Dipende da:** 9
 
@@ -1577,7 +1625,7 @@ presente su entrambe le larghezze.
 
 ---
 
-## PR 12 — Chi siamo, contatti, rassegna disabilitata
+## PR 13 — Chi siamo, contatti, rassegna disabilitata
 
 **Branch:** `pagine-istituzionali` · **Dipende da:** 6
 
@@ -1603,7 +1651,7 @@ presente su entrambe le larghezze.
 
 ---
 
-## PR 13 — Sveltia CMS
+## PR 14 — Sveltia CMS
 
 **Branch:** `cms-sveltia` · **Dipende da:** 9
 
@@ -1631,9 +1679,9 @@ presente su entrambe le larghezze.
 
 ---
 
-## PR 14 — Pubblicazione
+## PR 15 — Pubblicazione
 
-**Branch:** `pubblicazione` · **Dipende da:** 13
+**Branch:** `pubblicazione` · **Dipende da:** 14
 
 ### Obiettivi
 
@@ -1663,14 +1711,14 @@ presente su entrambe le larghezze.
 
 ---
 
-## PR 15 — Proporzioni su schermo piccolo
+## PR 16 — Proporzioni su schermo piccolo
 
-**Branch:** `proporzioni-mobile` · **Dipende da:** 8, 12
+**Branch:** `proporzioni-mobile` · **Dipende da:** 8, 13
 
 Non è rifinitura rimandata per pigrizia: è **la stessa taratura fatta una volta
 sola invece che tre**. Su un telefono la scena divide l'altezza con due cose che
 alla PR 7 non esistevano ancora — la Timeline orizzontale in basso (PR 8) e la
-navigazione a pillola in alto (PR 12) — e ogni misura decisa prima che ci siano
+navigazione a pillola in alto (PR 13) — e ogni misura decisa prima che ci siano
 va rifatta quando arrivano.
 
 Quello che alla PR 7 doveva essere giusto, ed è giusto, è la **struttura**:
