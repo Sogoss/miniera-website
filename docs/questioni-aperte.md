@@ -138,12 +138,6 @@ il posto dove si tocca è la PR 15 insieme al resto dei meta.
 Lo schema di `sedi` ha un campo `map` facoltativo. Non è stato deciso se
 usarlo, né se una mappa serva davvero nella pagina contatti.
 
-### Numero WhatsApp reale
-
-Nei file di design è il segnaposto `+39 300 000 0000`. Quello vero è del
-presidente dell'associazione, che ha scelto lui di pubblicarlo in questo modo.
-Va sostituito prima della pubblicazione.
-
 ### Indirizzo email
 
 `ciao@laminieraculturale.it` resta com'è nel design, anche se la casella non

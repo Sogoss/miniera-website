@@ -70,6 +70,80 @@ export function checkModalTargets(markup: string, path = 'the page'): Violation[
   return violations;
 }
 
+/* The two classes that decide which form of a control a reader gets, and the
+   `display` each of them has to switch off. */
+const SWITCHES = [
+  {
+    selector: '.no-js .only-js',
+    what: 'the button that opens the modal, for a reader with no scripting',
+  },
+  {
+    selector: 'html:not(.no-js) .no-js-only',
+    what: 'the plain links and the direct WhatsApp link, once the script is running',
+  },
+];
+
+/**
+ * The `no-js` switch actually wins.
+ *
+ * A page carries both forms of a control — the button that opens the modal and
+ * the plain thing that needs no script — and one rule decides which of the two
+ * a reader sees. Which makes it not styling but «for this reader that element
+ * does not exist», and it has to beat whatever a component declares about its
+ * own display.
+ *
+ * It did not. `.no-js .only-js` is two classes, and so is the
+ * `.button[data-astro-cid-…]` a scoped component style compiles to: a tie, and
+ * a tie goes to whichever stylesheet the bundler put last, which was the
+ * component. Half the switch worked — `html:not(.no-js) .no-js-only` carries an
+ * element as well, so it wins by a point — and half did not, which is the worst
+ * possible arrangement: with scripting off, a dead button published on top of
+ * the very links it was standing in for. It was shipped at PR 7 and found at
+ * PR 12 by opening the built site with the class put back by hand, because in
+ * the source the two halves look symmetrical.
+ *
+ * Read out of dist/ rather than out of global.css, and the reason is the whole
+ * defect: what was wrong was never in that file, it was where the file landed.
+ */
+export function checkNoJsSwitch(css: string, path = 'the published CSS'): Violation[] {
+  const violations: Violation[] = [];
+
+  for (const { selector, what } of SWITCHES) {
+    /* Every rule that names this selector, whether it stands alone or in a
+       list: the minifier merges the two halves into one rule with a comma, and
+       a check that only knew the standalone form would report a stylesheet
+       that is perfectly correct. */
+    const at = new RegExp(
+      `(^|[,{}])\\s*${selector.replace(/[.:()\\/]/g, '\\$&')}\\s*[,{]`,
+      'gi',
+    );
+
+    let found = false;
+    let match: RegExpExecArray | null;
+    while ((match = at.exec(css)) !== null) {
+      const open = css.indexOf('{', match.index + match[0].length - 1);
+      const body = open === -1 ? '' : css.slice(open, css.indexOf('}', open));
+      if (!/display\s*:\s*none/i.test(body)) continue;
+
+      found = true;
+      if (/display\s*:\s*none\s*!\s*important/i.test(body)) continue;
+      violations.push({
+        rule: 'modal',
+        detail: `${path}: \`${selector}\` hides ${what} without \`!important\`. Two classes is what a scoped component style also weighs — \`.button[data-astro-cid-…]\` — so the two declarations tie and the order of the stylesheets decides. It has already been decided the wrong way once: a dead button published on top of the links it stands in for`,
+      });
+    }
+
+    if (!found) {
+      violations.push({
+        rule: 'modal',
+        detail: `${path}: nothing hides ${what}. Without \`${selector}\` a page publishes both forms of every control at once — the button and the fallback, one of which does nothing`,
+      });
+    }
+  }
+
+  return violations;
+}
+
 /**
  * More than one modal in a document.
  *

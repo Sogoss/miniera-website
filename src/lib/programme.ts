@@ -9,6 +9,7 @@
  */
 import { getCollection, getEntry } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
+import { bookingLink } from './contact.ts';
 import { type CycleLike, cycleAccentCss, findCycleNumberConflicts } from './cycles.ts';
 import {
   findNumberDateConflicts,
@@ -47,6 +48,11 @@ export type Scene = {
   past: boolean;
   cancelled: boolean;
   note: string;
+  /** Where «Prenota il posto» writes to, with the evening already named in the
+   *  message. Built for every evening and not only for the ones still to come:
+   *  what «bookable» means is decided by `stateOf`, once, and a second branch
+   *  here would be a second place deciding it. */
+  bookingUrl: string;
   attendance: number | undefined;
   materials: EventData['materials'];
   photo: EventData['photo'];
@@ -196,6 +202,7 @@ async function toScene(event: EventData, now: Date): Promise<Scene> {
     past,
     cancelled: event.cancelled,
     note: noteOf(event, past),
+    bookingUrl: bookingLink(event.number, event.title),
     attendance: event.attendance,
     materials: event.materials,
     photo: event.photo,

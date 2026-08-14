@@ -70,11 +70,15 @@ Fatto:
   serata e ne porta i meta per le anteprime; l'indirizzo segue chi scorre
 - Dalla rotaia si raggiunge qualunque serata in un tocco: le lontane sono
   marchi senza data sul desktop, e sul telefono la barra scorre
+- La prenotazione arriva a destinazione: «Prenota il posto» apre il pannello che
+  spiega come si fa e porta il link a WhatsApp, con il messaggio già scritto e
+  la serata dentro. Il numero sta in un posto solo, e con gli script spenti il
+  bottone è direttamente quel link
 
 Da fare: l'elenco completo dei passi, in ordine e uno per PR, sta in
-[piano.md](piano.md). In sintesi — la prenotazione dentro il modale, le pagine
-istituzionali, il CMS, la pubblicazione. La migrazione delle 81 serate storiche
-resta fuori dalla beta, vedi [questioni-aperte.md](questioni-aperte.md).
+[piano.md](piano.md). In sintesi — le pagine istituzionali, il CMS, la
+pubblicazione. La migrazione delle 81 serate storiche resta fuori dalla beta,
+vedi [questioni-aperte.md](questioni-aperte.md).
 
 Lo scroller del programma è `src/components/Programme.astro`, e le rotte che lo
 usano sono `src/pages/index.astro` e `src/pages/[number].astro`. Ogni scena porta

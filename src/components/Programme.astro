@@ -101,26 +101,11 @@ const { scenes, openIndex } = Astro.props;
     })();
   </script>
 
-  {/* What the «Prenota il posto» button shows, written once for the whole
-      programme: it is the same for every evening still to come, so it does not
-      belong inside a scene. In a <template> because it has no place in the page
-      until it is asked for — unlike the links of an evening, which are content
-      and stay in the markup.
-
-      The number to write to is not here yet: it is the president's, the design
-      only ever had a placeholder, and publishing a wrong one is worse than
-      publishing none. PR 12 puts it in, and with it the direct link that gives
-      this button something to do with scripting off. */}
-  <template id="booking">
-    <p>
-      La sala ha sessanta posti. Per tenerne uno si scrive all'organizzatore con
-      il proprio nome e quante persone siete: la risposta arriva in serata.
-    </p>
-    <p>
-      Se non si prenota si può venire lo stesso, ma il posto non è garantito.
-    </p>
-  </template>
-
+  {/* What the «Prenota il posto» button shows lives in the scene it belongs to,
+      not here. It was one template for the whole programme while the panel said
+      the same thing to every evening; from PR 12 it carries the WhatsApp link,
+      and that link names the evening in the message it sends — so there is one
+      per evening still to come, written where that evening is. */}
   <Modal />
 
   {/* What follows the reader: the tick that says where they are, the accent of

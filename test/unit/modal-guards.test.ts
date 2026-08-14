@@ -9,6 +9,7 @@ import { describe, expect, it } from 'vitest';
 import {
   checkLinksOutsideTemplates,
   checkModalTargets,
+  checkNoJsSwitch,
   checkSingleModal,
   modalOpeners,
 } from '../guards/modal.ts';
@@ -107,5 +108,62 @@ describe('checkLinksOutsideTemplates', () => {
 
   it('has nothing to say when nothing is expected', () => {
     expect(checkLinksOutsideTemplates(PAGE, [])).toEqual([]);
+  });
+});
+
+/* The switch that decides which of the two forms a reader gets.
+ *
+ * The one guard here written after the defect rather than before it: this was
+ * shipped at PR 7 and found at PR 12, by opening the built site and putting the
+ * class back by hand. The source was right the whole time. */
+describe('checkNoJsSwitch', () => {
+  const SWITCH = '.no-js .only-js,html:not(.no-js) .no-js-only{display:none!important}';
+
+  it('accepts the rule that wins', () => {
+    expect(checkNoJsSwitch(SWITCH)).toEqual([]);
+  });
+
+  it('accepts the two halves written apart, and spaced as a person types them', () => {
+    // The minifier merges them into one rule with a comma; global.css writes
+    // them as a list across two lines. Both are the same stylesheet.
+    const apart =
+      '.no-js .only-js { display: none !important; }\n' +
+      'html:not(.no-js) .no-js-only { display: none !important; }';
+    expect(checkNoJsSwitch(apart)).toEqual([]);
+  });
+
+  it('reports the tie, which is what was actually published', () => {
+    // Two classes on each side: `.no-js .only-js` against the
+    // `.button[data-astro-cid-…]` a scoped style compiles to. The order of the
+    // stylesheets decided, and it decided for the component.
+    const tie = '.no-js .only-js,html:not(.no-js) .no-js-only{display:none}';
+    const violations = checkNoJsSwitch(tie, 'dist/index.html');
+    expect(violations).toHaveLength(2);
+    expect(violations[0]!.rule).toBe('modal');
+    expect(violations[0]!.detail).toContain('!important');
+    expect(violations[0]!.detail).toContain('dist/index.html');
+  });
+
+  it('reports the half that is missing, which is worse than both missing', () => {
+    // Half a switch publishes a dead button on top of the links it stands in
+    // for — the page shows both forms of the same control, one of which does
+    // nothing.
+    const half = '.no-js .only-js{display:none!important}';
+    const violations = checkNoJsSwitch(half);
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain('no-js-only');
+  });
+
+  it('is not satisfied by a rule that names the selector without hiding it', () => {
+    // A rule about the same elements — a margin, an outline — is legitimate
+    // work, and it is not this. Counted as an answer it would let the switch
+    // disappear entirely with the suite green.
+    const other = '.no-js .only-js{margin:0}html:not(.no-js) .no-js-only{margin:0}';
+    expect(checkNoJsSwitch(other)).toHaveLength(2);
+    expect(checkNoJsSwitch(other)[0]!.detail).toContain('nothing hides');
+  });
+
+  it('says something about a stylesheet with no switch at all', () => {
+    expect(checkNoJsSwitch('.button{display:inline-flex}')).toHaveLength(2);
   });
 });

@@ -50,6 +50,11 @@ const STATE_LABEL: Partial<Record<EventState, string>> = {
 
 const stateLabel = STATE_LABEL[state];
 const titleId = `titolo-${scene.number}`;
+
+/* Written once because it is published twice — the button that opens the panel
+   and the link that stands in for it with no scripting are the same offer, and
+   two literals would be one edit away from disagreeing. */
+const BOOKING_LABEL = 'Prenota il posto';
 ---
 
 <section
@@ -165,11 +170,54 @@ const titleId = `titolo-${scene.number}`;
         )
       }
 
+      {/* The booking, in the two forms one page can carry: the button that opens
+          the panel, and the link that is left when no script runs. The CSS shows
+          whichever is going to work — the same `only-js` / `no-js-only` pair the
+          recordings above use — so nothing flashes and nothing is dead.
+
+          The panel is per evening and no longer one shared by the whole
+          programme, because the message it sends names the evening: one
+          `<template>` for all of them could only carry a link that names none.
+          Filling it from a `data-` attribute in the script was the other way,
+          and it is the modal building content out of data instead of cloning it
+          — an address written by a script is an address that does not exist for
+          whoever does not run one.
+
+          In a `<template>` because, unlike the recordings, this text has no
+          place in the page until it is asked for: what a reader with no
+          scripting loses is the explanation, not the action — the link leaves
+          with the message already written. */}
       {
         state === 'upcoming' && (
-          <Button class="only-js" data-modal-from="booking" data-modal-title={scene.title}>
-            Prenota il posto
-          </Button>
+          <Fragment>
+            <Button
+              class="only-js"
+              data-modal-from={`booking-${scene.number}`}
+              data-modal-title={scene.title}
+            >
+              {BOOKING_LABEL}
+            </Button>
+
+            <Button class="no-js-only" href={scene.bookingUrl} target="_blank" rel="noopener">
+              {BOOKING_LABEL}
+              <span class="visually-hidden">— si apre in una nuova scheda</span>
+            </Button>
+
+            <template id={`booking-${scene.number}`}>
+              <p>
+                La sala ha sessanta posti. Per tenerne uno si scrive
+                all'organizzatore con il proprio nome e quante persone siete: la
+                risposta arriva in serata.
+              </p>
+              <p>Se non si prenota si può venire lo stesso, ma il posto non è garantito.</p>
+              <p>
+                <a href={scene.bookingUrl} target="_blank" rel="noopener">
+                  Scrivi su WhatsApp
+                  <span class="visually-hidden">— si apre in una nuova scheda</span>
+                </a>
+              </p>
+            </template>
+          </Fragment>
         )
       }
 
