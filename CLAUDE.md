@@ -331,8 +331,9 @@ scena: il CSS li nasconde solo dopo che lo script è partito — è la classe
 `no-js` sul documento, tolta dal primo script della testa — così con gli script
 spenti non si perde niente. **Non spostarli in un `<template>`**: lì sarebbero
 invisibili a chi non ha script, a un crawler e a Ctrl+F, e una guardia lo dice.
-Tre guardie in `test/guards/modal.ts`: il bersaglio di ogni bottone esiste nella
-pagina, di `<dialog>` ce n'è uno, i link stanno fuori dai template.
+Quattro guardie in `test/guards/modal.ts`: il bersaglio di ogni bottone esiste
+nella pagina, di `<dialog>` ce n'è uno, i link stanno fuori dai template, e
+l'interruttore fra le due forme di un controllo nasconde davvero — qui sotto.
 
 **La prenotazione è l'altra cosa che apre quel modale, e ne ha una per serata.**
 Il pannello sta in un `<template>` dentro la scena — lì va bene, perché quel

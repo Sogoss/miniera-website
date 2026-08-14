@@ -113,8 +113,12 @@ export function checkNoJsSwitch(css: string, path = 'the published CSS'): Violat
        list: the minifier merges the two halves into one rule with a comma, and
        a check that only knew the standalone form would report a stylesheet
        that is perfectly correct. */
+    /* Every metacharacter escaped, and not the five that happen to be in the
+       two selectors above: the day one of them names an attribute —
+       `[data-timeline] .no-js-only` — a half-escaped `[` opens a character
+       class, and what the guard then looks for is not a selector at all. */
     const at = new RegExp(
-      `(^|[,{}])\\s*${selector.replace(/[.:()\\/]/g, '\\$&')}\\s*[,{]`,
+      `(^|[,{}])\\s*${selector.replace(/[.*+?^${}()|[\]\\/:-]/g, '\\$&')}\\s*[,{]`,
       'gi',
     );
 
@@ -122,7 +126,14 @@ export function checkNoJsSwitch(css: string, path = 'the published CSS'): Violat
     let match: RegExpExecArray | null;
     while ((match = at.exec(css)) !== null) {
       const open = css.indexOf('{', match.index + match[0].length - 1);
-      const body = open === -1 ? '' : css.slice(open, css.indexOf('}', open));
+      /* A block that never closes declares nothing. Written
+         `css.slice(open, css.indexOf('}', open))` a missing `}` gave -1, and a
+         negative end means «one character short of the end of the stylesheet»
+         rather than «nothing» — so what this read was the whole rest of the
+         file with its last character bitten off, which is the shape of answer
+         that is right by accident. */
+      const close = open === -1 ? -1 : css.indexOf('}', open);
+      const body = open === -1 || close === -1 ? '' : css.slice(open, close);
       if (!/display\s*:\s*none/i.test(body)) continue;
 
       found = true;

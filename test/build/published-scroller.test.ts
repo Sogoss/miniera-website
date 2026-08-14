@@ -142,14 +142,51 @@ describe('the published programme', () => {
     expect(checkLinksOutsideTemplates(home!.html, urls, HOME)).toEqual([]);
   });
 
-  it('gives a scene one button, not one per recording', () => {
-    // Two buttons stacked put the second under the bottom edge of a 390×800
-    // screen, and the scene is deliberately not scrollable — so they collapse
-    // into one that opens the modal.
+  it('gives a scene one button per offer, not one per recording', () => {
+    // What PR 7 collapsed is the *list*: an evening with three recordings had
+    // three buttons, and on a 390×800 screen the second was already under the
+    // bottom edge of a scene that is deliberately not scrollable. What it did
+    // not collapse — and could not — are the two different offers an evening
+    // can make, since «rivedi» and «prenota» fill the panel with different
+    // things.
+    //
+    // Counted per offer for that reason. Written as «at most one button», this
+    // was true of every evening in the sample content and false of a shape the
+    // content is free to take at any time: an evening still to come with a
+    // teaser clip on it. The suite would have gone red on a content edit, with
+    // the failure pointing at this file instead of at anything broken — which
+    // is the one thing the build layer is written not to do.
+    //
+    // Whether two of them stacked still fit a phone is a question of
+    // proportions, and it is measured on a real one at its own step.
+    const OFFERS = ['materials', 'booking'];
+
     for (const [at, evening] of evenings.entries()) {
-      const buttons = [...sceneAt(at).matchAll(/<button\b/g)];
-      expect(buttons.length, `evening #${evening.number} has ${buttons.length} buttons`)
-        .toBeLessThanOrEqual(1);
+      const scene = sceneAt(at);
+      const buttons = [...scene.matchAll(/<button\b/g)];
+      const targets = [...scene.matchAll(/<button\b[^>]*\bdata-modal-from="([^"]*)"/g)].map(
+        (match) => match[1]!,
+      );
+
+      // A button inside a scene is an opener and nothing else: there is no
+      // other work for one to do in there, and one that does something else is
+      // a control this reasoning has never looked at.
+      expect(buttons, `evening #${evening.number} has a button that opens no panel`).toHaveLength(
+        targets.length,
+      );
+
+      for (const target of targets) {
+        expect(
+          OFFERS.some((offer) => target.startsWith(`${offer}-`)),
+          `evening #${evening.number} opens \`${target}\`, which is neither offer`,
+        ).toBe(true);
+      }
+
+      for (const offer of OFFERS) {
+        const of = targets.filter((target) => target.startsWith(`${offer}-`));
+        expect(of.length, `evening #${evening.number} has ${of.length} \`${offer}\` buttons`)
+          .toBeLessThanOrEqual(1);
+      }
     }
   });
 

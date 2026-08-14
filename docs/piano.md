@@ -1602,7 +1602,7 @@ presente su entrambe le larghezze.
 
 ### Decisioni prese scrivendo la PR
 
-Le sette per esteso stanno in [decisioni.md](decisioni.md), sotto *La
+Le nove per esteso stanno in [decisioni.md](decisioni.md), sotto *La
 prenotazione*. In breve:
 
 - **Il numero sta in un modulo puro**, `src/lib/contact.ts`, che costruisce

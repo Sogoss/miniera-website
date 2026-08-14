@@ -16,6 +16,7 @@ import {
   digitsOf,
   phoneNumbersIn,
 } from '../guards/contact.ts';
+import { whatsappDigits } from '../../src/lib/contact.ts';
 
 const NUMBER = '+39 335 665 4599';
 const PLACEHOLDER = '+39 300 000 0000';
@@ -68,6 +69,32 @@ describe('digitsOf', () => {
   it('drops the prefix and the separators and nothing else', () => {
     expect(digitsOf('+39 335 665 4599')).toBe('393356654599');
     expect(digitsOf('393356654599')).toBe('393356654599');
+  });
+
+  it('reads a number exactly as src/lib/contact.ts reads it', () => {
+    // Two copies of one character class — the module's and the guard's — and
+    // on purpose: a guard that imported the module it guards would go blind
+    // together with it. What the two copies must not do is drift. A separator
+    // added to the module and not here leaves the guard silently not
+    // recognising a spelling the module accepts, which is the number written a
+    // second time and no violation reported: this guard failing open, which is
+    // the one way it dies quietly. Asserted on every separator either of them
+    // knows.
+    // Written as escapes, for the reason both files write their class that
+    // way: a non-breaking space is indistinguishable on screen from an
+    // ordinary one, and an assertion nobody can read proves nothing.
+    for (const spelling of [
+      '+39 335 665 4599',
+      '+39\u00a0335\u00a0665\u00a04599',
+      '+39.335.665.4599',
+      '+39-335-665-4599',
+      '+39\u2010335\u2010665\u20104599',
+      '+39\u2011335\u2011665\u20114599',
+      '+39\u2013335\u2013665\u20134599',
+      '+393356654599',
+    ]) {
+      expect(digitsOf(spelling), `«${spelling}»`).toBe(whatsappDigits(spelling));
+    }
   });
 });
 

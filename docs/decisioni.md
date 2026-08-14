@@ -1318,6 +1318,14 @@ scritta; il programma resta tutto lì da scorrere. *(PR 9)*
 
 ## La prenotazione
 
+**Il numero pubblicato è `+39 335 665 4599`, dato dal committente il 14 agosto
+2026**, ed è quello del presidente dell'associazione, che ha scelto lui di
+pubblicarlo in questo modo. Scritto qui perché non sta scritto in nessun altro
+posto che duri: nei file di design c'è solo il segnaposto, e chi legge il
+repository fra un anno trova dieci cifre senza provenienza — e dieci cifre senza
+provenienza in un bottone che manda messaggi a qualcuno sono esattamente ciò che
+nessuna guardia può verificare. *(PR 12)*
+
 **Il numero sta in un modulo puro, `src/lib/contact.ts`, e i link li costruisce
 lui.** È configurazione, non contenuto: una seconda copia scritta a mano in un
 componente non è sbagliata il giorno che la si scrive — è giusta, ed è per

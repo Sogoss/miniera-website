@@ -118,6 +118,26 @@ describe('every published page', () => {
   );
 
   it.each(pages.map((page) => [page.path, page] as const))(
+    '%s starts as `no-js` and takes it off from the head',
+    (_path, page) => {
+      // The other half of the same switch, and the half no stylesheet can
+      // prove. `checkNoJsSwitch` reads the rule; what decides whether the rule
+      // ever applies is the class on the document and the one line of the head
+      // that removes it. Drop `class="no-js"` and
+      // `html:not(.no-js) .no-js-only` matches for everybody: the WhatsApp link
+      // and the list of recordings vanish for a reader with no scripting and
+      // the dead button is back — which is exactly the defect this PR closed,
+      // reachable again by a one-word edit with the guard still green.
+      expect(page.html, 'the document does not start as `no-js`').toMatch(
+        /<html\b[^>]*\bclass="[^"]*\bno-js\b/,
+      );
+      expect(page.html, 'nothing takes `no-js` off once a script runs').toMatch(
+        /classList\.remove\(\s*['"]no-js['"]\s*\)/,
+      );
+    },
+  );
+
+  it.each(pages.map((page) => [page.path, page] as const))(
     '%s leads nowhere from a tick that is not a link',
     (_path, page) => {
       // Asked of every page and not only of the programme: the rail belongs to

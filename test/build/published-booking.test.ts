@@ -62,11 +62,22 @@ describe('the published booking', () => {
     expect(bookable.length, 'no upcoming evening in the sample content').toBeGreaterThan(0);
   });
 
-  it('writes every link to the number the domain holds', () => {
-    const links = whatsappLinks(html);
-    expect(links.length, 'no WhatsApp link in the programme at all').toBeGreaterThan(0);
-    for (const link of links) {
-      expect(link, `${link} does not write to the configured number`).toContain(`wa.me/${digits}?`);
+  it('writes every link to the number the domain holds, wherever it published one', () => {
+    // Every published file and not the home page alone. `checkWhatsappSource`
+    // reads src/ and nothing else, so a wa.me address that arrives another way
+    // — copied into public/, written by a script, left on the route of one
+    // evening — is seen by no guard at all; and `checkPlaceholderNumber` only
+    // knows the one wrong number the design left behind, not the other
+    // fourteen digits somebody could type. Read here, where everything that
+    // reaches a reader has to pass.
+    const found = readPublishedFiles().flatMap((file) =>
+      whatsappLinks(file.text).map((link) => ({ link, path: file.path })),
+    );
+    expect(found.length, 'no WhatsApp link in dist/ at all').toBeGreaterThan(0);
+    for (const { link, path } of found) {
+      expect(link, `${path} does not write to the configured number`).toContain(
+        `wa.me/${digits}?`,
+      );
     }
   });
 
