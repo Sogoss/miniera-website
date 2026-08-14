@@ -10,21 +10,36 @@ import { checkBrandSignature } from '../guards/brand.ts';
 import { checkModalTargets, checkNoJsSwitch, checkSingleModal } from '../guards/modal.ts';
 import { checkTimelineLinks, checkTimelineTargets, tickTags } from '../guards/timeline.ts';
 import {
+  checkAnchorsWithoutHref,
   checkDocumentBasics,
   checkOpenGraph,
   checkSkipLink,
   checkSkipLinkStyle,
 } from '../guards/document.ts';
+import { checkInternalLinks } from '../guards/routes.ts';
 import {
   checkClipShapeReferences,
   checkDuplicateClipShapeIds,
   checkEmptyClipShapes,
 } from '../guards/shapes.ts';
 import { CLIP_SHAPES } from '../../src/lib/shapes.ts';
-import { decodeEntities, publishedPages, readPublishedCss } from '../support/dist.ts';
+import {
+  decodeEntities,
+  listPublishedFiles,
+  publishedPages,
+  readPublishedCss,
+} from '../support/dist.ts';
 import astroConfig from '../../astro.config.mjs';
 
 const pages = publishedPages();
+
+/* Every address dist/ actually answers: a page, or a file copied beside it.
+   Built from what the build produced and not from a list written here — a
+   route this file forgot would be reported as a broken link, which is a guard
+   firing on correct work. */
+const routes = listPublishedFiles().map(
+  (file) => file.replace(/^dist/, '').replace(/\/index\.html$/, '') || '/',
+);
 
 /* Whether the site knows its own address yet — asked of the configuration
    itself, not of its text. Grepping for `site:` missed it on a single line and
@@ -148,6 +163,34 @@ describe('every published page', () => {
       expect(checkTimelineTargets(page.html, page.path)).toEqual([]);
     },
   );
+
+  it.each(pages.map((page) => [page.path, page] as const))(
+    '%s links to no page this build did not produce',
+    (_path, page) => {
+      // The other end of `checkEveningRoutes`: there an evening had an address
+      // and no page, here a link has a page and nothing at the other end. A
+      // 404 is found by following it, which builds never do and readers always
+      // do — and the navigation this PR adds is on every page of the site.
+      expect(checkInternalLinks(page.html, routes, page.path)).toEqual([]);
+    },
+  );
+
+  it.each(pages.map((page) => [page.path, page] as const))(
+    '%s writes no link with the address left off',
+    (_path, page) => {
+      // An `<a>` with no href is not a link: no focus, no announcement, no
+      // Enter. It looks exactly like the links beside it, which is how the
+      // voice with no page would come back as one.
+      expect(checkAnchorsWithoutHref(page.html, page.path)).toEqual([]);
+    },
+  );
+
+  it('has routes to check the links against', () => {
+    // Without this the assertion above would report every link on every page,
+    // or — with the set built the other way — none of them.
+    expect(routes).toContain('/');
+    expect(routes.length).toBeGreaterThan(pages.length);
+  });
 
   it('publishes a rail somewhere, so that the two tick guards have work to do', () => {
     // The anti-vacuity half of the pair above, and the same argument as the

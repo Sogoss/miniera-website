@@ -1393,6 +1393,128 @@ chiamare numero è una sequenza a gruppi di una cifra: `M 3 0 0 0 0 0 0 0 0 0` i
 un path SVG è dieci cifre e nove separatori, e una guardia che segnala un disegno
 è una guardia che qualcuno spegne. *(PR 12)*
 
+## Le pagine istituzionali e la navigazione
+
+**La navigazione sta nel layout**, accanto a `CycleAccents` e `ClipShapes`, per
+il criterio già scritto alla PR 5: nel layout ci sta ciò che, dimenticato, non
+fa fallire niente. Una pagina senza navigazione si legge benissimo e non porta
+da nessuna parte. *(PR 13)*
+
+**Le voci sono `<a href>`, non bottoni.** Nell'export sono `<button onClick>`
+perché lì le viste sono stati di un componente; da noi sono pagine vere, e
+l'elemento per una cosa che porta a un'altra pagina è il link — con l'indirizzo
+condivisibile, il tasto centrale, l'apri-in-nuova-scheda, l'annuncio da screen
+reader e una navigazione che funziona con gli script spenti. È la regola 14
+applicata alla seconda rotaia del sito. *(PR 13)*
+
+**L'indicatore scorrevole diventa `aria-current="page"`.** Nel design è uno
+`<span>` posizionato in pixel misurati da JavaScript a ogni `resize`; a schermo
+la stessa cosa la fa una regola CSS, e così è anche *detta* invece che solo
+disegnata. Si perde l'animazione fra due voci, che in un sito di pagine vere non
+esiste: fra la voce vecchia e la nuova c'è un caricamento. *(PR 13)*
+
+**La tendina del telefono è `<details>/<summary>`.** Porta apertura, chiusura,
+fuoco, Invio e l'annuncio *espanso/compresso* senza una riga di script. Quello
+che la tendina del design ha e questa no è la chiusura al clic fuori, che è un
+handler: costa un tocco e risparmia del codice che alla PR 16 andrebbe tarato.
+*(PR 13)*
+
+**L'elenco delle voci è reso due volte, ed è impaginazione e non due sorgenti.**
+Sopra i 900px è la riga del design desktop, sotto è la tendina; una delle due è
+sempre `display: none`, quindi nell'albero di accessibilità e nell'ordine di
+tabulazione ce n'è esattamente una. Tutt'e due vengono da `NAVIGATION`, quindi
+non possono divergere — ed è per questo che le marcature `aria-current="page"`
+pubblicate sono due e il test lo pretende. La strada senza duplicazione era una
+sola, `<details>` con il pannello forzato aperto sul desktop, e non regge: i
+browser nascondono i figli di un `<details>` chiuso in un modo che il CSS
+d'autore non raggiunge — su Safari 15.4, che è la soglia dichiarata, il menu
+sarebbe una riga vuota. *(PR 13)*
+
+**«Rassegna stampa» non è un link e non ha una pagina.** Un `<a>` senza `href`
+non è un link: non prende il fuoco, ha il ruolo generico e non l'annuncio di un
+link, e in un menu è una voce che sembra attiva e non lo è — la stessa mezza
+verità dell'`aria-disabled` su un `<a>` senza indirizzo, tolta alla PR 6. È
+testo, con accanto il suo *in arrivo*. E niente pagina: sarebbe un indirizzo
+condivisibile e indicizzabile per qualcosa che non ha niente da dire, più una
+rotta che la sitemap della PR 15 dovrebbe ricordarsi di escludere. *(PR 13)*
+
+**Ogni link interno pubblicato deve trovare la sua pagina in `dist/`**,
+`checkInternalLinks`: la sorella di `checkEveningRoutes`, e il motivo per cui la
+decisione qui sopra non ha bisogno di una guardia sua — il giorno che qualcuno
+dà un `href` a quella voce, quella pagina non c'è e la suite lo dice. *(PR 13)*
+
+**L'indirizzo si compone in un posto solo**, `src/lib/venues.ts`. La collection
+teneva l'indirizzo da sempre; quello che veniva scritto a mano era la
+*scrittura*, e alla PR 12 erano già due — `Scene.astro` con la città,
+`componenti.astro` senza. Nessuna delle due è sbagliata, ed è questo il punto:
+sono due risposte alla stessa domanda, e chi le vede tutte e due vede un sito che
+non è sicuro di dove sta. *(PR 13)*
+
+**E gli indirizzi del design non compaiono da nessuna parte**, `checkStaleVenue`,
+sul sorgente e sul pubblicato. *Circolo di via Fratelli Rosselli 12* è scritto
+cinque volte in `design-export/`, che è la specifica da cui si traduce: il modo
+in cui arriva in produzione è qualcuno che ne copia la riga, esattamente come il
+numero segnaposto. *(PR 13)*
+
+**Il segnaposto telefonico del design non si pubblica.** `011 000 0000` è un
+numero di Torino ben formato: chiamarlo raggiunge qualcuno che non è
+l'associazione, o nessuno, e la pagina attorno è perfetta. L'associazione non ha
+un fisso da pubblicare, quindi la pagina contatti offre le due porte che
+esistono. La guardia c'era già ed è parametrica: le si passa la seconda costante.
+*(PR 13)*
+
+**L'email sta accanto al numero, e si pubblica marcata come segnaposto.**
+`ciao@laminieraculturale.it` è la decisione già presa in
+[questioni-aperte.md](questioni-aperte.md) — arriva col dominio — ma la casella
+non esiste ancora, e un `mailto:` che non riceve è il segnaposto telefonico con
+una chiocciola. La via che funziona oggi è WhatsApp, e la pagina lo dice.
+*(PR 13)*
+
+**I testi che l'associazione non ha ancora scritto sono segnaposto palesi.** Nel
+design ci sono una storia di fondazione, quattro persone con nome e ruolo e
+quattro statistiche: nessuna di quelle cose appartiene a questa associazione.
+Pubblicate così sono una pagina che rende perfettamente, dice il falso e non
+fallisce da nessuna parte — e nessuno rilegge una pagina che sembra finita. Un
+lorem ipsum, un `Nome Cognome` e uno `0000` si vedono a colpo d'occhio, ed è per
+questo che sono stati scelti: la variante credibile è quella che resta
+pubblicata. *(PR 13)*
+
+**E stanno in un modulo solo, si dichiarano nel markup e non sopravvivono al
+dominio.** `src/lib/placeholder.ts` li tiene tutti — «tutti» è la proprietà che
+rende la sostituzione un file solo invece di una caccia — il componente
+`Placeholder` mette insieme la cornice che il lettore vede e il
+`data-placeholder` che la guardia legge, e con `site` impostato in
+`astro.config.mjs` un solo blocco marcato in `dist/` è una violazione. È
+l'interruttore di `og:url`, armato dalla configurazione e non dalla memoria di
+qualcuno: **la PR 15 non chiude finché i testi veri non ci sono**, ed è voluto —
+un dominio vero con un lorem ipsum sopra è l'unica cosa peggiore di non avere il
+dominio. *(PR 13)*
+
+**Il 3:1 dei cicli implica il 4,5:1 sull'inchiostro, su questo fondo, e la
+verifica resta scritta.** La voce corrente scrive nero sull'accento, e una parola
+vuole 4,5 dove un bordo vuole 3: sembrava la scoperta della PR 6 — il 3:1
+verificato contro il fondo della pagina mentre `EventCard` disegnava l'accento su
+`--surface-raised` — e invece qui i conti dicono un'altra cosa. Passare 3:1
+contro `#003049` mette un colore sopra 0,179 di luminanza relativa, e sopra 0,175
+si è già oltre 4,5:1 contro il nero: i sei colori del repository stanno fra 5,89
+e 8,43. La seconda verifica **non può fallire oggi**, e resta perché una delle sue
+due premesse è un token: chi domani mette `--text-on-accent: var(--blue-900)` —
+il «nero più morbido», la cosa ovvia da fare — porta diversi accenti sotto la
+soglia in una pagina dove non cambia nient'altro. L'inchiostro si legge dai
+token, risolvendo il `var()` con cui è dichiarato. *(PR 13)*
+
+**La pillola non mangia lo scorrimento.** Un riquadro fisso sopra lo scroller
+viene colpito per primo, e una rotellina sopra di esso cerca un antenato
+scorrevole suo — trovando il documento, alto una schermata e fermo. È la trappola
+che la Timeline ha già pagato: `pointer-events: none` sull'involucro e `auto`
+sulla pillola. *(PR 13)*
+
+**I `clamp()` delle due pagine nuove sono in `rem`.** La PR 16 esiste anche per
+togliere i px da quelli delle scene, copiati dal design: un `clamp()` che non
+dipende in nessuno dei suoi termini dal corpo di base non dà niente a chi
+ingrandisce il testo dal sistema, e il pubblico di questo sito ha cinquanta e
+sessant'anni. Quelli scritti qui non devono essere sistemati due volte. *(PR 13)*
+
 ## Rimandate
 
 **Il dominio.** Se ne riparla a sito finito. Il design presuppone

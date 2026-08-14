@@ -7,10 +7,15 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  EMAIL,
   PLACEHOLDER_NUMBER,
+  PLACEHOLDER_PHONE,
   WHATSAPP_NUMBER,
   bookingLink,
   bookingMessage,
+  contactLink,
+  contactMessage,
+  mailtoLink,
   whatsappDigits,
   whatsappLink,
 } from '../../src/lib/contact.ts';
@@ -110,5 +115,65 @@ describe('the two numbers', () => {
 
   it('are both readable as numbers', () => {
     expect(whatsappDigits(PLACEHOLDER_NUMBER)).toBe('393000000000');
+  });
+});
+
+/* The message from the contacts page, which is the one that names no evening.
+   A page where somebody writes to ask something else would otherwise open a
+   chat about a Thursday they never mentioned. */
+describe('contactMessage', () => {
+  it('says who is writing and nothing about an evening', () => {
+    expect(contactMessage()).toContain('Miniera');
+    expect(contactMessage()).not.toMatch(/serata/i);
+  });
+
+  it('is not the message the booking sends', () => {
+    expect(contactMessage()).not.toBe(bookingMessage(81, 'Chi tiene aperto il quartiere'));
+  });
+
+  it('travels to the configured number, encoded', () => {
+    const link = contactLink();
+    expect(link.startsWith(`https://wa.me/${whatsappDigits(WHATSAPP_NUMBER)}?text=`)).toBe(true);
+    expect(decodeURIComponent(link.split('?text=')[1]!)).toBe(contactMessage());
+  });
+});
+
+describe('mailtoLink', () => {
+  it('writes to the address the module holds', () => {
+    expect(mailtoLink()).toBe(`mailto:${EMAIL}`);
+  });
+
+  it('carries a subject, encoded', () => {
+    // Italian subjects carry apostrophes and accents, and a space is not a
+    // space in a URL.
+    const link = mailtoLink("Scrivo dall'associazione — è urgente");
+    expect(link.startsWith(`mailto:${EMAIL}?subject=`)).toBe(true);
+    expect(decodeURIComponent(link.split('?subject=')[1]!)).toBe(
+      "Scrivo dall'associazione — è urgente",
+    );
+    expect(link).not.toContain(' ');
+  });
+
+  it('refuses what is not an address instead of building a link to nobody', () => {
+    // The same decision as `whatsappDigits`: a mailto built from a typo opens
+    // a composer addressed to nothing and fails at no point a build can see.
+    for (const wrong of ['ciao', 'ciao@', '@laminieraculturale.it', 'ciao@laminieraculturale', 'ciao @laminiera.it']) {
+      expect(() => mailtoLink(undefined, wrong), `«${wrong}» was accepted`).toThrow();
+    }
+  });
+
+  it('accepts the address it is given, when it is one', () => {
+    expect(mailtoLink(undefined, 'presidenza@laminieraculturale.it')).toBe(
+      'mailto:presidenza@laminieraculturale.it',
+    );
+  });
+});
+
+describe('the landline of the design', () => {
+  it('is a number, and is not the one the association uses', () => {
+    // Readable as a number is what makes it huntable: `checkPlaceholderNumber`
+    // reads numbers the way a person writes them.
+    expect(PLACEHOLDER_PHONE.replace(/\s/g, '')).toBe('0110000000');
+    expect(PLACEHOLDER_PHONE).not.toBe(WHATSAPP_NUMBER);
   });
 });

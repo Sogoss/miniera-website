@@ -1,0 +1,127 @@
+---
+/* Contatti: the ways there actually are of reaching the association.
+ *
+ * Three, and only one of them works today. WhatsApp is the one the president
+ * answers — it is the same number the booking writes to, built by the same
+ * module. The email is the design's, kept by a decision already taken in
+ * docs/questioni-aperte.md: it arrives with the domain, and until then the
+ * mailbox does not exist. So it is published marked, with the sentence that
+ * says so beside it — an address that reaches nobody is the placeholder
+ * telephone number wearing an at sign, and the honest thing is to say which of
+ * the two doors is open.
+ *
+ * The design also has a landline, `011 000 0000`. It is not here: the
+ * association has no number to publish and that one is a well-formed Turin
+ * telephone that rings somewhere else. `checkPlaceholderNumber` hunts it in
+ * dist/ the same way it hunts the WhatsApp placeholder.
+ */
+import Base from '../layouts/Base.astro';
+import Button from '../components/Button.astro';
+import Placeholder from '../components/Placeholder.astro';
+import { EMAIL, WHATSAPP_NUMBER, contactLink, mailtoLink } from '../lib/contact.ts';
+import { loadHomeVenue } from '../lib/programme.ts';
+import { fullAddress } from '../lib/venues.ts';
+import { PLACEHOLDER_TEXTS as TEXTS } from '../lib/placeholder.ts';
+import '../styles/pages.css';
+
+const venue = await loadHomeVenue();
+
+const DESCRIPTION =
+  'Come raggiungere La Miniera Culturale in Periferia: WhatsApp, email e dove si trova la sala.';
+
+/* The subject is written here and not in the module: `mailtoLink` builds a
+   link to the association and this is what *this page* opens a message about.
+   The booking has its own, and the two say different things. */
+const EMAIL_SUBJECT = 'Scrivo dal sito della Miniera Culturale';
+---
+
+<Base
+  title="Contatti — La Miniera Culturale in Periferia"
+  description={DESCRIPTION}
+  mainId="contenuto"
+  skipLabel="Salta al contenuto"
+>
+  <article class="page">
+    <header class="page-head">
+      <span class="page-kicker">Contatti</span>
+      <Placeholder hint>
+        <h1 class="page-title">{TEXTS.contactTitle}</h1>
+        <p class="page-lead">{TEXTS.contactLead}</p>
+      </Placeholder>
+    </header>
+
+    <section class="page-section" aria-labelledby="scriverci">
+      <h2 id="scriverci">Come scriverci</h2>
+
+      <div class="page-contacts">
+        <a class="page-contact" href={contactLink()} target="_blank" rel="noopener">
+          <svg class="page-icon page-icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+            <path d="M3.5 20.5l1.4-4.2A8 8 0 1 1 8 19.4z"></path>
+            <path d="M8.8 9.4c.4 3 2.8 5.4 5.8 5.8l1-1.6 2 .9-.5 1.7c-3.9.6-8.3-3.6-8.9-8.2l1.7-.5.9 2z"></path>
+          </svg>
+          {/* The number itself and not «scrivici su WhatsApp» a second time:
+              the button underneath already says that, and what a contacts page
+              is for is the thing somebody copies into their phone. It is
+              published from the module, like every link built from it. */}
+          <span class="page-contact-lines">
+            <span class="page-label">WhatsApp</span>
+            <span class="page-contact-value">{WHATSAPP_NUMBER}</span>
+          </span>
+          <span class="visually-hidden">— si apre in una nuova scheda</span>
+        </a>
+      </div>
+
+      <div class="page-actions">
+        <Button href={contactLink()} size="lg" target="_blank" rel="noopener">
+          Scrivici su WhatsApp
+        </Button>
+      </div>
+    </section>
+
+    <section class="page-section" aria-labelledby="email">
+      <h2 id="email">Email</h2>
+      <Placeholder>
+        <div class="page-contacts">
+          <a class="page-contact" href={mailtoLink(EMAIL_SUBJECT)}>
+            <svg class="page-icon page-icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+              <rect x="3" y="5" width="18" height="14"></rect>
+              <path d="M3 6.5l9 6 9-6"></path>
+            </svg>
+            <span class="page-contact-lines">
+              <span class="page-label">Email</span>
+              <span class="page-contact-value">{EMAIL}</span>
+            </span>
+          </a>
+        </div>
+        <p>{TEXTS.emailNote}</p>
+      </Placeholder>
+    </section>
+
+    <section class="page-section" aria-labelledby="dove">
+      <h2 id="dove">Dove siamo</h2>
+      <div class="page-facts">
+        <p class="page-fact">
+          <svg class="page-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+            <path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"></path>
+            <circle cx="12" cy="10" r="2.6"></circle>
+          </svg>
+          <span>{fullAddress(venue)}</span>
+        </p>
+      </div>
+
+      <div class="page-actions">
+        <Button href="/chi-siamo" size="lg" variant="secondary">Chi siamo</Button>
+        <Button href="/" size="lg" variant="secondary">Vedi il programma</Button>
+      </div>
+    </section>
+  </article>
+</Base>
+
+<style>
+  /* The icon of a contact row is bigger than the one beside a fact: it is the
+     thing the eye lands on in a list of two. */
+  .page-icon-lg {
+    width: 1.375rem;
+    height: 1.375rem;
+  }
+</style>

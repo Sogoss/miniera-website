@@ -74,10 +74,21 @@ Fatto:
   spiega come si fa e porta il link a WhatsApp, con il messaggio già scritto e
   la serata dentro. Il numero sta in un posto solo, e con gli script spenti il
   bottone è direttamente quel link
+- Il sito ha più di una pagina, e un modo per raggiungerle: la navigazione a
+  pillola su ogni pagina — voci che sono link, la corrente marcata, la tendina
+  del telefono che si apre senza script — più `/chi-siamo` e `/contatti`.
+  «Rassegna stampa» è annunciata e non è un link, perché non c'è una pagina a
+  cui puntare. L'indirizzo della sede viene dalla collection e si scrive in un
+  modo solo, in ogni punto del sito
+- **I testi delle due pagine nuove sono segnaposto palesi** — lorem ipsum,
+  `Nome Cognome`, cifre a `0000` — in attesa di quelli dell'associazione: stanno
+  in un modulo solo, sono marcati sulla pagina e in `dist/`, e diventano un test
+  rosso il giorno che il sito prende un dominio. Vedi
+  [questioni-aperte.md](questioni-aperte.md)
 
 Da fare: l'elenco completo dei passi, in ordine e uno per PR, sta in
-[piano.md](piano.md). In sintesi — le pagine istituzionali, il CMS, la
-pubblicazione. La migrazione delle 81 serate storiche resta fuori dalla beta,
+[piano.md](piano.md). In sintesi — il CMS, la pubblicazione, le proporzioni su
+schermo piccolo. La migrazione delle 81 serate storiche resta fuori dalla beta,
 vedi [questioni-aperte.md](questioni-aperte.md).
 
 Lo scroller del programma è `src/components/Programme.astro`, e le rotte che lo

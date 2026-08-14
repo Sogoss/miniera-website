@@ -1,0 +1,319 @@
+---
+/* The navigation: the mark, and the four voices of the site.
+ *
+ * **The voices are links.** In the export they are `<button onClick>`, because
+ * there the pages are states of one component and there is nothing to link to;
+ * here they are pages — decided in docs/design.md — and a link is the element
+ * for a thing that leads to another page. It arrives with the address bar, the
+ * middle click, open-in-new-tab, the announcement a screen reader makes for a
+ * link, and a navigation that works with no script at all. It is rule 14
+ * applied a second time: the Timeline's ticks made the same choice for the same
+ * reason.
+ *
+ * **The sliding indicator is `aria-current="page"`.** In the design it is a
+ * `<span>` positioned in pixels measured by JavaScript on every resize; on
+ * screen the same thing is a CSS rule, and this way it is also *said* rather
+ * than only drawn. What is lost is the animation between two voices, which a
+ * site of real pages never had: between the old voice and the new one there is
+ * a page load.
+ *
+ * **«Rassegna stampa» is not a link and has no page.** An `<a>` with no `href`
+ * is not a link — it takes no focus, is announced as nothing, and in a menu it
+ * is a voice that looks live and is not. It is text with its note beside it,
+ * and `checkInternalLinks` is what stops somebody giving it an address before
+ * there is a page at the other end.
+ *
+ * **The list is rendered twice, and that is layout and not two sources.** Above
+ * 900px it is the row of the desktop design; below, the phone's disclosure. One
+ * of the two is always `display: none`, so exactly one is in the accessibility
+ * tree and in the tab order — and both come off `NAVIGATION`, so they cannot
+ * disagree. A `<details>` because it is the cheapest element again: it opens,
+ * closes, takes focus, answers Enter and announces itself expanded or
+ * collapsed, with nothing written here. What the design's dropdown has and this
+ * does not is closing on a click outside, which is an event handler; the cost
+ * is one tap and the saving is a script that PR 16 would have to tune.
+ */
+import Brand from './Brand.astro';
+import { NAVIGATION, currentHref } from '../lib/navigation.ts';
+
+/* Read here rather than taken as a prop: a prop is something a page can be
+   given wrong, and every page already knows its own address. `Astro.url` is the
+   route being rendered, which in a build is the page's own path. */
+const current = currentHref(Astro.url.pathname);
+const currentLabel = NAVIGATION.find((item) => item.href === current)?.label;
+---
+
+{/* Two boxes and not one: the outer one spans the screen so that the pill can
+    be centred, and it lets the wheel through. A fixed box over the scroller is
+    hit-tested first, and a wheel over it looks for a scrolling ancestor of its
+    own — finding the document, which is one screen tall and does not move. That
+    is a strip across the top of the programme where scrolling does nothing, and
+    it is the trap the Timeline already paid for. */}
+<div class="site-nav-wrap">
+  {/* `data-navigation` is the handle the build assertions take hold of, like
+      `data-timeline` and `data-scene`: a class is styling and can be renamed by
+      whoever restyles this, and the checks would go on passing over nothing. */}
+  <nav class="site-nav" data-navigation aria-label="Le pagine del sito">
+    <a class="site-nav-home" href="/">
+      <Brand height={14} />
+    </a>
+
+    <ul class="site-nav-voices" data-nav="row">
+      {
+        NAVIGATION.map((item) => (
+          <li>
+            {item.href ? (
+              <a
+                class="site-nav-voice"
+                href={item.href}
+                aria-current={item.href === current ? 'page' : undefined}
+              >
+                {item.label}
+              </a>
+            ) : (
+              <span class="site-nav-voice" data-soon>
+                {item.label}
+                <span class="site-nav-soon">{item.note}</span>
+              </span>
+            )}
+          </li>
+        ))
+      }
+    </ul>
+
+    <details class="site-nav-more" data-nav="menu">
+      <summary class="site-nav-summary">
+        {/* The current page, as the design has it — and «Menu» where there is
+            no current page, which is the component gallery: a summary reading
+            nothing at all is a control with no name. */}
+        <span>{currentLabel ?? 'Menu'}</span>
+        <svg class="site-nav-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
+          <path d="M6 9.5l6 6 6-6"></path>
+        </svg>
+      </summary>
+
+      <ul class="site-nav-panel">
+        {
+          NAVIGATION.map((item) => (
+            <li>
+              {item.href ? (
+                <a
+                  class="site-nav-voice"
+                  href={item.href}
+                  aria-current={item.href === current ? 'page' : undefined}
+                >
+                  {item.label}
+                </a>
+              ) : (
+                <span class="site-nav-voice" data-soon>
+                  {item.label}
+                  <span class="site-nav-soon">{item.note}</span>
+                </span>
+              )}
+            </li>
+          ))
+        }
+      </ul>
+    </details>
+  </nav>
+</div>
+
+<style>
+  .site-nav-wrap {
+    position: fixed;
+    z-index: 60;
+    top: var(--space-4);
+    right: 0;
+    left: 0;
+    display: flex;
+    justify-content: center;
+    padding: 0 var(--space-3);
+    pointer-events: none;
+  }
+
+  /* `position: relative` because the phone's panel hangs off the pill and not
+     off the summary: dropped from the summary it would sit under a control a
+     few characters wide and hang off the right edge of a narrow screen. */
+  .site-nav {
+    position: relative;
+    display: flex;
+    max-width: 100%;
+    align-items: center;
+    gap: clamp(12px, 2vw, 24px);
+    padding: var(--space-2) var(--space-3) var(--space-2) var(--space-4);
+    border: var(--border-width-hairline) solid var(--border-hairline);
+    border-radius: var(--radius-pill);
+    background: var(--veil-bar);
+    box-shadow: var(--shadow-lift-lg);
+    pointer-events: auto;
+  }
+
+  /* The blur is an enhancement and nothing rests on it: under it there is a
+     veil at 82%, which is opaque enough to read a voice against a photograph.
+     Declared in @supports and not as a second declaration — rule 4. */
+  @supports (backdrop-filter: blur(16px)) {
+    .site-nav {
+      backdrop-filter: blur(16px);
+    }
+  }
+
+  .site-nav-home {
+    display: flex;
+    flex: none;
+    align-items: center;
+    padding-right: var(--space-3);
+    border-right: var(--border-width-hairline) solid var(--border-hairline);
+    text-decoration: none;
+  }
+
+  .site-nav-voices,
+  .site-nav-panel {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .site-nav-voices {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .site-nav-voice {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-pill);
+    color: var(--text-secondary);
+    font: var(--type-label);
+    letter-spacing: var(--tracking-caps);
+    text-transform: uppercase;
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+      color var(--dur-base) var(--ease-out),
+      background var(--dur-base) var(--ease-out);
+  }
+
+  a.site-nav-voice:hover {
+    background: rgba(var(--cream-100-rgb), 0.12);
+    color: var(--text-primary);
+  }
+
+  /* The accent under a word, which is why the cycle colours are held to 4.5:1
+     against black and not only to the 3:1 an interface element needs. */
+  .site-nav-voice[aria-current='page'] {
+    background: var(--accent);
+    color: var(--text-on-accent);
+  }
+
+  .site-nav-voice[data-soon] {
+    color: var(--text-muted);
+  }
+
+  .site-nav-soon {
+    font-size: var(--text-2xs);
+    font-weight: var(--weight-regular);
+    letter-spacing: var(--tracking-normal);
+    text-transform: none;
+  }
+
+  .site-nav-soon::before {
+    content: '· ';
+  }
+
+  /* --- The phone's disclosure --------------------------------------------- */
+
+  .site-nav-more {
+    flex: none;
+  }
+
+  .site-nav-summary {
+    display: flex;
+    min-height: 44px;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 0 var(--space-3);
+    border-radius: var(--radius-pill);
+    background: var(--accent);
+    color: var(--text-on-accent);
+    cursor: pointer;
+    font: var(--type-label);
+    letter-spacing: var(--tracking-caps);
+    list-style: none;
+    text-transform: uppercase;
+  }
+
+  /* The marker, in the two places browsers put it. */
+  .site-nav-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .site-nav-caret {
+    width: 14px;
+    height: 14px;
+    flex: none;
+    transition: transform var(--dur-base) var(--ease-out);
+  }
+
+  .site-nav-more[open] .site-nav-caret {
+    transform: rotate(180deg);
+  }
+
+  .site-nav-panel {
+    position: absolute;
+    top: calc(100% + var(--space-2));
+    right: 0;
+    display: flex;
+    width: min(260px, 72vw);
+    flex-direction: column;
+    padding: var(--space-1);
+    border: var(--border-width-hairline) solid var(--border-hairline);
+    border-radius: 20px;
+    background: var(--veil-bar-strong);
+    box-shadow: var(--shadow-lift-lg);
+  }
+
+  @supports (backdrop-filter: blur(18px)) {
+    .site-nav-panel {
+      backdrop-filter: blur(18px);
+    }
+  }
+
+  .site-nav-panel .site-nav-voice {
+    min-height: 44px;
+    align-items: center;
+    justify-content: flex-start;
+    border-radius: 14px;
+    white-space: normal;
+  }
+
+  /* --- Which of the two is showing ---------------------------------------- */
+
+  .site-nav-more {
+    display: none;
+  }
+
+  @media (max-width: 900px) {
+    .site-nav-wrap {
+      top: var(--space-3);
+      padding: 0 var(--space-3);
+    }
+
+    .site-nav {
+      width: 100%;
+      justify-content: space-between;
+      gap: var(--space-2);
+      padding: var(--space-1) var(--space-1) var(--space-1) var(--space-4);
+    }
+
+    .site-nav-voices {
+      display: none;
+    }
+
+    .site-nav-more {
+      display: block;
+    }
+  }
+</style>

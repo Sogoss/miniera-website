@@ -28,6 +28,7 @@ import GuestRow from './GuestRow.astro';
 import Label from './Label.astro';
 import { type EventState, stateOf } from '../lib/events.ts';
 import type { Scene } from '../lib/programme.ts';
+import { fullAddress } from '../lib/venues.ts';
 
 interface Props {
   scene: Scene;
@@ -114,7 +115,7 @@ const BOOKING_LABEL = 'Prenota il posto';
           <path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"></path>
           <circle cx="12" cy="10" r="2.6"></circle>
         </svg>
-        <span>{scene.venue.name}, {scene.venue.address}, {scene.venue.city}</span>
+        <span>{fullAddress(scene.venue)}</span>
       </p>
       {
         scene.attendance !== undefined && (

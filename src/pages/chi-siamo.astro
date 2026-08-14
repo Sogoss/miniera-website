@@ -1,0 +1,162 @@
+---
+/* Chi siamo: manifesto, come nasce, valori, persone, sede, numeri.
+ *
+ * The structure is the design's, section for section. The prose is not: what
+ * the export writes there is a founding story, four people with names and
+ * roles, and four statistics, none of which belongs to this association — and
+ * an address that is wrong three separate ways. Published as it stands that is
+ * a page which renders perfectly, says something false, and fails nowhere.
+ *
+ * So everything that asserts anything is a placeholder, and an obvious one:
+ * lorem ipsum, `Nome Cognome`, `0000`. It lives in src/lib/placeholder.ts,
+ * every block of it is marked, and none of it can survive the domain — see the
+ * module, and docs/questioni-aperte.md.
+ *
+ * The one thing here that is true is the address, and it is true because it is
+ * not written here: it comes from the `sedi` collection through
+ * `loadHomeVenue()`, spelled by the one function that spells it.
+ */
+import Base from '../layouts/Base.astro';
+import Button from '../components/Button.astro';
+import GuestRow from '../components/GuestRow.astro';
+import Placeholder from '../components/Placeholder.astro';
+import { loadHomeVenue } from '../lib/programme.ts';
+import { fullAddress } from '../lib/venues.ts';
+import { PLACEHOLDER_IMAGES, PLACEHOLDER_TEXTS as TEXTS } from '../lib/placeholder.ts';
+import '../styles/pages.css';
+
+const venue = await loadHomeVenue();
+
+/* What the page is, which is true whatever ends up written inside it: a
+   description is the sentence under a link in a chat, and it is no place for
+   lorem ipsum — nor for a claim this repository cannot stand behind. */
+const DESCRIPTION =
+  'Chi tiene aperta La Miniera Culturale in Periferia: come nasce, le persone, la sede e i numeri.';
+---
+
+<Base
+  title="Chi siamo — La Miniera Culturale in Periferia"
+  description={DESCRIPTION}
+  mainId="contenuto"
+  skipLabel="Salta al contenuto"
+>
+  <article class="page">
+    <header class="page-head">
+      <span class="page-kicker">Chi siamo</span>
+      <Placeholder hint>
+        <h1 class="page-title">{TEXTS.manifestoTitle}</h1>
+        <p class="page-lead">{TEXTS.manifestoLead}</p>
+      </Placeholder>
+    </header>
+
+    <section class="page-section page-two" aria-labelledby="come-nasce">
+      <div class="page-column">
+        <span class="page-label">Come nasce</span>
+        {/* The heading is inside the block and the label above it is not: «Come
+            nasce» is the structure of the page and stays whatever the
+            association writes, while a title is already a claim. The guard
+            found this one — it was outside, and a placeholder heading published
+            unmarked is a placeholder read as a sentence somebody wrote. */}
+        <Placeholder>
+          <h2 id="come-nasce">{TEXTS.originTitle}</h2>
+          {TEXTS.originParagraphs.map((paragraph) => <p>{paragraph}</p>)}
+        </Placeholder>
+      </div>
+      <Placeholder class="page-frame">{PLACEHOLDER_IMAGES.hall}</Placeholder>
+    </section>
+
+    <section class="page-section" aria-labelledby="valori">
+      <h2 id="valori">I nostri valori</h2>
+      <Placeholder>
+        <div class="page-grid">
+          {
+            TEXTS.values.map((value) => (
+              <div class="page-column">
+                <h3>{value.title}</h3>
+                <p>{value.body}</p>
+              </div>
+            ))
+          }
+        </div>
+      </Placeholder>
+    </section>
+
+    <section class="page-section" aria-labelledby="persone">
+      <h2 id="persone">Le persone</h2>
+      <Placeholder>
+        <p class="page-lead">{TEXTS.peopleLead}</p>
+        <div class="page-grid">
+          {
+            TEXTS.people.map((person) => (
+              <div class="page-column">
+                <p class="page-figure">{PLACEHOLDER_IMAGES.portrait}</p>
+                <GuestRow name={person.name} role={person.role} size={21} />
+              </div>
+            ))
+          }
+        </div>
+      </Placeholder>
+    </section>
+
+    {/* The section that is not a placeholder — or not entirely. The address is
+        the collection's; the two lines under it are not, because when the door
+        opens is a fact about the association and the evenings only know when
+        they start. */}
+    <section class="page-section page-two" aria-labelledby="dove-siamo">
+      <div class="page-column">
+        <h2 id="dove-siamo">Dove siamo</h2>
+        <div class="page-facts">
+          <p class="page-fact">
+            <svg class="page-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+              <path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"></path>
+              <circle cx="12" cy="10" r="2.6"></circle>
+            </svg>
+            <span>{fullAddress(venue)}</span>
+          </p>
+        </div>
+
+        <Placeholder>
+          <div class="page-facts">
+            <p class="page-fact">
+              <svg class="page-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                <circle cx="12" cy="12" r="9"></circle>
+                <path d="M12 7v5.4l3.4 2"></path>
+              </svg>
+              <span>{TEXTS.venueHours}</span>
+            </p>
+            <p class="page-fact">
+              <svg class="page-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                <path d="M6 3h12v13a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4z"></path>
+                <path d="M9 20v1.5M15 20v1.5M6 8h12"></path>
+              </svg>
+              <span>{TEXTS.venueAccess}</span>
+            </p>
+          </div>
+        </Placeholder>
+
+        <div class="page-actions">
+          <Button href="/" size="lg">Vedi il programma</Button>
+          <Button href="/contatti" size="lg" variant="secondary">Scrivici</Button>
+        </div>
+      </div>
+      <Placeholder class="page-frame">{PLACEHOLDER_IMAGES.entrance}</Placeholder>
+    </section>
+
+    <section class="page-section" aria-labelledby="numeri">
+      <h2 id="numeri">I numeri</h2>
+      <Placeholder>
+        <p class="page-lead">{TEXTS.figuresLead}</p>
+        <div class="page-stats">
+          {
+            TEXTS.figures.map((figure) => (
+              <p>
+                <span class="page-stat-value">{figure.value}</span>
+                <span class="page-stat-label">{figure.label}</span>
+              </p>
+            ))
+          }
+        </div>
+      </Placeholder>
+    </section>
+  </article>
+</Base>

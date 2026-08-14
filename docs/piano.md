@@ -74,7 +74,7 @@ sostituisce un telefono vero.
 | 10 | Il piano: la Timeline che raggiunge l'archivio | `piano-timeline-archivio` | fatta |
 | 11 | La Timeline raggiunge l'archivio | `timeline-archivio` | fatta |
 | 12 | La prenotazione dentro il modale | `modale-prenotazione` | fatta |
-| 13 | Chi siamo, contatti, rassegna disabilitata | `pagine-istituzionali` | da fare |
+| 13 | Chi siamo, contatti, rassegna disabilitata | `pagine-istituzionali` | fatta |
 | 14 | Sveltia CMS | `cms-sveltia` | da fare |
 | 15 | Pubblicazione | `pubblicazione` | da fare |
 | 16 | Proporzioni su schermo piccolo | `proporzioni-mobile` | da fare |
@@ -1708,27 +1708,164 @@ prenotazione*. In breve:
 
 ## PR 13 — Chi siamo, contatti, rassegna disabilitata
 
-**Branch:** `pagine-istituzionali` · **Dipende da:** 6
+**Branch:** `pagine-istituzionali` · **Dipende da:** 6, 12
+
+Fino a qui il sito è una schermata sola. Questa PR ne aggiunge due, e con esse
+la cosa che finora non serviva a nessuno: **un modo per raggiungerle**. La
+navigazione è il pezzo grosso di questa PR, non le pagine.
+
+E i testi non ci sono. Li darà il committente; quello che entra adesso è
+**segnaposto palese** — lorem ipsum, `Nome Cognome`, cifre a `0000` e `9999`.
+Un segnaposto credibile — quattro persone con nome e cognome, «1.400 persone
+passate in sala» — è il difetto che questo repository passa il tempo a cacciare:
+una pagina perfetta e falsa non fallisce da nessuna parte, e nessuno la rilegge.
+Un lorem ipsum fallisce a colpo d'occhio. Per non lasciare comunque tutto alla
+buona volontà, i segnaposto stanno in un modulo solo, si dichiarano nel markup, e
+**la loro presenza diventa un test rosso il giorno che il sito prende un
+dominio**.
+
+### Decisioni prese scrivendo la PR
+
+Le quindici per esteso stanno in [decisioni.md](decisioni.md), sotto *Le pagine
+istituzionali e la navigazione*. In breve:
+
+- **La navigazione sta nel layout**, con `CycleAccents` e `ClipShapes`, per il
+  criterio della PR 5: dimenticarla non fa fallire niente, pubblica una pagina
+  che si legge benissimo e da cui non si esce
+- **Le voci sono `<a href>`, non bottoni**, e l'indicatore scorrevole misurato in
+  JavaScript diventa `aria-current="page"`: è la regola 14 applicata alla seconda
+  rotaia del sito
+- **La tendina del telefono è `<details>/<summary>`**, che si apre senza script.
+  Si perde la chiusura al clic fuori, che è un handler
+- **L'elenco è reso due volte** — riga e tendina, da `NAVIGATION` — perché un
+  `<details>` forzato aperto sul desktop non è una cosa che il CSS d'autore possa
+  fare sulla soglia di browser dichiarata
+- **«Rassegna stampa» è testo e non ha una pagina**, e a tenerlo così è
+  `checkInternalLinks` invece di una regola ripetuta
+- **L'indirizzo si compone in un posto solo**, `venues.ts`: la collection ce
+  l'aveva da sempre, ma la *scrittura* era a mano e ce n'erano già due che non
+  concordavano
+- **Il segnaposto telefonico del design non si pubblica**, e l'email si pubblica
+  marcata: la casella non esiste ancora
+- **I segnaposto stanno in `placeholder.ts`, si dichiarano con `Placeholder` e
+  non sopravvivono al dominio**
 
 ### Obiettivi
 
-- [ ] `/chi-siamo`: manifesto, come nasce, valori, persone, sede, numeri
-- [ ] `/contatti`
-- [ ] `/rassegna` resta «Coming soon», visibile in navigazione ma non attiva
-- [ ] L'indirizzo è **Palazzo ex Venchi Unica, Piazza Massaua 17/b, Torino** in
-      ogni punto: nei file di design ne compaiono tre versioni incoerenti e
-      nessuna è quella buona
+- [x] `SiteNav.astro`, incluso da `Base.astro`: marchio esteso, quattro voci,
+      `aria-current="page"` sulla corrente
+- [x] Le voci sono link; «Rassegna stampa» è testo e non un link, e `/rassegna`
+      non esiste
+- [x] Sul telefono la tendina è `<details>` e si apre con gli script spenti
+- [x] `/chi-siamo`: manifesto, come nasce, valori, persone, sede, numeri —
+      struttura del design, testi segnaposto palesi
+- [x] `/contatti`: WhatsApp che funziona, email dichiarata segnaposto, dove si è
+- [x] L'indirizzo è **Palazzo ex Venchi Unica, Piazza Massaua 17/b, Torino** in
+      ogni punto del sito, `Scene.astro` e `componenti.astro` compresi, e si
+      compone in un posto solo
+- [x] Nessun `011 000 0000` e nessun *Fratelli Rosselli* in `dist/`
+- [x] I segnaposto stanno in `src/lib/placeholder.ts`, sono marcati nel markup e
+      visibili come tali a chi legge
+- [x] Il salta-a delle due pagine porta al contenuto, non «al programma»
+- [x] `npm test`, `npm run check` e `npm run test:mutate` verdi, con le guardie
+      nuove dentro: **57 su 57**
 
 ### Test automatici
 
-- Le pagine esistono e hanno un solo `<h1>` ciascuna
-- La voce «Rassegna stampa» non è un collegamento attivo
-- Nessuna occorrenza di «Fratelli Rosselli» in `dist/`
+Guardie nuove, ognuna con il suo caso negativo:
+
+- **`checkInternalLinks`** — ogni `href` interno di una pagina pubblicata trova
+  un file in `dist/`. È la sorella di `checkEveningRoutes`: lì l'indirizzo
+  esisteva e la pagina no, qui è il link. I casi negativi sono `/rassegna`, uno
+  `/chisiamo` scritto male e un `contatti` relativo scritto su `/chi-siamo`, che
+  raggiunge `/chi-siamo/contatti`
+- **`checkAnchorsWithoutHref`** — nessun `<a>` senza indirizzo nel pubblicato,
+  con l'unica eccezione scritta *e verificata* qui sotto
+- **`checkEmailSource`** — nessun `mailto:` e nessuna copia dell'indirizzo fuori
+  da `contact.ts`, con i commenti che non contano
+- **`checkStaleVenue`** — gli indirizzi del design non compaiono nel sorgente né
+  in `dist/`, letti attraverso un a capo e in qualunque maiuscola
+- **`checkPlaceholderText`** — ogni segnaposto pubblicato sta dentro un
+  `[data-placeholder]`; **`checkPlaceholderSource`** — nessuno è scritto fuori
+  dal modulo; **`checkNoPlaceholders`** — con `site` impostato, un solo blocco
+  marcato è una violazione
+- **`checkPlaceholderNumber`** prende la seconda costante, `011 000 0000`
+- **`checkAccentContrast`** prende un minimo: 3:1 contro una superficie, 4,5:1
+  contro l'inchiostro scritto sull'accento
+
+Sul pubblicato:
+
+- La navigazione è su ogni pagina, con le voci che dichiara `navigation.ts` —
+  l'attesa si ricava dal modulo
+- Le marcature `aria-current="page"` sono **due** sulle rotte che stanno in
+  navigazione, una per forma, e **zero** su `/componenti`; su `/81` la voce
+  corrente è «Programma», perché `/81` è il programma
+- Nessuno script nomina la navigazione: è ciò che riporterebbe indietro la
+  decisione sul `<details>` senza toccare il markup
+- L'indirizzo pubblicato sulle due pagine e nelle scene è quello che la
+  collection scrive, con l'attesa ricavata dal contenuto
+- Ogni `wa.me` della pagina contatti porta le cifre configurate e il messaggio
+  che **non nomina una serata**
+- I segnaposto: nessuno fuori da un blocco marcato su nessuna pagina, e le due
+  pagine ne portano davvero — altrimenti la verifica passerebbe sul vuoto
+- Il lettore lo vede, e non solo il markup: la cornice tratteggiata e la
+  targhetta «Segnaposto» sono lette nel CSS che quelle pagine ricevono
+
+> **Trovato accendendo la guardia.** Il titolo di «Come nasce» stava **fuori**
+> dal blocco marcato, ed è la prima cosa che `checkPlaceholderText` ha detto: un
+> `<h2>` di lorem ipsum pubblicato senza cornice si legge come una frase che
+> qualcuno ha scritto. La targhetta e il markup si erano già separati alla prima
+> pagina scritta con essi, che è esattamente il motivo per cui la cornice e
+> l'attributo li mette lo stesso componente.
+
+> **La guardia sui link ha incontrato l'unico `<a>` senza indirizzo legittimo del
+> repository**, ed è stata la PR 6 a scriverlo: il link disabilitato di `Button`,
+> che porta `role="link"` **e** `aria-disabled="true"` — senza il ruolo un `<a>`
+> senza href è generico e l'attributo non qualifica niente, che è la versione
+> dell'export tolta allora. L'eccezione quindi non è «un `<a>` senza href a volte
+> va bene»: è «spento *e lo dice*», e la guardia pretende tutt'e due gli
+> attributi. Metà di quella coppia adesso è una violazione con un messaggio suo.
+
+> **Il 4,5:1 sull'inchiostro non può fallire su questo fondo, e i conti stanno
+> scritti.** Sembrava la scoperta della PR 6 — il 3:1 verificato contro il fondo
+> della pagina mentre `EventCard` disegnava l'accento su `--surface-raised` — e
+> invece no: passare 3:1 contro `#003049` mette un colore sopra 0,179 di
+> luminanza, e sopra 0,175 si è già oltre 4,5:1 contro il nero. I sei colori del
+> repository stanno fra 5,89 e 8,43. La verifica resta perché una delle sue due
+> premesse è un token: chi mette `--text-on-accent: var(--blue-900)` — il «nero
+> più morbido» — porta diversi accenti sotto la soglia senza che cambi
+> nient'altro. Una verifica che oggi non può fallire e domani sì è una cosa
+> diversa da un ramo che nessun parametro raggiunge, e la differenza è scritta
+> accanto.
 
 ### Test manuali
 
-- Confronto con il design, sezione per sezione
-- Le due pagine si leggono bene su schermo stretto
+Fatti sul sito **costruito**, non in `npm run dev`:
+
+- La tendina si apre e si chiude col tocco, mostra le quattro voci, marca quella
+  corrente con l'accento e lascia «Rassegna stampa» spenta con il suo *in arrivo*
+- **Con la tendina chiusa, i suoi link non prendono né il fuoco né i clic**:
+  provato chiamando `focus()` e con un `elementFromPoint` sul punto dove il
+  pannello sarebbe — il browser non li dà, che è ciò che rende `<details>` la
+  scelta giusta invece di una scommessa
+- Il clic fuori **non** chiude il menu: è il costo dichiarato di non avere uno
+  script, ed è stato verificato che sia quello e non altro
+- L'ordine di tabulazione è salta-a, marchio, tendina, voci
+- La pillola non mangia lo scorrimento: sopra il suo involucro il colpo di
+  rotella arriva alla scena sotto, sopra la pillola no — che è come deve essere
+- L'accento della navigazione segue la serata a schermo: sul programma la
+  pillola è verde come il ciclo 3, sulle due pagine è l'arancio predefinito
+- L'indirizzo pubblicato è quello della collection, con la città
+- I segnaposto si vedono che sono segnaposto: cornice tratteggiata, targhetta, e
+  un lorem ipsum che nessuno può leggere come una frase dell'associazione
+
+> **Quello che non è stato provato**, e va fatto quando c'è uno schermo largo:
+> la riga di voci del desktop **a larghezza vera**. La finestra del browser su
+> questa macchina non passa i 521px, quindi la riga è stata guardata forzando le
+> due regole di `display` a quella larghezza — si vede che rende, che la voce
+> corrente prende l'accento e che «Rassegna stampa» resta spenta, ma non come
+> respira a 1440. Le proporzioni delle due pagine su schermo largo restano da
+> guardare, e la PR 16 le guarda comunque.
 
 ---
 

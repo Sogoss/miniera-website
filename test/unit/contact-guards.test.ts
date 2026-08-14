@@ -11,6 +11,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  checkEmailSource,
   checkPlaceholderNumber,
   checkWhatsappSource,
   digitsOf,
@@ -212,5 +213,59 @@ describe('checkPlaceholderNumber', () => {
   it('names the line, so the page is not searched by hand', () => {
     const html = `<p>una riga</p>\n<p>un'altra</p>\n<p>+39 300 000 0000</p>`;
     expect(checkPlaceholderNumber(html, PLACEHOLDER, 'dist/index.html')[0]!.detail).toContain(':3');
+  });
+});
+
+/* The address, which is the number's twin with one thing more: the mailbox
+   does not exist yet. A second copy of it is a second thing to change on the
+   day the domain arrives, and the forgotten one goes on offering a way of
+   writing to nobody. */
+describe('checkEmailSource', () => {
+  const EMAIL = 'ciao@laminieraculturale.it';
+
+  it('accepts a page that asks the module for the link', () => {
+    const source = `<a href={mailtoLink(SUBJECT)}>{EMAIL}</a>`;
+    expect(checkEmailSource(source, EMAIL, 'src/pages/contatti.astro')).toEqual([]);
+  });
+
+  it('reports a mailto written by hand', () => {
+    const source = `<a href="mailto:altro@example.it">Scrivici</a>`;
+    const violations = checkEmailSource(source, EMAIL, 'src/pages/contatti.astro');
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain('mailto:');
+  });
+
+  it('reports the address printed by hand, whatever its case', () => {
+    const source = `const scrivi = 'Ciao@LaMinieraCulturale.it';`;
+    expect(checkEmailSource(source, EMAIL, 'src/components/Foo.astro')).toHaveLength(1);
+  });
+
+  it('ignores the rule written about rather than broken', () => {
+    // The module itself explains what it holds, and a guard that reported its
+    // own documentation is a guard somebody switches off.
+    const commented = `/* the address is ${EMAIL}, and a mailto: is built by mailtoLink */\nfoo();`;
+    expect(checkEmailSource(commented, EMAIL, 'a.ts')).toEqual([]);
+  });
+
+  it('says nothing about a file with no address in it', () => {
+    expect(checkEmailSource(`const a = 1;`, EMAIL, 'a.ts')).toEqual([]);
+  });
+});
+
+/* The second placeholder of the design, and the reason the guard above it
+   takes the number as an argument: `011 000 0000` is a well-formed Turin
+   landline that rings somewhere that is not the association. */
+describe('checkPlaceholderNumber, on the landline of the design', () => {
+  const PHONE = '011 000 0000';
+
+  it('reports it however it is written', () => {
+    for (const spelling of ['011 000 0000', '0110000000', '+39 011 000 0000', 'tel:0110000000']) {
+      expect(checkPlaceholderNumber(spelling, PHONE, 'dist/contatti/index.html').length)
+        .toBeGreaterThan(0);
+    }
+  });
+
+  it('says nothing about the number the association actually uses', () => {
+    expect(checkPlaceholderNumber(NUMBER, PHONE, 'dist/index.html')).toEqual([]);
   });
 });

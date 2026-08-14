@@ -111,6 +111,20 @@ describe('checkAccentContrast', () => {
     expect(checkAccentContrast(cycle('#00a9b0'), 'nero')).toHaveLength(1);
   });
 
+  it('asks for more when the accent is written on rather than drawn with', () => {
+    // The threshold is a parameter because since PR 13 the accent is both: a
+    // border on a scene wants 3:1, and the current voice of the navigation is a
+    // word in `--text-on-accent` over the cycle's colour, which wants 4.5. A
+    // colour at 3.66:1 against the ink passes as an interface element and fails
+    // as a background for a label — and that difference is the whole reason the
+    // second call exists.
+    expect(checkAccentContrast(cycle('#666666'), '#000000')).toEqual([]);
+    const violations = checkAccentContrast(cycle('#666666'), '#000000', 'a.md', 4.5);
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain('4.5:1');
+    expect(violations[0]!.detail).toContain('navigation');
+  });
+
   it('computes the ratios the palette was chosen with', () => {
     // The numbers quoted in docs/decisioni.md, so that the prose and the guard
     // cannot drift apart in silence.

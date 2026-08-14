@@ -19,8 +19,12 @@ import {
   checkKickerRepeatsCycle,
 } from '../guards/content.ts';
 import { checkNoShortBrandVariant } from '../guards/brand.ts';
-import { checkWhatsappSource } from '../guards/contact.ts';
-import { WHATSAPP_NUMBER } from '../../src/lib/contact.ts';
+import { checkEmailSource, checkWhatsappSource } from '../guards/contact.ts';
+import { EMAIL, WHATSAPP_NUMBER } from '../../src/lib/contact.ts';
+import { checkPlaceholderSource } from '../guards/placeholder.ts';
+import { placeholderTexts } from '../../src/lib/placeholder.ts';
+import { checkStaleVenue } from '../guards/venue.ts';
+import { FORMER_ADDRESSES, fullAddress } from '../../src/lib/venues.ts';
 import { checkAccentContrast, checkHandWrittenCycleRules } from '../guards/cycles.ts';
 import { cycleAccentCss, findCycleNumberConflicts } from '../../src/lib/cycles.ts';
 import {
@@ -80,12 +84,25 @@ const clocklessFiles = codeFiles.filter((path) => path !== CLOCK_HOLDER);
    pointed at src/ anyway. */
 const NUMBER_HOLDER = 'src/lib/contact.ts';
 const SHIPPED_TEXT = ['.ts', '.astro', '.mjs', '.js', '.json', '.html', '.css', '.svg', '.txt'];
-const numberlessFiles = [
+const shippedText = [
   ...filesWithExtension(join(repoRoot, 'src'), SHIPPED_TEXT),
   ...(exists('public') ? filesWithExtension(join(repoRoot, 'public'), SHIPPED_TEXT) : []),
   ...filesWithExtension(join(repoRoot, 'scripts'), SHIPPED_TEXT),
   'astro.config.mjs',
-].filter((path) => path !== NUMBER_HOLDER);
+];
+const numberlessFiles = shippedText.filter((path) => path !== NUMBER_HOLDER);
+
+/* The same shape twice more, for the two facts PR 13 added to the same family.
+   The address of the hall is spelled by src/lib/venues.ts and the design's is
+   still written in design-export/, five times; the placeholders are all in
+   src/lib/placeholder.ts, and «all of them» is the property that makes
+   replacing them one edit rather than a hunt. In both cases the file that owns
+   the fact is the one file allowed to write it. */
+const VENUE_HOLDER = 'src/lib/venues.ts';
+const addresslessFiles = shippedText.filter((path) => path !== VENUE_HOLDER);
+
+const PLACEHOLDER_HOLDER = 'src/lib/placeholder.ts';
+const placeholderlessFiles = shippedText.filter((path) => path !== PLACEHOLDER_HOLDER);
 
 /* All the CSS the source has to offer, in one string: the stylesheets, the
    <style> blocks of the components, and the inline `style` attributes — which
@@ -295,6 +312,68 @@ describe('the WhatsApp number', () => {
     expect(checkWhatsappSource(read(NUMBER_HOLDER), WHATSAPP_NUMBER, NUMBER_HOLDER).length)
       .toBeGreaterThan(0);
   });
+
+  it.each(numberlessFiles)('%s asks the domain for the address too', (path) => {
+    expect(checkEmailSource(read(path), EMAIL, path).map((v) => v.detail)).toEqual([]);
+  });
+
+  it('has the address in contact.ts, and a mailto nowhere', () => {
+    expect(checkEmailSource(read(NUMBER_HOLDER), EMAIL, NUMBER_HOLDER).length).toBeGreaterThan(0);
+  });
+});
+
+/* The address of the hall, which is the same rule seen from a third side.
+ *
+ * The collection has held it since the schema existed; what was being written
+ * by hand was the *spelling*, in two places that disagreed. Now one function
+ * spells it, and what this watches is the other way a wrong address arrives:
+ * the design's, copied out of design-export/ — where it is written five times,
+ * naming a building this association has never been in. */
+describe('the address of the hall', () => {
+  it.each(addresslessFiles)('%s does not carry the address of the design', (path) => {
+    expect(checkStaleVenue(read(path), FORMER_ADDRESSES, path).map((v) => v.detail)).toEqual([]);
+  });
+
+  it('names it in venues.ts, so that the guard has something to recognise', () => {
+    // The other side of the exception, and the anti-vacuity half: an empty
+    // FORMER_ADDRESSES would make every assertion above agree for ever.
+    expect(FORMER_ADDRESSES.length).toBeGreaterThan(0);
+    expect(checkStaleVenue(read(VENUE_HOLDER), FORMER_ADDRESSES, VENUE_HOLDER).length)
+      .toBeGreaterThan(0);
+  });
+
+  it('is spelled by one function and read from the collection', () => {
+    // The positive half: what the pages publish is what the collection says.
+    const venues = collectionEntries('sedi');
+    expect(venues.length).toBeGreaterThan(0);
+    for (const venue of venues) {
+      const spelled = fullAddress({
+        name: String(venue.data.name),
+        address: String(venue.data.address),
+        city: String(venue.data.city),
+      });
+      expect(checkStaleVenue(spelled, FORMER_ADDRESSES, `src/content/sedi/${venue.id}.md`))
+        .toEqual([]);
+    }
+  });
+});
+
+/* The text that is not written yet, which has one home for a reason: the day
+   the association sends its own, replacing it has to be one file to empty and
+   not a hunt through the pages. */
+describe('the placeholders', () => {
+  it.each(placeholderlessFiles)('%s takes its placeholders from the module', (path) => {
+    expect(checkPlaceholderSource(read(path), placeholderTexts(), path).map((v) => v.detail))
+      .toEqual([]);
+  });
+
+  it('writes them in placeholder.ts, and has some to write', () => {
+    expect(placeholderTexts().length).toBeGreaterThan(5);
+    expect(
+      checkPlaceholderSource(read(PLACEHOLDER_HOLDER), placeholderTexts(), PLACEHOLDER_HOLDER)
+        .length,
+    ).toBeGreaterThan(0);
+  });
 });
 
 /* The content, which is the other side of the language boundary.
@@ -410,6 +489,46 @@ describe('src/content', () => {
       checkAccentContrast(cycle, hex!, `src/content/cicli/${cycle.id}.md`),
     ).toEqual([]);
   });
+
+  /* The other direction, added at PR 13: since the navigation the accent is
+     not only drawn but *written on*. The current voice is a label in
+     `--text-on-accent` over the cycle's colour, and a word wants 4.5:1 where a
+     border wants 3.
+   *
+   * Measured rather than assumed, and the measurement is worth writing down:
+   * on a ground this dark the 3:1 above already implies this. Passing 3:1
+   * against `#003049` puts a colour over 0.179 relative luminance, and anything
+   * over 0.175 is already past 4.5:1 against black — the six colours in the
+   * repository sit between 5.89 and 8.43. So this cannot fail today, and it is
+   * here for the day one of its two premises stops holding: `--text-on-accent`
+   * is a token, and a designer who sets it to `--blue-900` — the obvious
+   * «softer black» — takes several accents under the line at once, on a page
+   * where nothing else changes. The ink is read out of the tokens for that
+   * reason, and resolved through the `var()` it is declared as. */
+  const ink = (() => {
+    const colours = read('src/styles/tokens/colors.css');
+    const declared = /--text-on-accent\s*:\s*([^;]+);/.exec(colours)?.[1]?.trim() ?? '';
+    const named = /^var\(\s*(--[\w-]+)\s*\)$/.exec(declared)?.[1];
+    if (!named) return declared;
+    return new RegExp(`${named}\\s*:\\s*(#[0-9a-fA-F]{6})`).exec(colours)?.[1] ?? '';
+  })();
+
+  it('reads the ink of the accent out of the tokens', () => {
+    // Without this the assertion below passes over an empty string the day the
+    // token is renamed, which is a check that stops checking in silence.
+    expect(ink, 'colors.css no longer declares --text-on-accent as a hex').toMatch(
+      /^#[0-9a-fA-F]{6}$/,
+    );
+  });
+
+  it.each(cycleEntries.map((cycle) => [cycle.id, cycle] as const))(
+    '%s can be written on, not only drawn with',
+    (_id, cycle) => {
+      expect(
+        checkAccentContrast(cycle, ink, `src/content/cicli/${cycle.id}.md`, 4.5),
+      ).toEqual([]);
+    },
+  );
 
   it('keeps a sample of a role overridden on the event', () => {
     // The `speakers[].role ?? person.role` branch has no other coverage: no

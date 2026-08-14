@@ -112,8 +112,18 @@ export function contrastRatio(one: string, other: string): number | null {
    below which a colour is not a design decision but an unreadable page. */
 const MINIMUM_CONTRAST = 3;
 
+/* 4.5:1, which is what a word needs rather than a line.
+   Since PR 13 the accent is not only drawn but written *on*: the current voice
+   of the navigation is a label in `--text-on-accent` — black — on a background
+   of the cycle's colour, and «Chi siamo» read at 3:1 is a heading nobody with
+   ordinary eyesight in a lit room can be asked to read. It is the same
+   discovery as PR 6, where the 3:1 was checked against the page ground while
+   `EventCard` drew the accent on `--surface-raised`: the guard was right about
+   a pairing that had stopped being the only one. */
+const MINIMUM_TEXT_CONTRAST = 4.5;
+
 /**
- * A cycle colour that cannot be read on the ground of the site.
+ * A cycle colour that cannot be read against something it is drawn against.
  *
  * Until PR 4 an accent could only ever be one of the five tokens in colors.css,
  * tuned to equal lightness and saturation so that no cycle prevails and the
@@ -123,31 +133,43 @@ const MINIMUM_CONTRAST = 3;
  * Nothing else in the suite would say a word, and the failure is visible only by
  * looking at the deployed site.
  *
+ * `minimum` is which of the two questions is being asked. Against a surface the
+ * accent is an interface element — a kicker, a border, a tick — and 3:1 is the
+ * floor. Against the ink written *on* it, it is a background for words, and the
+ * floor is 4.5:1. Two calls and one function, because a colour that fails
+ * either one fails for the same reason and the fix is the same: pick another.
+ *
  * This does not check the rest of the tuning — that no cycle *prevails* is a
  * judgement about saturation next to five other colours, and a guard that tried
  * would be arguing with a designer. It checks the half that is a number.
  */
 export function checkAccentContrast(
   cycle: { number: number; name: string; color: string },
-  ground: string,
+  against: string,
   path = 'the cycle',
+  minimum: number = MINIMUM_CONTRAST,
 ): Violation[] {
-  const ratio = contrastRatio(cycle.color, ground);
+  const ratio = contrastRatio(cycle.color, against);
   if (ratio === null) {
     return [
       {
         rule: 'rule 12',
-        detail: `${path}: the colour \`${cycle.color}\` or the ground \`${ground}\` is not a six-digit hex, so no contrast can be worked out for cycle #${cycle.number} «${cycle.name}»`,
+        detail: `${path}: the colour \`${cycle.color}\` or the ground \`${against}\` is not a six-digit hex, so no contrast can be worked out for cycle #${cycle.number} «${cycle.name}»`,
       },
     ];
   }
 
-  if (ratio >= MINIMUM_CONTRAST) return [];
+  if (ratio >= minimum) return [];
+
+  const because =
+    minimum >= MINIMUM_TEXT_CONTRAST
+      ? 'below the 4.5:1 a word needs: the current voice of the navigation is a label written on this colour, and the booking link in the modal is another'
+      : 'below the 3:1 an accent needs to be read at all. The five tuned colours of the design are between 3.88 and 5.55; a colour this close to the ground publishes a kicker and a scene border nobody can see';
 
   return [
     {
       rule: 'rule 12',
-      detail: `${path}: cycle #${cycle.number} «${cycle.name}» has the colour \`${cycle.color}\`, which sits at ${ratio.toFixed(2)}:1 against the ground \`${ground}\` — below the ${MINIMUM_CONTRAST}:1 an accent needs to be read at all. The five tuned colours of the design are between 3.88 and 5.55; a colour this close to the ground publishes a kicker and a scene border nobody can see`,
+      detail: `${path}: cycle #${cycle.number} «${cycle.name}» has the colour \`${cycle.color}\`, which sits at ${ratio.toFixed(2)}:1 against \`${against}\` — ${because}`,
     },
   ];
 }

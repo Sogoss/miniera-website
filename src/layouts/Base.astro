@@ -26,6 +26,7 @@
 import '../styles/global.css';
 import ClipShapes from '../components/ClipShapes.astro';
 import CycleAccents from '../components/CycleAccents.astro';
+import SiteNav from '../components/SiteNav.astro';
 
 interface Props {
   /** The <title>, and the title of every preview. */
@@ -120,6 +121,14 @@ const preview = Astro.site && image ? new URL(image, Astro.site).href : undefine
   <body>
     <a class="skip-link" href={`#${mainId}`}>{skipLabel}</a>
     <ClipShapes />
+
+    {/* After the skip link and before everything else, which is the order the
+        link exists for: whatever the navigation is made of, a keyboard has to
+        be able to get past it in one press. Here rather than in each page for
+        the same reason as the two components above — a page that forgot it
+        would not fail, it would publish something perfectly readable that
+        nobody can leave. */}
+    <SiteNav />
 
     <!-- tabindex="-1" so that the jump moves the focus and not only the
          scroll: without it several browsers scroll the page and leave the

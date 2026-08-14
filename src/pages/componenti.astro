@@ -27,6 +27,7 @@ import Label from '../components/Label.astro';
 import SignatureBand from '../components/SignatureBand.astro';
 import { CLIP_SHAPES } from '../lib/shapes.ts';
 import { loadProgramme } from '../lib/programme.ts';
+import { fullAddress } from '../lib/venues.ts';
 
 const { scenes } = await loadProgramme();
 
@@ -191,7 +192,7 @@ const guest = scene.speakers[0];
               title={one.title}
               kicker={one.kicker}
               date={one.longDate}
-              venue={`${one.venue.name}, ${one.venue.address}`}
+              venue={fullAddress(one.venue)}
               guests={one.speakers.map((speaker) => speaker.name)}
               cycle={one.cycle.number}
             />

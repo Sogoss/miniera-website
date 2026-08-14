@@ -40,7 +40,7 @@ punto.
 |---|---|---|---|
 | Timeline | verticale a destra | orizzontale in basso | **entrambe**, secondo la larghezza |
 | Divisore "oggi" | presente | assente | **si elimina** |
-| Navigazione | voci orizzontali con indicatore scorrevole | pillola con tendina | responsive, come da design |
+| Navigazione | voci orizzontali con indicatore scorrevole | pillola con tendina | **entrambe**, secondo la larghezza — e senza script: vedi qui sotto |
 | Layout scena | due colonne (testo \| foto) | una colonna, foto in alto | responsive, come da design |
 | "Prenota il posto" | apre un modale | link diretto a WhatsApp | **modale su entrambi** |
 | Allineamento testo | a sinistra | centrato | **a sinistra** |
@@ -66,11 +66,32 @@ cambio di URL, diventano pagine vere:
 | `/81` | il programma aperto su quella serata, numero editoriale nudo |
 | `/chi-siamo` | manifesto, come nasce, valori, persone, sede |
 | `/contatti` | contatti |
-| `/rassegna` | **disabilitata**, "Coming soon" |
+| `/rassegna` | **non esiste**: è una voce di navigazione, non un indirizzo |
 
 Il numero nudo e non uno slug: le anteprime su WhatsApp e Facebook mostrano
 titolo e foto grazie ai meta Open Graph, non allo slug, quindi uno slug
 allungherebbe l'URL senza guadagno.
+
+## La navigazione
+
+Dalla PR 13, e sta in `Base.astro`: ogni pagina la porta, nessuno deve
+ricordarsene. Le due forme del design convergono così.
+
+| Nel design | Da noi | Perché |
+|---|---|---|
+| `<button onClick>` per voce | `<a href>` | sono pagine vere, non stati di un componente: il link porta indirizzo, tasto centrale, annuncio e funziona senza script |
+| indicatore scorrevole misurato in JS | `aria-current="page"` | a schermo lo fa il CSS, e così è anche *detto* invece che solo disegnato |
+| tendina con handler e overlay | `<details>/<summary>` | apre, chiude, prende il fuoco e si annuncia da sé; si perde la chiusura al clic fuori |
+| «Rassegna stampa» disabilitata | testo con il suo *in arrivo* | un `<a>` senza indirizzo non è un link, e non c'è una pagina a cui puntare |
+
+L'elenco delle voci è reso **due volte** — la riga del desktop e il pannello
+della tendina — da `src/lib/navigation.ts`, e una delle due è sempre `display:
+none`. È impaginazione e non due sorgenti; la strada senza duplicazione sarebbe
+stata un `<details>` forzato aperto sopra i 900px, e i browser non lasciano al
+CSS d'autore quella decisione.
+
+L'accento della voce corrente è quello della serata a schermo, perché
+`data-cycle` sta su `<html>`: è il comportamento del design, e qui arriva gratis.
 
 ## Lo scroller e la Timeline
 

@@ -6,7 +6,14 @@
  * reader presses back — by which time they blame the browser.
  */
 import { describe, expect, it } from 'vitest';
-import { checkEveningRoutes, checkHistoryPush, publishedNumbers } from '../guards/routes.ts';
+import {
+  checkEveningRoutes,
+  checkHistoryPush,
+  checkInternalLinks,
+  linkTarget,
+  pageLinks,
+  publishedNumbers,
+} from '../guards/routes.ts';
 
 const PROGRAMME = `
   <section data-scene data-number="78" data-state="past"></section>
@@ -80,5 +87,93 @@ describe('checkHistoryPush', () => {
 
   it('says nothing about a file that touches no history', () => {
     expect(checkHistoryPush(`const a = 1;`, 'a.ts')).toEqual([]);
+  });
+});
+
+/* The other end of the same question: there an evening had an address and no
+   page, here a link has a page and no page at the other end. Both are 404s
+   nobody meets while testing — a link is followed by readers, not by builds. */
+describe('checkInternalLinks', () => {
+  const ROUTES = ['/', '/81', '/chi-siamo', '/contatti', '/favicon.svg'];
+
+  const NAVIGATION = `
+    <nav>
+      <a href="/">Programma</a>
+      <span data-soon>Rassegna stampa</span>
+      <a href="/chi-siamo" aria-current="page">Chi siamo</a>
+      <a href="/contatti">Contatti</a>
+    </nav>
+  `;
+
+  it('accepts a navigation whose every link has a page', () => {
+    expect(checkInternalLinks(NAVIGATION, ROUTES, 'dist/chi-siamo/index.html')).toEqual([]);
+  });
+
+  it('reports the voice that was given an address before there was a page', () => {
+    // The whole reason «Rassegna stampa» is text: the day somebody makes it a
+    // link, this is what says the page is not there.
+    const withLink = NAVIGATION.replace(
+      '<span data-soon>Rassegna stampa</span>',
+      '<a href="/rassegna">Rassegna stampa</a>',
+    );
+    const violations = checkInternalLinks(withLink, ROUTES, 'dist/index.html');
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain('/rassegna');
+  });
+
+  it('is not satisfied by a route that merely looks like the one asked for', () => {
+    expect(checkInternalLinks('<a href="/chisiamo">Chi siamo</a>', ROUTES)).toHaveLength(1);
+    expect(checkInternalLinks('<a href="/81/82">più serate</a>', ROUTES)).toHaveLength(1);
+  });
+
+  it('does not mind a trailing slash, which is how a browser writes it', () => {
+    expect(checkInternalLinks('<a href="/chi-siamo/">Chi siamo</a>', ROUTES)).toEqual([]);
+  });
+
+  it('leaves alone what is not a page of this site', () => {
+    const elsewhere = `
+      <a href="https://www.youtube.com/@laminieraculturale">Rivedi</a>
+      <a href="mailto:ciao@example.it">Scrivici</a>
+      <a href="tel:+390110000000">Chiamaci</a>
+      <a href="//example.org/x">Fuori</a>
+      <a href="#serata-81">La serata</a>
+    `;
+    expect(checkInternalLinks(elsewhere, ROUTES)).toEqual([]);
+  });
+
+  it('resolves a relative link against the page that carries it', () => {
+    // `contatti` written on /chi-siamo does not reach the contacts page: it
+    // reaches /chi-siamo/contatti, which is nothing. In a browser it is one
+    // click to find out and in a build it is silent.
+    expect(checkInternalLinks('<a href="contatti">Scrivici</a>', ROUTES, 'dist/chi-siamo/index.html'))
+      .toHaveLength(1);
+    expect(checkInternalLinks('<a href="../contatti">Scrivici</a>', ROUTES, 'dist/chi-siamo/index.html'))
+      .toEqual([]);
+  });
+
+  it('drops the query and the fragment before asking', () => {
+    expect(checkInternalLinks('<a href="/chi-siamo?da=nav#persone">Chi siamo</a>', ROUTES))
+      .toEqual([]);
+  });
+
+  it('reports a missing page once, however many links point at it', () => {
+    const twice = '<a href="/rassegna">a</a><a href="/rassegna">b</a>';
+    expect(checkInternalLinks(twice, ROUTES)).toHaveLength(1);
+  });
+
+  it('ignores a link that is commented out', () => {
+    // Work in progress is not a published link, and a guard that reported it
+    // would be reporting somebody mid-thought.
+    expect(checkInternalLinks('<!-- <a href="/rassegna">presto</a> -->', ROUTES)).toEqual([]);
+  });
+
+  it('reads the links of a page whatever order the attributes are in', () => {
+    const found = pageLinks('<a class="x" href="/uno">1</a><a href=\'/due\' id="y">2</a>');
+    expect(found.map((link) => link.href)).toEqual(['/uno', '/due']);
+  });
+
+  it('reads `&amp;` in an href as the ampersand it is', () => {
+    expect(linkTarget('/cerca?a=1&amp;b=2', 'dist/index.html')).toBe('/cerca');
+    expect(pageLinks('<a href="/x?a=1&amp;b=2">x</a>')[0]!.href).toBe('/x?a=1&b=2');
   });
 });

@@ -14,71 +14,31 @@
  * analysis and does not pretend to be; what keeps it honest is that it has been
  * seen firing on exactly that prop.
  */
+import { elementsWith } from './document.ts';
 import { stripMarkupComments } from './language.ts';
 import { type Violation, lineNumber } from './types.ts';
 
 /** The signature that has to travel with the mark, however it is cased. */
 const SIGNATURE = 'in periferia';
 
-/* Elements that cannot have children, so cannot hold a signature. */
-const VOID_ELEMENTS = new Set([
-  'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta',
-  'param', 'source', 'track', 'wbr',
-]);
-
 /**
  * Every element carrying `data-brand`, with the text inside it.
  *
- * Scanned with the brackets balanced rather than up to the first `</span>`: the
- * mark is three nested spans, so stopping at the first closing tag would read
- * the accent bar alone and find no text in any mark ever published — a guard
- * that fires on correct markup, which is the half that gets switched off.
+ * The scan is `elementsWith`, which balances the tags — the mark is three
+ * nested spans, and stopping at the first `</span>` would read the accent bar
+ * alone and find no text in any mark ever published. It lives in document.ts
+ * because the placeholder guard needs the same answer about a different
+ * attribute, and two copies of a scanner this fiddly is two chances to get it
+ * wrong in different ways.
  */
 export function brandElements(markup: string): { text: string; index: number }[] {
-  const found: { text: string; index: number }[] = [];
-  const opening = /<([a-z][a-z0-9-]*)\b([^>]*)>/gi;
-  let match: RegExpExecArray | null;
-
-  while ((match = opening.exec(markup)) !== null) {
-    const [whole, tag = '', attributes = ''] = match;
-    if (!/\sdata-brand(?=[\s=>/]|$)/i.test(attributes)) continue;
-
-    /* An element that has no closing tag holds no text, and saying so is the
-       whole of it: counting `</tag>` from a void or self-closed element never
-       gets back to zero, so the scan used to run to the end of the document and
-       call the rest of the page the mark's text. On the gallery that rest
-       contains the signature band, so a mark on `<img data-brand>` — a raster
-       logo — passed the check by borrowing somebody else's words. */
-    if (VOID_ELEMENTS.has(tag.toLowerCase()) || /\/\s*$/.test(attributes)) {
-      found.push({ text: '', index: match.index });
-      continue;
-    }
-
-    const from = match.index + whole.length;
-    let depth = 1;
-    let end = markup.length;
-
-    const nested = new RegExp(`</?${tag}\\b`, 'gi');
-    nested.lastIndex = from;
-    let step: RegExpExecArray | null;
-    while ((step = nested.exec(markup)) !== null) {
-      depth += step[0].startsWith('</') ? -1 : 1;
-      if (depth === 0) {
-        end = step.index;
-        break;
-      }
-    }
-
-    found.push({
-      // Tags out, whitespace collapsed: what is left is what a reader gets.
-      // Attributes go with the tags, which is deliberate — a signature living
-      // in an `aria-label` over a truncated mark is the defect, not the fix.
-      text: markup.slice(from, end).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim(),
-      index: match.index,
-    });
-  }
-
-  return found;
+  return elementsWith(markup, 'data-brand').map(({ index, from, to }) => ({
+    // Tags out, whitespace collapsed: what is left is what a reader gets.
+    // Attributes go with the tags, which is deliberate — a signature living
+    // in an `aria-label` over a truncated mark is the defect, not the fix.
+    text: markup.slice(from, to).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim(),
+    index,
+  }));
 }
 
 /**
