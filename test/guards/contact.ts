@@ -63,15 +63,26 @@ export function phoneNumbersIn(text: string): { digits: string; index: number }[
   return found;
 }
 
+/* The longest country code there is, in digits — E.164 allows three. */
+const COUNTRY_CODE = 3;
+
 /**
  * Whether two written numbers are the same one.
  *
  * By the tail, because the country code is the part a spelling drops:
  * `300 000 0000` and `+39 300 000 0000` reach the same telephone, and a check
  * comparing them character for character would pass the shorter one through.
+ *
+ * But by the tail *and no further*: the two may differ by a country code and by
+ * nothing else. Left as a bare `endsWith`, eight zeros anywhere in a published
+ * file — `00 00 00 00` in the numbers of a transform, which passes the grouping
+ * rule above — were a suffix of the placeholder `393000000000`, and the guard
+ * would have reported a page for a drawing. Four digits of difference is not a
+ * country code.
  */
 function sameNumber(one: string, other: string): boolean {
-  return one.endsWith(other) || other.endsWith(one);
+  const [short, long] = one.length <= other.length ? [one, other] : [other, one];
+  return long.endsWith(short) && long.length - short.length <= COUNTRY_CODE;
 }
 
 /**

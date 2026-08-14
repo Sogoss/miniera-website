@@ -130,10 +130,13 @@ describe('the published booking', () => {
     // The link that stands in for the button cannot live in there — inside one
     // it is invisible to a reader with no scripting, to a crawler and to
     // Ctrl+F, which is the whole failure this guard was written for.
-    const links = bookable.map(
-      (scene) => whatsappLinks(scene.markup).find((link) => link.includes(digits))!,
-    );
-    expect(links.length).toBe(bookable.length);
+    const links = bookable
+      .map((scene) => whatsappLinks(scene.markup).find((link) => link.includes(digits)))
+      .filter((link): link is string => link !== undefined);
+    // Filtered before counting, and counted against the evenings rather than
+    // against itself: written as `links.length` alone this passed on a list of
+    // `undefined`, which is every evening having lost its link.
+    expect(links).toHaveLength(bookable.length);
     expect(checkLinksOutsideTemplates(html, links, HOME)).toEqual([]);
   });
 

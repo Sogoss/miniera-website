@@ -162,6 +162,21 @@ describe('checkPlaceholderNumber', () => {
     }
   });
 
+  it('does not call eight zeros a telephone number', () => {
+    // `00 00 00 00` groups in twos, so the rule above lets it through as a
+    // written number — and it is a suffix of `393000000000`. Compared by the
+    // tail alone, a `matrix(1, 0, 0, 1, 00 00, 00 00)` or any other run of
+    // grouped zeros in a published file was reported as the placeholder: a
+    // guard firing on a drawing, which is the kind that gets switched off.
+    // What separates two spellings of one number is a country code, and a
+    // country code is at most three digits.
+    expect(checkPlaceholderNumber('<p>00 00 00 00</p>', PLACEHOLDER, 'x')).toEqual([]);
+    expect(checkPlaceholderNumber('<p>00000000</p>', PLACEHOLDER, 'x')).toEqual([]);
+    // And the spellings that really are the placeholder still are.
+    expect(checkPlaceholderNumber('<p>000 000 0000</p>', PLACEHOLDER, 'x')).toEqual([]);
+    expect(checkPlaceholderNumber('<p>300 000 0000</p>', PLACEHOLDER, 'x')).toHaveLength(1);
+  });
+
   it('reports it inside a link, which is where it does the damage', () => {
     const html = `<a href="https://wa.me/393000000000?text=Ciao">Prenota il posto</a>`;
     expect(checkPlaceholderNumber(html, PLACEHOLDER, 'dist/index.html')).toHaveLength(1);
