@@ -388,7 +388,7 @@ per come è formattato un file invece che per quello che dice.
 
 **`og:image`, invece, non lo pretende, e non è una svista.** Ha bisogno di
 un'immagine, non di un dominio, e il repository non ne ha una: chiederlo insieme
-a `og:url` avrebbe aperto la PR 15 su una suite rossa che si poteva chiudere
+a `og:url` avrebbe aperto la PR 16 su una suite rossa che si poteva chiudere
 solo inventando un asset che nessuno ha scelto — cioè un test che detta una
 decisione di contenuto. La decisione sta in
 [questioni-aperte.md](questioni-aperte.md); quello che la suite controlla è che
@@ -832,7 +832,7 @@ ciclo viene ritarato nel CMS, indicando un file di test invece del contenuto che
 `CLAUDE.md` dice che per lo stile guardare il sorgente non basta, quindi una
 rassegna viva solo in `npm run dev` lascerebbe le varianti di ogni componente
 verificate da nessuna parte. Fuori dall'indice perché è una pagina di servizio —
-e la sitemap della PR 15 dovrà escluderla. Non `/rassegna`, che è della rassegna
+e la sitemap della PR 16 dovrà escluderla. Non `/rassegna`, che è della rassegna
 stampa della PR 13.
 
 ## Forme di ritaglio, la geometria
@@ -1008,7 +1008,7 @@ colonna della locandina resta vuota, il layout a due colonne è metà lavoro e
 marchio, nessun volto — e dichiarate come segnaposto nel file che le usa. Escono
 quando arrivano le foto vere: [questioni-aperte.md](questioni-aperte.md).
 
-**Le proporzioni su schermo piccolo si tarano una volta sola, alla PR 16.** Su
+**Le proporzioni su schermo piccolo si tarano una volta sola, alla PR 17.** Su
 un telefono la scena divide l'altezza con la Timeline in basso e la navigazione
 in alto, che alla PR 7 non esistono: ogni misura decisa prima va rifatta quando
 arrivano. Quello che alla PR 7 doveva essere giusto è la struttura — niente
@@ -1041,7 +1041,7 @@ parola, e la parola resta al contrasto del testo normale.
 **Le dimensioni scalano per `clamp()` con limiti fissi, non per percentuale
 pura.** Una percentuale vera dipende dal contenitore e per le altezze non ha un
 riferimento; le unità viewport da sole diventano assurde sui ventisette pollici
-e illeggibili sui 320 px. Quello che invece va corretto — ed è la PR 16 — sono i
+e illeggibili sui 320 px. Quello che invece va corretto — ed è la PR 17 — sono i
 **limiti in px** dei `clamp` tipografici: nessuno dei tre termini dipende dalla
 dimensione del carattere di base, quindi chi ingrandisce il testo dal sistema
 non ottiene niente. La scala degli spazi a passi di 4 px resta com'è: scalare
@@ -1302,7 +1302,7 @@ mai messo in cache: è qualcuno che chiede di un altro giorno, e rispondergli
 dalla memoria risponderebbe a un'altra domanda. *(PR 9, in revisione)*
 
 **L'immagine da anteprima si genera solo quando c'è il dominio.** Prima si
-generava comunque, con l'argomento che alla PR 15 non ci fosse niente da
+generava comunque, con l'argomento che alla PR 16 non ci fosse niente da
 ricordarsi — e il costo si vedeva in `dist/`: un JPEG per serata che nessuna
 pagina referenziava, cioè ottantuno ridimensionamenti e ottantuno file morti in
 ogni deployment con l'archivio pieno. La promessa regge lo stesso: arriva il
@@ -1416,7 +1416,7 @@ esiste: fra la voce vecchia e la nuova c'è un caricamento. *(PR 13)*
 **La tendina del telefono è `<details>/<summary>`.** Porta apertura, chiusura,
 fuoco, Invio e l'annuncio *espanso/compresso* senza una riga di script. Quello
 che la tendina del design ha e questa no è la chiusura al clic fuori, che è un
-handler: costa un tocco e risparmia del codice che alla PR 16 andrebbe tarato.
+handler: costa un tocco e risparmia del codice che alla PR 17 andrebbe tarato.
 *(PR 13)*
 
 **L'elenco delle voci è reso due volte, ed è impaginazione e non due sorgenti.**
@@ -1436,7 +1436,7 @@ link, e in un menu è una voce che sembra attiva e non lo è — la stessa mezza
 verità dell'`aria-disabled` su un `<a>` senza indirizzo, tolta alla PR 6. È
 testo, con accanto il suo *in arrivo*. E niente pagina: sarebbe un indirizzo
 condivisibile e indicizzabile per qualcosa che non ha niente da dire, più una
-rotta che la sitemap della PR 15 dovrebbe ricordarsi di escludere. *(PR 13)*
+rotta che la sitemap della PR 16 dovrebbe ricordarsi di escludere. *(PR 13)*
 
 **Ogni link interno pubblicato deve trovare la sua pagina in `dist/`**,
 `checkInternalLinks`: la sorella di `checkEveningRoutes`, e il motivo per cui la
@@ -1486,7 +1486,7 @@ rende la sostituzione un file solo invece di una caccia — il componente
 `data-placeholder` che la guardia legge, e con `site` impostato in
 `astro.config.mjs` un solo blocco marcato in `dist/` è una violazione. È
 l'interruttore di `og:url`, armato dalla configurazione e non dalla memoria di
-qualcuno: **la PR 15 non chiude finché i testi veri non ci sono**, ed è voluto —
+qualcuno: **la PR 16 non chiude finché i testi veri non ci sono**, ed è voluto —
 un dominio vero con un lorem ipsum sopra è l'unica cosa peggiore di non avere il
 dominio. *(PR 13)*
 
@@ -1514,7 +1514,7 @@ e sul telefono è larga quanto lo schermo — una fascia di 54 pixel in cima al
 programma dove il dito non scorre. Provato sul costruito, prima e dopo: nel vuoto
 fra due voci adesso il colpo di rotella raggiunge la scena. *(PR 13)*
 
-**I `clamp()` delle due pagine nuove sono in `rem`.** La PR 16 esiste anche per
+**I `clamp()` delle due pagine nuove sono in `rem`.** La PR 17 esiste anche per
 togliere i px da quelli delle scene, copiati dal design: un `clamp()` che non
 dipende in nessuno dei suoi termini dal corpo di base non dà niente a chi
 ingrandisce il testo dal sistema, e il pubblico di questo sito ha cinquanta e
@@ -1586,6 +1586,19 @@ sono nostri e seguono la regola sulla lingua; «Save» e i menù sono suoi. Non 
 un compromesso nascosto: sta scritto qui e in [architettura.md](architettura.md)
 perché non sia una sorpresa al primo accesso. *(PR 14)*
 
+**Il redattore ha un'eccezione sulla protezione di `main`.** Il CMS commetta
+direttamente su `main` via API, e `main` pretende una pull request con
+`enforce_admins` acceso: un salvataggio da `/admin` verrebbe rifiutato, e il
+redattore leggerebbe un errore di git in un form che esiste per non fargli sapere
+che git c'è. La strada scelta è **«bypass pull request allowances» per il solo
+account che usa il CMS**: le modifiche al codice continuano a passare da una PR,
+i contenuti no. Quel che si perde è che un contenuto rotto si vede dopo la
+pubblicazione invece che prima — la CI gira anche sul push a `main`, quindi si
+vede comunque. L'alternativa era far scrivere Sveltia su un branch `contenuti` e
+portarlo su `main` con una PR: nessuna eccezione, ma il redattore salva e non
+pubblica, e qualcuno deve fondere. Si applica nelle impostazioni del repository e
+si verifica alla PR 16. *(deciso alla PR 14, applicato alla PR 16)*
+
 **Il `config.yml` si convalida anche contro lo schema JSON di Sveltia**, che il
 pacchetto pubblica e che quindi è quello della versione fissata dal lockfile.
 Tutte le guardie qui sopra confrontano i nostri due file fra loro, e leggono le
@@ -1602,7 +1615,36 @@ Zod ha ragione a fermare la build. `editor.preview: false`, perché l'anteprima
 di Sveltia è una resa generica dei campi e questo sito è uno scroller a schermo
 pieno con lo snap e un accento per ciclo: un'anteprima che non gli somiglia è
 una promessa che il sito non mantiene. Quella vera è il deploy preview della
-PR 15. *(PR 14)*
+PR 16. *(PR 14)*
+
+## La suite veloce
+
+**L'accecamento avviene in memoria, non riscrivendo i file.** Fino alla PR 14
+`test:mutate` iniettava `return []` nel file su disco, faceva girare la suite e
+rimetteva il file com'era. Funzionava, e tutto ciò che di sgradevole aveva
+seguiva da un fatto solo: per qualche secondo il repository non era quello che
+chi ci lavora crede che sia. Da lì la marcatura nei file accecati, gli handler
+dei segnali, il ripristino nel `finally` e la rilettura finale — apparato per
+rendere sicuro un metodo pericoloso. E imponeva la sequenza: due accecamenti
+insieme si sarebbero pestati lo stesso file. Adesso la sostituzione la fa un
+plugin di Vite mentre il modulo viene caricato: niente sul disco cambia, niente
+da rimettere a posto, niente da riconoscere dopo un Ctrl-C, e sessantacinque
+corse possono andare in parallelo. *(PR 15)*
+
+**La suite continua a girare intera per ogni accecamento.** Far girare «solo i
+test che nominano quella guardia» dimezzerebbe il tempo e risponderebbe alla
+domanda che questo strumento è nato per rifiutare: conta cosa i test tengono, non
+come sono scritti. Il tempo si è preso da un'altra parte — dal parallelismo, che
+non cambia la domanda. *(PR 15)*
+
+**In CI le guardie si dividono a fette, e l'unione si verifica.** Un runner ha
+quattro vCPU, quindi il parallelismo dentro un job ha un tetto basso: le fette
+girano su job diversi. Il prezzo è che nessun job vede più la risposta intera, e
+una fetta che non parte è indistinguibile da una che non aveva niente da fare —
+cioè il «18 su 18» che questo strumento esiste per non stampare, salito di un
+piano dentro la configurazione della CI. Perciò ogni fetta dichiara le guardie
+che ha accecato e un passo finale somma: una guardia coperta due volte, o
+nessuna, è rossa. *(PR 15)*
 
 ## Rimandate
 

@@ -76,8 +76,9 @@ sostituisce un telefono vero.
 | 12 | La prenotazione dentro il modale | `modale-prenotazione` | fatta |
 | 13 | Chi siamo, contatti, rassegna disabilitata | `pagine-istituzionali` | fatta |
 | 14 | Sveltia CMS | `cms-sveltia` | fatta |
-| 15 | Pubblicazione | `pubblicazione` | da fare |
-| 16 | Proporzioni su schermo piccolo | `proporzioni-mobile` | da fare |
+| 15 | La suite più veloce | `test-veloci` | da fare |
+| 16 | Pubblicazione | `pubblicazione` | da fare |
+| 17 | Proporzioni su schermo piccolo | `proporzioni-mobile` | da fare |
 
 Fuori dalla beta, bloccate da [questioni-aperte.md](questioni-aperte.md):
 migrazione delle foto e caricamento delle 81 serate storiche.
@@ -665,7 +666,7 @@ In breve:
 - Ogni pagina porta tutte le forme che il componente dichiara, e nessun `id`
   italiano dell'export arriva in `dist/`
 - I meta Open Graph di base ci sono, e **`og:url` e `og:image` sono pretesi
-  appena `site` è impostato**: il test si accende da solo alla PR 15
+  appena `site` è impostato**: il test si accende da solo alla PR 16
 - Il salta-a è il primo link del `<body>` e punta a un `id` che esiste — non a
   uno che gli somiglia: `#programma` non è soddisfatto da `id="programma-2"`,
   ed è il primo difetto che il caso negativo ha trovato nella guardia appena
@@ -696,7 +697,7 @@ In breve:
 > alle guardie del documento anche le pagine copiate da `public/`, cioè la
 > PR 14 non avrebbe potuto chiudere verde con la shell di Sveltia in
 > `public/admin/`; e pretendere `og:image` all'arrivo del dominio avrebbe aperto
-> la PR 15 su una suite rossa chiudibile solo inventando un'immagine che nessuno
+> la PR 16 su una suite rossa chiudibile solo inventando un'immagine che nessuno
 > ha scelto. L'immagine è una questione aperta, non un test.
 
 ### Test manuali
@@ -1066,7 +1067,7 @@ Per esteso in [decisioni.md](decisioni.md), sotto *Lo scroller*. In breve:
 > pubblichi due bottoni non è impedito nel componente: lo prende il test sul
 > conteggio, che però diventa rosso indicando il file del contenuto invece del
 > punto dove si decide — costa una regola editoriale, non una correzione. Il
-> `max-height: 80vh` del pannello passa alla PR 16, che è dove le proporzioni su
+> `max-height: 80vh` del pannello passa alla PR 17, che è dove le proporzioni su
 > schermo piccolo si tarano una volta sola. E lo **stile della serata annullata**
 > non è stato scritto: `data-state="cancelled"` si pubblica e nessuna regola lo
 > legge. La barratura passa alla PR 9, dove una serata annullata ha già fra gli
@@ -1097,7 +1098,7 @@ Per esteso in [decisioni.md](decisioni.md), sotto *Lo scroller*. In breve:
 - Con un contenuto finto da 81 serate, la pagina resta fluida su un telefono di
   qualche anno fa — è la misura rimandata in `vincoli-tecnici.md`
 
-> **I tre test su telefono sono rimandati alla PR 15**, dove il sito ha un URL
+> **I tre test su telefono sono rimandati alla PR 16**, dove il sito ha un URL
 > stabile che apre chiunque. Non è una spunta data per buona: chi lavora al
 > progetto non ha un iPhone, e provarlo adesso vorrebbe dire un tunnel verso il
 > server di sviluppo o un device remoto — più attenzione di quanta ne valga
@@ -1105,7 +1106,7 @@ Per esteso in [decisioni.md](decisioni.md), sotto *Lo scroller*. In breve:
 > costruzione, non per fiducia: `--scene-height` è `svh` con il ripiego in
 > `@supports`, e ogni scena dichiara la propria altezza intrinseca, che è ciò
 > che tiene ferme le posizioni di snap. Il debito è scritto in
-> [questioni-aperte.md](questioni-aperte.md), sotto *Da fare alla PR 15*.
+> [questioni-aperte.md](questioni-aperte.md), sotto *Da fare alla PR 16*.
 
 ---
 
@@ -1260,7 +1261,7 @@ Per esteso in [decisioni.md](decisioni.md), sotto *La Timeline*. In breve:
 > **Due prove restano da fare, dichiarate e non date per buone.** Su un iPhone
 > vero: toccare una tacca lontana e verificare che lo scorrimento morbido arrivi
 > a destinazione senza essere interrotto dallo snap.
-> [questioni-aperte.md](questioni-aperte.md) la colloca già alla PR 15, per
+> [questioni-aperte.md](questioni-aperte.md) la colloca già alla PR 16, per
 > nome, e per lo stesso motivo della PR 7 — prima non c'è un URL stabile e chi
 > lavora al progetto non ha un iPhone. Nel frattempo il rischio è retto dal
 > fatto che il salto è quello nativo del browser sul frammento e non uno
@@ -1331,7 +1332,7 @@ breve:
 - Ogni rotta pubblica titolo e descrizione della sua serata, non del sito, e
   `og:description` dice la stessa cosa del meta
 - **Quando `site` è impostato**, ogni rotta con una foto pubblica `og:image`
-  assoluto: scritto ora, si accende alla PR 15
+  assoluto: scritto ora, si accende alla PR 16
 - Gli `<h1>` di due rotte sono diversi, e quello della radice non nomina nessuna
   serata
 - **Guardia** `checkEveningRoutes`: ogni `data-number` pubblicato trova la sua
@@ -1411,14 +1412,14 @@ breve:
 > **l'immagine da anteprima si generava anche senza dominio**, cioè un JPEG per
 > serata che nessuna pagina referenziava. Con l'archivio pieno sono ottantuno
 > ridimensionamenti e ottantuno file morti in ogni deployment. Generarla solo
-> quando c'è il dominio non toglie niente alla promessa che alla PR 15 non ci
+> quando c'è il dominio non toglie niente alla promessa che alla PR 16 non ci
 > sia niente da ricordarsi: arriva il dominio e arrivano le immagini.
 >
 > **Due sono rimaste aperte, di proposito.** Il `<title>` di una serata non
 > nomina l'associazione, mentre quello della radice sì: è una scelta di testo
 > italiano e la si fa guardandola, non correggendola di nascosto. E `og:type`
 > resta `website` anche sulle rotte delle serate: cambiarlo è una decisione sul
-> layout condiviso, e il posto dove si prende è la PR 15, insieme al resto dei
+> layout condiviso, e il posto dove si prende è la PR 16, insieme al resto dei
 > meta.
 
 ### Test manuali
@@ -1436,7 +1437,7 @@ breve:
   20–25 KB di [vincoli-tecnici.md](vincoli-tecnici.md) — e 109 file in tutto,
   contro i 20.000 che Cloudflare Pages concede per deployment
 
-> **Rimandata alla PR 15**: l'anteprima di un link su WhatsApp e su Facebook.
+> **Rimandata alla PR 16**: l'anteprima di un link su WhatsApp e su Facebook.
 > Senza dominio non c'è niente da incollare in una chat e `og:image` non viene
 > emesso — il layout lo omette apposta, perché un URL relativo lì dentro
 > «sembra giusto nel markup e l'anteprima esce senza figura». Il test è scritto
@@ -1907,7 +1908,7 @@ Fatti sul sito **costruito**, non in `npm run dev`:
 > CSS — quindi la riga desktop era stata guardata forzando le due regole di
 > `display` a quella larghezza: si vedeva che rende, non come respira a 1440. È
 > il caso in cui l'emulazione non sostituisce lo schermo, come il telefono vero
-> della PR 15: la prova è stata chiesta a chi ne aveva uno.
+> della PR 16: la prova è stata chiesta a chi ne aveva uno.
 
 ---
 
@@ -1946,7 +1947,7 @@ breve:
   scritta per le foto. Lo copia la build, e un test confronta i byte pubblicati
   con quelli installati. `@sveltia/cms` passa quindi fra le `dependencies`
 - **L'accesso in questa PR è con token personale**, e l'OAuth entra fra gli
-  obiettivi della PR 15: ha bisogno di un'origine registrata su GitHub e di un
+  obiettivi della PR 16: ha bisogno di un'origine registrata su GitHub e di un
   relay, e l'origine non esiste finché il sito non è pubblicato
 - **Il fuso si dichiara nel CMS** — `input_timezone: Europe/Rome`,
   `output_utc: false`, `format: YYYY-MM-DDTHH:mm:ssZ` — con la sua guardia
@@ -2081,7 +2082,7 @@ locale — e sono la stessa cosa della prova a 1440px della PR 13, chiesta a chi
 ne aveva lo schermo:
 
 - Accesso col token contro il repository vero e un salvataggio su un branch di
-  prova: il commit compare. Che la build parta è della PR 15, dove il sito è
+  prova: il commit compare. Che la build parta è della PR 16, dove il sito è
   collegato
 - **Lettura del file scritto**: campi giusti, `date` con `+02:00`, nessun corpo,
   nome del file uguale al numero
@@ -2092,7 +2093,107 @@ ne aveva lo schermo:
 
 ---
 
-## PR 15 — Pubblicazione
+## PR 15 — La suite più veloce
+
+**Branch:** `test-veloci` · **Dipende da:** 1, 14
+
+I numeri, prima di tutto, perché sono loro a decidere il piano. `npm test` è 9,5
+secondi con la build dentro, `astro check` dieci, l'installazione dodici.
+`npm run test:mutate` è **sei minuti e mezzo in locale e 786 secondi in CI**,
+cioè **il 94% del job**: tutto il resto sono quarantotto secondi in croce.
+
+Non c'è una suite lenta: c'è una moltiplicazione. Sessantacinque accecamenti per
+5,6 secondi di suite, in sequenza, su una macchina che ha otto core e ne usa uno.
+E cresce da sé — la sessantacinquesima guardia ha aggiunto sei secondi a ogni
+giro futuro, la settantesima ne aggiungerà altri sei. Il costo lo paga ogni PR,
+due volte: una in locale e una in CI.
+
+### Decisioni prese scrivendo la PR
+
+- **L'accecamento smette di riscrivere i file.** Oggi lo script edita
+  `test/guards/*.ts` sul posto e li rimette a posto in un `finally`, con una
+  marcatura per riconoscere una corsa interrotta, gli handler dei segnali e una
+  rilettura finale che si rifiuta di finire in silenzio. Tutta quella cura esiste
+  perché il metodo è pericoloso — ed è anche ciò che impedisce di
+  parallelizzare, perché due accecamenti insieme si pestano lo stesso file. La
+  sostituzione si sposta **dentro la suite**, dove è un'operazione in memoria e
+  non lascia niente da rimettere a posto
+- **In parallelo, con un pool di `core − 2`**, la misura che il resto
+  dell'impianto usa già
+- **In CI a fette**, perché un runner ha quattro vCPU: le guardie si dividono fra
+  più job di matrice. **Ogni fetta dichiara quali guardie ha coperto e l'unione
+  si verifica**, perché una fetta persa in silenzio sarebbe esattamente il «18 su
+  18» che questo strumento esiste per non dire
+- **I file di test condividono l'ambiente** (`isolate: false`), che è un terzo
+  di ogni corsa. Quel che si rinuncia è l'isolamento *fra file di test*, che
+  questa suite non usa: ogni strato legge file e calcola, e l'unico stato
+  condiviso — la build — è un `globalSetup` che gira una volta in ogni caso. Lo
+  stesso modo per la corsa di tutti i giorni e per quelle accecate, di
+  proposito: una suite che giudica un accecamento in un modo ed è creduta in un
+  altro può contraddirsi
+- **Le letture si memoizzano**: `read()`, `publishedPages()`,
+  `readPublishedCss()`, `readPublishedFiles()`. Mezza suite apriva gli stessi
+  file di `dist/` una volta per file di test, e niente cambia sotto i piedi
+  mentre gira — l'unica cosa che scriveva durante una corsa era l'accecamento,
+  che adesso non scrive più
+- **Quel che non cambia: la suite gira intera per ogni accecamento.** Girare
+  «solo i test che nominano quella guardia» dimezzerebbe il tempo e risponderebbe
+  a un'altra domanda — quella che lo strumento è nato per rifiutare, e che il suo
+  stesso commento spiega
+
+### Obiettivi
+
+- [x] `npm run test:mutate` in locale **sotto i due minuti**: 1m58s, da 6m30s
+- [x] La CI **sotto i tre minuti** di orologio, da 13m54s
+- [x] Nessun file del repository viene modificato durante la corsa
+- [x] Il conteggio resta onesto: le fette si ricompongono, e se una manca il
+      passo è rosso
+
+### Test automatici
+
+- L'accecamento in memoria **acceca davvero**: dentro la suite quella guardia
+  restituisce zero violazioni e la suite se ne accorge. È la proprietà che oggi
+  è garantita dalla riscrittura del file: cambiando metodo va riprovata, non
+  ereditata
+- Due accecamenti in parallelo non si contaminano: fallisce quello atteso, e
+  soltanto quello
+- L'unione delle fette copre ogni guardia **una volta sola**, e togliere una
+  fetta fa fallire il passo
+- I tempi prima e dopo, con lo stesso comando sulla stessa macchina, scritti qui
+
+> **Le misure, perché la metà del guadagno non è arrivata da dove sembrava.**
+> Il parallelismo da solo ha portato 6m30s a 5m14s, e basta: ogni corsa di vitest
+> apre worker suoi, quindi sei corse insieme ne mettevano quaranta su otto core e
+> spendevano la differenza in coda. Il resto è venuto da due cose che valgono
+> anche per chi non acceca niente. `isolate: false` — i file di test condividono
+> l'ambiente invece di riceverne uno nuovo ciascuno — toglie un terzo a ogni
+> corsa, da 5,5s a 3,7s; e **al livello della radice viene accettato e ignorato**,
+> il che è stato trovato solo misurando lo stesso comando con l'opzione sulla
+> riga di comando. La memoizzazione delle letture — `read()`, `publishedPages()`,
+> `readPublishedCss()`, `readPublishedFiles()` — toglie il resto: mezza suite
+> apriva gli stessi file di `dist/` una volta per file di test.
+>
+> Il conto finale, sulla stessa macchina a otto core: **1m58s contro 6m30s**, con
+> sei corse da due worker ciascuna — nove accecamenti in 24s, contro i 27s di
+> quattro-per-due e i 27s di tre-per-tre. E `npm test` è passato da 9,6s a 7,8s
+> per la stessa ragione, senza che nessuno lo chiedesse.
+
+### Test manuali
+
+- **Ctrl-C a metà corsa: il repository resta pulito.** Fatto: interrotta una
+  corsa dopo venticinque secondi, nessun file porta traccia di un accecamento e
+  le uniche modifiche in `git status` sono quelle di questa PR. Prima era ciò che
+  lo script curava a mano con gli handler dei segnali e la rilettura finale;
+  adesso è vero perché non c'è niente da curare
+- **Da fare sul repository, e lo deve fare il committente**: il controllo
+  obbligatorio per il merge era `verify`, e adesso la risposta sulle guardie sta
+  in `guards-complete`. Va aggiunto ai *required status checks*, altrimenti una
+  fetta rossa non ferma più niente — che è la stessa forma di silenzio che le
+  fette introducono e che il passo finale esiste per chiudere
+
+---
+
+## PR 16 — Pubblicazione
 
 **Branch:** `pubblicazione` · **Dipende da:** 14
 
@@ -2132,7 +2233,7 @@ ne aveva lo schermo:
 
 ---
 
-## PR 16 — Proporzioni su schermo piccolo
+## PR 17 — Proporzioni su schermo piccolo
 
 **Branch:** `proporzioni-mobile` · **Dipende da:** 8, 13
 

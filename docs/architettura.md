@@ -42,7 +42,7 @@ la regola 21 del [CLAUDE.md](../CLAUDE.md).
 [token]`. Il bottone «Sign in with GitHub», che è la via per chi non sa cos'è un
 token, ha bisogno di un'applicazione OAuth registrata su un'origine e di un
 relay che ne tenga il segreto: l'origine è il sito pubblicato, quindi arriva con
-il dominio alla PR 15.
+il dominio alla PR 16.
 
 **L'interfaccia del CMS è in inglese**: Sveltia ha diciassette traduzioni e
 nessuna italiana. Italiane sono le etichette e gli aiuti dei campi, che sono

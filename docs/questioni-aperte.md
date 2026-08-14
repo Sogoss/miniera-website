@@ -42,7 +42,7 @@ reversibile e prima o poi qualcuno vorrà stampare la foto di una serata.
 
 Non è ancora stato deciso dove.
 
-## Blocca la PR 15
+## Blocca la PR 16
 
 ### I testi, i numeri e le persone delle pagine istituzionali
 
@@ -65,13 +65,29 @@ Serve dal committente, in una volta sola:
 
 **E blocca la pubblicazione, per costruzione.** Con `site` impostato in
 `astro.config.mjs` un solo blocco `data-placeholder` in `dist/` è una
-violazione: la PR 15 non può chiudere finché questa voce è aperta. È voluto e
+violazione: la PR 16 non può chiudere finché questa voce è aperta. È voluto e
 sta scritto qui perché allora non sia una sorpresa — un dominio vero con un
 lorem ipsum sopra è l'unica cosa peggiore di non avere il dominio. Se il
 committente decidesse di pubblicare comunque, la strada è togliere le sezioni
 che non hanno testo, non togliere il marcatore.
 
-## Da fare alla PR 15
+## Da fare alla PR 16
+
+### L'eccezione sulla protezione di `main`, per il redattore
+
+**Aperta il 14 agosto 2026, alla PR 14; la decisione è già presa** — sta in
+[decisioni.md](decisioni.md) — e quel che resta è applicarla, perché sono
+impostazioni del repository e non righe di codice.
+
+Il CMS commetta direttamente su `main`, e `main` pretende una pull request con
+`enforce_admins` acceso: finché resta così, un salvataggio da `/admin` viene
+rifiutato e il redattore legge un errore di git dentro un form che esiste per non
+fargli sapere che git c'è.
+
+Da fare, sull'account del committente: *Settings → Branches → main → Allow
+specified actors to bypass required pull requests*, con l'account che usa il CMS.
+Da verificare alla PR 16: un salvataggio dal CMS arriva su `main` e fa partire la
+build.
 
 ### L'accesso al CMS col bottone, invece che col token
 
@@ -88,7 +104,7 @@ segreto del client, perché una pagina statica non può tenerlo. L'origine è il
 sito pubblicato. Il relay è un Worker, `sveltia-cms-auth`, che Sveltia pubblica
 apposta e che sta su Cloudflare come il resto.
 
-Serve dal committente, alla PR 15 e in una volta sola: l'applicazione OAuth
+Serve dal committente, alla PR 16 e in una volta sola: l'applicazione OAuth
 sull'account GitHub dell'associazione, e il Worker sul suo account Cloudflare.
 Quello che cambia qui dentro è una riga di `public/admin/config.yml` —
 `auth_methods: [oauth, token]` con il `base_url` accanto.
@@ -111,7 +127,7 @@ Rimandata dalla PR 7, e non perché non conti: è la prova che regge la decision
 indirizzi di Safari si ritrae. Chi lavora al progetto non ha un iPhone, e i due
 modi di provarlo adesso — un tunnel verso il server di sviluppo, un servizio con
 device remoti — costano più attenzione di quanta ne valga finché non c'è un URL
-stabile: alla PR 15 il sito è pubblicato e lo apre chiunque, da qualunque
+stabile: alla PR 16 il sito è pubblicato e lo apre chiunque, da qualunque
 telefono.
 
 Quello che intanto regge il rischio è costruttivo e non una speranza: l'altezza
@@ -127,7 +143,7 @@ interrotto dallo snap — rimandato qui dalla PR 8, per lo stesso motivo e con l
 stesso rischio retto per costruzione: il salto è quello nativo del browser sul
 frammento, non uno `scrollTo` scritto da noi.
 
-## Da decidere prima della PR 15
+## Da decidere prima della PR 16
 
 ### L'immagine delle anteprime social
 
@@ -140,7 +156,7 @@ Va scelta, non generata a caso: il marchio su fondo blu è la strada ovvia, nel
 formato 1200×630 che le anteprime si aspettano. È una decisione di contenuto e
 di design, quindi non la prende una guardia — e per questo la suite **non**
 pretende `og:image` quando arriva il dominio: pretenderlo avrebbe aperto la
-PR 15 su un test rosso che si poteva chiudere solo inventando l'immagine.
+PR 16 su un test rosso che si poteva chiudere solo inventando l'immagine.
 Quello che la suite pretende è che, se una pagina ne pubblica una, sia assoluta.
 
 ## Minori
@@ -180,7 +196,7 @@ titoli di fila.
 
 `og:type` resta `website` anche sulle rotte delle serate, che sono
 semanticamente degli eventi. Sta in `Base.astro`, cioè nel layout condiviso, e
-il posto dove si tocca è la PR 15 insieme al resto dei meta.
+il posto dove si tocca è la PR 16 insieme al resto dei meta.
 
 ### Link a mappa per le sedi
 
@@ -210,7 +226,7 @@ regola 20 impedisce che resti così il giorno che il sito ha un dominio.
 le quattro voci con il suo *in arrivo*, come testo e non come link — un `<a>`
 senza indirizzo non è un link, e una pagina «Coming soon» sarebbe un indirizzo
 condivisibile e indicizzabile per qualcosa che non ha niente da dire, più una
-rotta che la sitemap della PR 15 dovrebbe ricordarsi di escludere.
+rotta che la sitemap della PR 16 dovrebbe ricordarsi di escludere.
 
 Resta aperto se e quando diventi una pagina vera. Il giorno che succede, la voce
 prende un `href` in `src/lib/navigation.ts` e nient'altro cambia — e finché quel

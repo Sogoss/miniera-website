@@ -283,7 +283,7 @@ non una preferenza.
     `checkPlaceholderText` sul pubblicato, `checkPlaceholderSource` sul sorgente,
     e `checkNoPlaceholders`, che **con `site` impostato in `astro.config.mjs`
     rende una violazione un solo blocco marcato**. È l'interruttore di `og:url`:
-    la PR 15 non chiude finché i testi veri non ci sono, ed è voluto.
+    la PR 16 non chiude finché i testi veri non ci sono, ed è voluto.
 
 21. **Il CMS e lo schema sono lo stesso elenco visto da due parti.**
     `public/admin/config.yml` e `src/content.config.ts` descrivono gli stessi
@@ -478,7 +478,7 @@ la ragione per cui è pubblicata è la stessa per cui esiste lo strato `build` �
 per lo stile il sorgente non basta, quindi una rassegna viva solo in `npm run
 dev` lascerebbe le varianti di ogni componente verificate da nessuna parte.
 Prende i dati veri dal dominio: un `data-cycle` inventato lì farebbe scattare la
-guardia della PR 4. **Alla PR 15 va tenuta fuori dalla sitemap.**
+guardia della PR 4. **Alla PR 16 va tenuta fuori dalla sitemap.**
 
 ## Comandi
 
@@ -492,8 +492,10 @@ npm run build        # build statica in dist/
 npm run preview      # anteprima della build
 npm test             # guardie e test, con una build dentro
 npm run test:mutate  # acceca ogni guardia a turno e pretende che la suite se
-                     # ne accorga — sei o sette minuti, la gira la CI: è la
-                     # suite intera una volta per guardia, e le guardie sono 65
+                     # ne accorga — due minuti, la gira la CI a fette. È la
+                     # suite intera una volta per guardia, e le guardie sono 65:
+                     # ciò che è cambiato è che le corse vanno in parallelo,
+                     # non che ne giri una parte
 npm run check        # astro check, typecheck
 npm run fonts:sync   # ricopia i caratteri dai pacchetti @fontsource
 npm run favicon:build  # rigenera public/favicon.ico da public/favicon.svg —
@@ -526,3 +528,13 @@ stanno tenendo. **Cercare il nome di una guardia dentro i test non risponde
 alla stessa domanda**: conta come i test sono scritti, non cosa tengono, e una
 guardia chiamata da una helper locale non compare in nessuno degli `it()` che
 la coprono.
+
+**L'accecamento avviene in memoria** — `scripts/blind.mjs`, un plugin di Vite
+che sostituisce quell'unico export mentre il modulo viene caricato — e non
+riscrivendo i file, come faceva fino alla PR 14. Da lì viene tutto il resto: se
+niente sul disco cambia non c'è niente da rimettere a posto, una corsa
+interrotta non lascia tracce e sessantacinque corse possono andare insieme. In
+CI le guardie si dividono a fette su più job, e **un passo finale somma le
+fette**: una guardia coperta due volte, o nessuna, è rossa — è il «18 su 18» di
+prima, salito di un piano dentro la configurazione della CI. Quel che non
+cambia è che per ogni accecamento gira **la suite intera**.
