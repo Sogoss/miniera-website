@@ -1,5 +1,5 @@
-/* Two guards over the file the build writes for Cloudflare, and they ask the
- * two different questions a generated policy can fail.
+/* The guards over the file the build writes for Cloudflare, and they ask the
+ * three different questions a generated policy can fail.
  *
  * The first is the one with no other witness: **does the policy still cover
  * what the pages contain?** Every script this site runs is inline, so every one
@@ -14,10 +14,15 @@
  * writes `'unsafe-inline'`, everything works, and the file keeps its name and
  * its shape while meaning nothing. That is not a hypothetical about this
  * project; it is what the entire generator exists to make unnecessary.
+ *
+ * The third is about the one thing here we do not write: the CMS bundle, which
+ * arrives from a package, is gitignored, and fetches its own fonts from an
+ * origin our policy has to name. A version bump can add a second one with
+ * nothing in a diff to read — and nothing fails when it does.
  */
 import { createHash } from 'node:crypto';
 import { hashSource, inlineScripts, inlineStyles } from '../../src/lib/headers.ts';
-import { DETACH_CSP, SECURITY_HEADERS } from '../../src/lib/headers.ts';
+import { ADMIN_PATHS, DETACH_CSP, SECURITY_HEADERS } from '../../src/lib/headers.ts';
 import { type Violation } from './types.ts';
 
 /** The path each block of the file applies to, with its lines. Cloudflare's
@@ -176,28 +181,53 @@ export function checkHeaderPolicy(headers: string, path = 'dist/_headers'): Viol
   }
 
   const siteAt = rules.findIndex((rule) => rule.path === '/*');
-  const adminAt = rules.findIndex((rule) => rule.path === '/admin/*');
 
-  if (adminAt === -1) {
-    violations.push({
-      rule: 'headers',
-      detail: `${path} has no \`/admin/*\` rule: the editing desk takes the site's policy, which forbids everything Sveltia needs. The CMS stops saving, and the only person who finds out is whoever tried`,
-    });
-  } else {
+  /* Both of them, and asked by name rather than by shape: `/admin/*` does not
+     match the bare `/admin`, which is the address a person types — see
+     ADMIN_PATHS. A rule missing there is a desk served the site's policy alone,
+     and it looks like the one next to it. */
+  for (const adminPath of ADMIN_PATHS) {
+    const adminAt = rules.findIndex((rule) => rule.path === adminPath);
+
+    if (adminAt === -1) {
+      violations.push({
+        rule: 'headers',
+        detail: `${path} has no \`${adminPath}\` rule: the editing desk takes the site's policy, which forbids everything Sveltia needs. The CMS stops saving, and the only person who finds out is whoever tried`,
+      });
+      continue;
+    }
+
     const admin = rules[adminAt]!;
-    const detaches = admin.lines.some((line) => line.replace(/\s+/g, ' ').trim() === DETACH_CSP);
+    const detachAt = admin.lines.findIndex(
+      (line) => line.replace(/\s+/g, ' ').trim() === DETACH_CSP,
+    );
+    const policyAt = admin.lines.findIndex((line) =>
+      /^content-security-policy\s*:/i.test(line.trim()),
+    );
 
     if (adminAt < siteAt) {
       violations.push({
         rule: 'headers',
-        detail: `${path} declares \`/admin/*\` before \`/*\`. A \`${DETACH_CSP}\` only removes what an earlier rule has already added, so in this order the editing desk detaches nothing and then has the site's policy appended after its own`,
+        detail: `${path} declares \`${adminPath}\` before \`/*\`. A \`${DETACH_CSP}\` only removes what an earlier rule has already added, so in this order the editing desk detaches nothing and then has the site's policy appended after its own`,
       });
     }
 
-    if (headerValue(admin, 'Content-Security-Policy') !== undefined && !detaches) {
+    if (policyAt === -1) continue;
+
+    if (detachAt === -1) {
       violations.push({
         rule: 'headers',
-        detail: `${path}: \`/admin/*\` declares a \`Content-Security-Policy\` and no \`${DETACH_CSP}\` above it. Both rules match that path and Cloudflare joins a header named twice with a comma — which in a CSP means two policies enforced at once, so the site's \`default-src 'self'\` goes on forbidding \`api.github.com\` however wide this row is. The CMS stops saving, and nothing here fails`,
+        detail: `${path}: \`${adminPath}\` declares a \`Content-Security-Policy\` and no \`${DETACH_CSP}\` above it. Both rules match that path and Cloudflare joins a header named twice with a comma — which in a CSP means two policies enforced at once, so the site's \`default-src 'self'\` goes on forbidding \`api.github.com\` however wide this row is. The CMS stops saving, and nothing here fails`,
+      });
+    } else if (detachAt > policyAt) {
+      /* The half the sentence above always claimed and this never read. What a
+         detach removes when it comes *after* the header its own rule has just
+         set is not something Cloudflare documents — the desk is then served
+         either two policies or none, and which one is found out in production.
+         Written above, there is nothing to find out. */
+      violations.push({
+        rule: 'headers',
+        detail: `${path}: \`${adminPath}\` writes \`${DETACH_CSP}\` below the \`Content-Security-Policy\` of its own rule, and it belongs above. Cloudflare documents the \`!\` as removing «a header which has been added by a more pervasive rule» and says nothing about one added by this one: in this order the editing desk is served either both policies or neither, and which of the two is a question answered in production`,
       });
     }
   }
@@ -247,4 +277,80 @@ export function checkStyleAttributes(
       rule: 'headers',
       detail: `${path} publishes \`style="${value}"\` and the policy does not let it apply: \`${governing}\` governs style attributes, and ${hashed ? 'its hash is not among the ones listed' : "a hash list covers `<style>` elements, not attributes — those need `'unsafe-hashes'`"}. Nothing fails. The declaration is dropped, the custom property falls back to the default in the stylesheet, and the element is published at another size`,
     }));
+}
+
+/** A file the browser fetches because a stylesheet named it: `url(…)` with an
+ *  absolute address. Relative ones are `'self'` and say nothing. */
+const FETCHED_URL = /url\(\s*["']?(https?:\/\/[^"')\s]+)/gi;
+
+/** The extensions a browser asks `font-src` about. Everything else a stylesheet
+ *  fetches by URL is an image, which is `img-src`. */
+const FONT_FILE = /\.(?:woff2?|ttf|otf|eot)(?:[?#]|$)/i;
+
+export function fetchedUrls(bundle: string): string[] {
+  return [...new Set([...bundle.matchAll(FETCHED_URL)].map((match) => match[1] ?? ''))];
+}
+
+/** The scheme and host of an address, which is the granularity a CSP source
+ *  list works at. */
+export function originOf(url: string): string {
+  return /^https?:\/\/[^/]+/.exec(url)?.[0] ?? '';
+}
+
+/**
+ * The editing desk is allowed to fetch what its own bundle asks for.
+ *
+ * **This is the guard for the widening nobody writes**, and it is the mirror of
+ * every other check here: those ask whether the policy still covers what *we*
+ * publish, and this asks whether it covers what a dependency we do not build
+ * fetches at runtime. Sveltia ships its own `@font-face` rules pointing at
+ * jsdelivr — three faces, one of them Material Symbols — and the bundle is
+ * gitignored and replaced by `npm run cms:sync` at every install, so a fourth
+ * origin can arrive in a version bump with nothing in a diff to read.
+ *
+ * Blocked, none of it fails. The desk renders, the desk saves, and Material
+ * Symbols being a **ligature** font, every control publishes its own ligature
+ * where its icon should be: `edit`, `delete`, `chevron_right`. It is the shape
+ * this whole file exists for — a policy that is right about everything a test
+ * was written for and wrong in front of a volunteer.
+ */
+export function checkAdminFetchSources(
+  bundle: string,
+  headers: string,
+  path = 'dist/_headers',
+): Violation[] {
+  const rules = headerRules(headers).filter((rule) => ADMIN_PATHS.includes(rule.path));
+  const violations: Violation[] = [];
+  const reported = new Set<string>();
+
+  for (const rule of rules) {
+    /* A row with no policy at all is checkHeaderPolicy's business, and saying it
+       twice is how a report stops being read. */
+    const policy = headerValue(rule, 'Content-Security-Policy');
+    if (policy === undefined) continue;
+
+    for (const url of fetchedUrls(bundle)) {
+      const origin = originOf(url);
+      const font = FONT_FILE.test(url);
+      const name = font ? 'font-src' : 'img-src';
+      const governing = directive(policy, name, ['default-src']);
+
+      if (governing.includes(origin)) continue;
+
+      const key = `${rule.path} ${name} ${origin}`;
+      if (reported.has(key)) continue;
+      reported.add(key);
+
+      violations.push({
+        rule: 'headers',
+        detail: `${path}: the CMS bundle fetches \`${url}\` and \`${rule.path}\` does not allow it — \`${governing === '' ? 'nothing' : governing}\` is what governs it. ${
+          font
+            ? 'Nothing fails: the desk renders and goes on saving, and the face falls back. Material Symbols is a ligature font, so a blocked one publishes the name of every icon in place of the icon — `edit`, `delete`, `chevron_right`'
+            : 'Nothing fails: the desk renders and goes on saving, with that image missing wherever it was meant to be'
+        }. Add \`${origin}\` to \`${name}\` in ADMIN_POLICY, with what needs it written beside it`,
+      });
+    }
+  }
+
+  return violations;
 }

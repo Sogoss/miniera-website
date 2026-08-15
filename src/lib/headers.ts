@@ -33,8 +33,16 @@
 
 /** A `<script>` with no `src`: the browser runs its body, so the body is what
  *  a hash has to cover. `[^>]*` never crosses the `>`, so an attribute cannot
- *  swallow the tag. */
-const INLINE_SCRIPT = /<script\b(?![^>]*\bsrc\s*=)[^>]*>([\s\S]*?)<\/script\s*>/gi;
+ *  swallow the tag.
+ *
+ *  **The space before `src` is load-bearing.** Written `\bsrc\s*=`, the word
+ *  boundary sits after the `-` of `data-src` too, so a `<script is:inline
+ *  data-src="…">` read as external: not hashed by the build, and not reported
+ *  by `checkInlineHashes` either — the guard calls this same function, so the
+ *  script would be blocked in production with the whole suite green. An
+ *  attribute of a tag we have already matched is always preceded by
+ *  whitespace, which is what tells the two apart. */
+const INLINE_SCRIPT = /<script\b(?![^>]*\ssrc\s*=)[^>]*>([\s\S]*?)<\/script\s*>/gi;
 
 const INLINE_STYLE = /<style\b[^>]*>([\s\S]*?)<\/style\s*>/gi;
 
@@ -127,6 +135,19 @@ export const ADMIN_POLICY = [
   // Sveltia is a compiled application that writes its own styles as it renders.
   // There is no build of ours to take a hash from.
   "style-src 'self' 'unsafe-inline'",
+  // Those styles fetch three faces from jsdelivr — Material Symbols, Source
+  // Sans 3, Noto Mono — declared inside a bundle we install and do not build.
+  // The self-hosting of src/assets/fonts is about the pages of this site; this
+  // row is not one of them, and rewriting somebody else's @font-face is a
+  // patch that has to be reapplied at every update.
+  //
+  // Blocked, the icon font is the one that shows: Material Symbols is a
+  // **ligature** font, so every control publishes its own ligature as text —
+  // `edit`, `delete`, `chevron_right` — while the desk goes on saving. It is
+  // the failure this row is written against, found by reading rather than by
+  // anything failing. `checkAdminFetchSources` is what keeps it from coming
+  // back the day Sveltia adds a fourth origin.
+  "font-src 'self' https://cdn.jsdelivr.net",
   // The bundle is served by us out of public/admin/ — see scripts/sync-cms.mjs
   // for why it is not a CDN.
   "script-src 'self'",
@@ -157,25 +178,41 @@ export const SECURITY_HEADERS: readonly (readonly [string, string])[] = [
 export const DETACH_CSP = '! Content-Security-Policy';
 
 /**
+ * The paths the editing desk is served at, and there are two.
+ *
+ * Cloudflare matches the pattern of a rule against the request path as it is
+ * written: `/admin/*` needs the slash, so it does not cover `/admin` — which is
+ * the address a person types. Whether Pages answers that with a redirect to
+ * `/admin/` or serves the index straight away is its business, not something
+ * this repository pins; served straight away, the desk would take the site's
+ * policy alone, with no `connect-src`, and the first thing an editor does would
+ * be refused with nothing written anywhere. A row costs a line.
+ */
+export const ADMIN_PATHS: readonly string[] = ['/admin', '/admin/*'];
+
+/**
  * The whole `_headers` file.
  *
  * **Two matching rules do not override each other — they add up.** Cloudflare
  * applies every rule whose pattern matches, and «if a header is applied twice
- * the values are joined with a comma separator»: `/admin/*` matches `/admin/*`
- * *and* `/*`, so the editing desk would be sent both policies in one header. A
- * comma in a `Content-Security-Policy` is not a list of sources, it is a list of
+ * the values are joined with a comma separator»: `/admin/…` matches the admin
+ * row *and* `/*`, so the editing desk would be sent both policies in one header.
+ * A comma in a `Content-Security-Policy` is not a list of sources, it is a list of
  * **policies**, and a browser enforces all of them at once — so the site's
  * `default-src 'self'`, which names no `connect-src`, would go on forbidding
  * `api.github.com` however wide the row underneath it was written. The CMS would
  * not save, which is the one failure this whole file is arranged to prevent, and
  * the only person who would find out is whoever tried.
  *
- * So the row takes the site's policy **off** before declaring its own, with the
- * `!` Cloudflare documents for exactly this — «remove a header which has been
- * added by a more pervasive rule». The order still matters, and now for a reason
- * that is true: a detach only removes what an earlier rule has already added, so
- * `/admin/*` written above `/*` would detach nothing and then have the site's
- * policy appended after it. `checkHeaderPolicy` holds both halves.
+ * So each admin row takes the site's policy **off** before declaring its own,
+ * with the `!` Cloudflare documents for exactly this — «remove a header which
+ * has been added by a more pervasive rule». The order still matters, and now for
+ * a reason that is true: a detach only removes what an earlier rule has already
+ * added, so an admin row written above `/*` would detach nothing and then have
+ * the site's policy appended after it. `checkHeaderPolicy` holds both halves,
+ * and the same for the order **inside** the row — a detach written under the
+ * policy it shares a rule with is a question about Cloudflare that nothing here
+ * can answer, and the answer arrives in production.
  *
  * No `Strict-Transport-Security`. It is a promise with a long expiry, made on
  * an address this project abandons at PR 20; it arrives with the domain, in the
@@ -190,13 +227,17 @@ export function headersFile(scripts: readonly string[]): string {
     ...SECURITY_HEADERS.map(([name, value]) => `  ${name}: ${value}`),
     `  Content-Security-Policy: ${sitePolicy(scripts)}`,
     '',
-    '/admin/*',
-    /* Both rules match this path and Cloudflare joins what they say. Without
-       this line the editing desk is governed by the site's policy as well as
-       its own, and stops talking to GitHub. */
-    `  ${DETACH_CSP}`,
-    `  Content-Security-Policy: ${ADMIN_POLICY}`,
-    '',
+    /* Both rules match these paths and Cloudflare joins what they say. Without
+       the detach the editing desk is governed by the site's policy as well as
+       its own, and stops talking to GitHub — and the detach goes first, because
+       what one removes when it comes after the header it names is not something
+       Cloudflare documents. */
+    ...ADMIN_PATHS.flatMap((path) => [
+      path,
+      `  ${DETACH_CSP}`,
+      `  Content-Security-Policy: ${ADMIN_POLICY}`,
+      '',
+    ]),
   ];
 
   return lines.join('\n');

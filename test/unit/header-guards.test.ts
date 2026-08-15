@@ -13,11 +13,14 @@
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import {
+  checkAdminFetchSources,
   checkHeaderPolicy,
   checkInlineHashes,
   checkStyleAttributes,
   directive,
+  fetchedUrls,
   headerRules,
+  originOf,
   styleAttributes,
 } from '../guards/headers.ts';
 import { DETACH_CSP, hashSource, headersFile } from '../../src/lib/headers.ts';
@@ -36,6 +39,14 @@ const PAGE = `<!doctype html><html><head>
 
 const HEADERS = headersFile([sha256(SCRIPT)]);
 
+/** A list of rules written back out as a `_headers` file: how a test fabricates
+ *  a variation of the real one without typing a policy by hand, which is the
+ *  thing this file is careful never to do. */
+const rebuilt = (rules: { path: string; lines: string[] }[]): string =>
+  rules
+    .map((rule) => [rule.path, ...rule.lines.map((line) => `  ${line}`)].join('\n'))
+    .join('\n\n');
+
 /** The policy this project shipped and had to take back: styles by hash, which
  *  says nothing about attributes. */
 const HASHED_STYLES = HEADERS.replace(
@@ -46,7 +57,9 @@ const HASHED_STYLES = HEADERS.replace(
 describe('headerRules', () => {
   it('reads a rule and the headers indented under it', () => {
     const rules = headerRules(HEADERS);
-    expect(rules.map((rule) => rule.path)).toEqual(['/*', '/admin/*']);
+    // Three, because the editing desk needs two: a Cloudflare pattern is matched
+    // against the path as written, so `/admin/*` does not cover `/admin`.
+    expect(rules.map((rule) => rule.path)).toEqual(['/*', '/admin', '/admin/*']);
     expect(rules[0]!.lines.some((line) => line.startsWith('X-Content-Type-Options'))).toBe(true);
   });
 
@@ -113,6 +126,18 @@ describe('checkInlineHashes', () => {
   it('says nothing about a script the page loads from a file', () => {
     const external = `<html><head><script src="/_astro/x.js"></script></head><body></body></html>`;
     expect(checkInlineHashes(external, HEADERS)).toEqual([]);
+  });
+
+  it('does not read `data-src` as `src`, which would hide a script from the policy', () => {
+    // A word boundary sits after the `-` of `data-src` too, so the lookahead
+    // that skips external scripts skipped this one — and the generator that
+    // writes the hashes calls the very same function. Neither hashed nor
+    // reported: blocked in production with the whole suite green, which is the
+    // exact failure this file was written against, arriving through its own
+    // regex.
+    const inline = `<html><head><script data-src="/x.js">${SCRIPT}</script></head></html>`;
+    expect(checkInlineHashes(inline, headersFile([]))).toHaveLength(1);
+    expect(checkInlineHashes(inline, HEADERS)).toEqual([]);
   });
 
   it('asks nothing of a <style> while style-src carries unsafe-inline', () => {
@@ -251,14 +276,25 @@ describe('checkHeaderPolicy', () => {
     expect(violations.some((v) => v.detail.includes("'sha256-"))).toBe(true);
   });
 
-  it('reports a missing /admin/* rule', () => {
-    const site = HEADERS.slice(0, HEADERS.indexOf('/admin/*'));
+  it('reports a file with no rule for the editing desk at all', () => {
+    const site = HEADERS.slice(0, HEADERS.indexOf('/admin'));
     const violations = checkHeaderPolicy(site);
-    expect(violations).toHaveLength(1);
-    expect(violations[0]!.detail).toContain('/admin/*');
+    expect(violations).toHaveLength(2);
+    expect(violations.map((v) => v.detail).join(' ')).toContain('/admin/*');
   });
 
-  it('reports an /admin/* policy that does not take the site one off first', () => {
+  it('reports the bare /admin left out while /admin/* is there', () => {
+    // The one a reader passes over. Cloudflare matches the pattern against the
+    // path as written, so `/admin/*` does not cover `/admin` — which is what a
+    // person types. Served the site's policy alone, with no `connect-src`, the
+    // first thing an editor does is refused and nothing anywhere says so.
+    const rules = headerRules(HEADERS).filter((rule) => rule.path !== '/admin');
+    const violations = checkHeaderPolicy(rebuilt(rules));
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain('`/admin` rule');
+  });
+
+  it('reports an admin policy that does not take the site one off first', () => {
     // The one that shipped. Both rules match `/admin/…` and Cloudflare joins a
     // header named twice with a comma — which in a CSP is two policies enforced
     // at once, so the site's `default-src 'self'` goes on forbidding
@@ -268,15 +304,125 @@ describe('checkHeaderPolicy', () => {
       .filter((line) => line.trim() !== DETACH_CSP)
       .join('\n');
     const violations = checkHeaderPolicy(joined);
-    expect(violations).toHaveLength(1);
+    // One for each row the desk is served at: the guard reads them separately,
+    // because they can drift separately.
+    expect(violations).toHaveLength(2);
     expect(violations[0]!.detail).toContain('joins a header named twice');
   });
 
-  it('reports the two rules written in the order that reverses their meaning', () => {
-    const rules = headerRules(HEADERS);
-    const swapped = [rules[1]!, rules[0]!]
-      .map((rule) => [rule.path, ...rule.lines.map((line) => `  ${line}`)].join('\n'))
-      .join('\n\n');
-    expect(checkHeaderPolicy(swapped).some((v) => v.detail.includes('before'))).toBe(true);
+  it('reports a detach written under the policy of its own rule', () => {
+    // What the sentence above has always claimed — «and no `!` **above** it» —
+    // and what the guard did not read: `some()` is as happy with the two lines
+    // in either order. Reversed, the `!` names a header this very rule has just
+    // set, which Cloudflare does not document: the desk ends up with both
+    // policies or with none, and which one is answered in production.
+    const rules = headerRules(HEADERS).map((rule) =>
+      rule.path === '/admin' ? { ...rule, lines: [...rule.lines].reverse() } : rule,
+    );
+    const violations = checkHeaderPolicy(rebuilt(rules));
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain('belongs above');
+  });
+
+  it('reports the rules written in the order that reverses their meaning', () => {
+    const [site, ...admin] = headerRules(HEADERS);
+    expect(checkHeaderPolicy(rebuilt([...admin, site!])).some((v) => v.detail.includes('before')))
+      .toBe(true);
+  });
+});
+
+/* The bundle is not ours and is not in git: it arrives from a package and is
+   replaced at every install, so what it fetches can change with a version bump
+   and nothing in a diff to read. These fixtures are the shape of what Sveltia
+   actually ships — the three faces, declared in CSS it compiled itself. */
+const FACE = (name: string, host = 'https://cdn.jsdelivr.net') =>
+  `@font-face{font-family:${name};src:url(${host}/fontsource/fonts/${name}.woff2) format("woff2")}`;
+
+const BUNDLE = [FACE('material-symbols-outlined'), FACE('source-sans-3'), FACE('noto-mono')].join('');
+
+/** The policy as it shipped, before the widening was written: `default-src
+ *  'self'` answers for the fonts, and refuses all three. */
+const NO_FONT_SRC = HEADERS.replaceAll(" font-src 'self' https://cdn.jsdelivr.net;", '');
+
+describe('fetchedUrls', () => {
+  it('reads the absolute ones a stylesheet names', () => {
+    expect(fetchedUrls(BUNDLE)).toHaveLength(3);
+  });
+
+  it('says nothing about a relative one, which is `self`', () => {
+    expect(fetchedUrls('src:url(/fonts/x.woff2)')).toEqual([]);
+  });
+
+  it('reads through the quotes, which a minifier may or may not have left', () => {
+    expect(fetchedUrls(`url("https://a.example/x.woff2")`)).toEqual(['https://a.example/x.woff2']);
+    expect(fetchedUrls(`url( 'https://a.example/y.png' )`)).toEqual(['https://a.example/y.png']);
+  });
+});
+
+describe('originOf', () => {
+  it('keeps the scheme and the host, which is what a source list works at', () => {
+    expect(originOf('https://cdn.jsdelivr.net/fontsource/x.woff2')).toBe(
+      'https://cdn.jsdelivr.net',
+    );
+  });
+});
+
+describe('checkAdminFetchSources', () => {
+  it('accepts the policy the generator writes against the bundle it is written for', () => {
+    expect(checkAdminFetchSources(BUNDLE, HEADERS)).toEqual([]);
+  });
+
+  it('reports the origin the policy does not name, once per rule', () => {
+    // The defect, as it shipped: `default-src 'self'` and no `font-src`, so all
+    // three faces are refused. Nothing fails — the desk renders and saves — and
+    // Material Symbols is a ligature font, so every control publishes its own
+    // ligature where its icon should be.
+    //
+    // Two violations and not six: three faces from one host are one widening to
+    // write, and six lines in CI are a report nobody finishes reading.
+    const violations = checkAdminFetchSources(BUNDLE, NO_FONT_SRC);
+    expect(violations).toHaveLength(2);
+    expect(violations[0]!.detail).toContain('font-src');
+    expect(violations[0]!.detail).toContain('ligature');
+  });
+
+  it('reports the row that drifted from the other', () => {
+    // Two rows carry the desk and they are written by the same generator today.
+    // The day one of them is edited by hand, the one a person types is the one
+    // that gets forgotten.
+    const drifted = rebuilt(
+      headerRules(HEADERS).map((rule) =>
+        rule.path === '/admin'
+          ? { ...rule, lines: rule.lines.map((line) => line.replace(' https://cdn.jsdelivr.net', '')) }
+          : rule,
+      ),
+    );
+    const violations = checkAdminFetchSources(BUNDLE, drifted);
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain('`/admin`');
+  });
+
+  it('asks img-src about something that is not a font', () => {
+    const image = '.x{background:url(https://images.example/logo.png)}';
+    const violations = checkAdminFetchSources(image, HEADERS);
+    expect(violations).toHaveLength(2);
+    expect(violations[0]!.detail).toContain('img-src');
+    expect(violations[0]!.detail).not.toContain('ligature');
+  });
+
+  it('accepts what img-src already names, which is where the blob: preview lives', () => {
+    const avatar = '.x{background:url(https://avatars.githubusercontent.com/u/1)}';
+    expect(checkAdminFetchSources(avatar, HEADERS)).toEqual([]);
+  });
+
+  it('says nothing about a row that declares no policy at all', () => {
+    // That is checkHeaderPolicy's report, and saying it twice is how a report
+    // stops being read.
+    const bare = '/*\n  X-Frame-Options: DENY\n\n/admin\n  X-Frame-Options: DENY\n';
+    expect(checkAdminFetchSources(BUNDLE, bare)).toEqual([]);
+  });
+
+  it('says nothing about a bundle that fetches nothing from anywhere', () => {
+    expect(checkAdminFetchSources('export const a = 1;', HEADERS)).toEqual([]);
   });
 });

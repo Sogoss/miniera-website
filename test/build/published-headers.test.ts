@@ -7,9 +7,11 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  checkAdminFetchSources,
   checkHeaderPolicy,
   checkInlineHashes,
   checkStyleAttributes,
+  fetchedUrls,
   styleAttributes,
 } from '../guards/headers.ts';
 import { inlineScripts, inlineStyles } from '../../src/lib/headers.ts';
@@ -22,6 +24,12 @@ const pages = publishedPages();
    on does not see it — and would have handed this one an empty string. */
 const HEADERS_FILE = 'dist/_headers';
 const headers = exists(HEADERS_FILE) ? read(HEADERS_FILE) : '';
+
+/* The one input here that nobody in this repository wrote. It is installed, not
+   committed, so what it fetches changes with a version bump and there is no
+   diff to read it in. */
+const BUNDLE_FILE = 'dist/admin/sveltia-cms.js';
+const bundle = exists(BUNDLE_FILE) ? read(BUNDLE_FILE) : '';
 
 describe('the headers the build writes', () => {
   it('published a _headers at all', () => {
@@ -82,6 +90,26 @@ describe('the headers the build writes', () => {
     // which is exactly what a reader would assume this site is.
     const attributes = pages.flatMap((page) => styleAttributes(page.html));
     expect(attributes.length).toBeGreaterThan(0);
+  });
+
+  it('lets the editing desk fetch what its own bundle asks for', () => {
+    // The row nobody would think to reread, because the thing that needs it is
+    // inside 1.9 MB of somebody else's minified JavaScript. Refused, the CMS
+    // still renders and still saves — and Material Symbols is a ligature font,
+    // so every control publishes `edit`, `delete`, `chevron_right` where its
+    // icon should be.
+    expect(checkAdminFetchSources(bundle, headers, HEADERS_FILE).map((v) => v.detail)).toEqual([]);
+  });
+
+  it('is covering a bundle that actually fetches from somewhere', () => {
+    // Anti-vacuity, and here it is also the other half of the row: the widening
+    // in ADMIN_POLICY is written for these fetches, so the day they stop
+    // existing this goes red and the widening comes back out. A relaxation that
+    // has outlived its reason is the shape a policy rots into.
+    expect(
+      fetchedUrls(bundle).length,
+      'the CMS bundle fetches nothing absolute any more: take the widening out of ADMIN_POLICY',
+    ).toBeGreaterThan(0);
   });
 
   it('changes with the script it covers', () => {

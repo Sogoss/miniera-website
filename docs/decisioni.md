@@ -83,6 +83,34 @@ salverebbe. È l'unico difetto di questo file che non fallisce da nessuna parte 
 lo trova chi prova a salvare. L'ordine serve lo stesso, e adesso per una ragione
 vera: un `!` toglie solo quel che una regola precedente ha già messo. *(PR 17)*
 
+**E le righe del banco di redazione sono due, `/admin` e `/admin/*`.** Un motivo
+di `_headers` Cloudflare lo confronta con l'indirizzo chiesto **come è scritto**:
+`/admin/*` vuole la barra, quindi non copre `/admin` — che è l'indirizzo che
+digita una persona. Se Pages a quel punto reindirizzi o serva direttamente
+l'indice è affar suo e non è una cosa che questo repository fissi; servito
+direttamente, il banco prenderebbe la sola policy del sito, senza `connect-src`,
+e la prima cosa che fa un redattore sarebbe rifiutata senza che da nessuna parte
+compaia niente. Una riga costa una riga. **E il `!` sta sopra la sua policy anche
+dentro la regola**: cosa toglie un distacco che venga *dopo* l'intestazione che
+la sua stessa regola ha appena messo, Cloudflare non lo documenta — la guardia
+diceva «e nessun `!` sopra» e leggeva solo se ci fosse. *(PR 17)*
+
+**`font-src` di `/admin` nomina jsdelivr, ed è l'unica cosa qui che non
+scriviamo noi.** Il bundle di Sveltia porta i suoi `@font-face` — Material
+Symbols, Source Sans 3, Noto Mono — verso quel CDN, dentro JavaScript compilato
+che noi installiamo e non costruiamo. L'auto-hosting dei caratteri è una regola
+sulle *pagine di questo sito*, e `/admin` non è una di quelle; riscrivere gli
+`@font-face` di qualcun altro sarebbe una toppa da riapplicare a ogni
+aggiornamento. Bloccato, non fallisce niente: il banco rende e salva, e siccome
+Material Symbols è un carattere **a legature**, ogni comando pubblica la propria
+legatura al posto dell'icona — `edit`, `delete`, `chevron_right`. Non lo trova
+nessuna build: lo trova chi apre `/admin` e legge dei nomi. La guardia è
+`checkAdminFetchSources`, e legge **il bundle**, non un elenco scritto qui: quel
+file è ignorato da git e sostituito a ogni installazione, quindi una quarta
+origine può arrivare con un aumento di versione e nessun diff da leggere. Un
+test accanto pretende che il bundle scarichi ancora qualcosa da fuori: il giorno
+che smette, quella riga larga esce. *(PR 17)*
+
 **Ma gli stili sono `'unsafe-inline'`, e la ragione è un difetto che abbiamo
 pubblicato.** La prima versione trattava gli stili come gli script, con gli
 hash. **Un hash in `style-src` copre un elemento `<style>` e non un attributo

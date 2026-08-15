@@ -72,8 +72,11 @@ Content-Security-Policy, e la policy contiene l'**hash di ogni script e di ogni
 stile in linea** che la build ha prodotto — questo sito non ha un solo script
 esterno, quindi senza quegli hash non gira niente. Si calcolano da `dist/` e non
 dal sorgente, perché quel che un browser hasha sono i byte che ha ricevuto.
-`/admin` ha la sua riga, più larga: Sveltia scrive stile a runtime e parla con
-`api.github.com`. E quella riga comincia con `! Content-Security-Policy`, perché
+`/admin` ha le sue righe — due, `/admin` e `/admin/*`, perché un motivo si
+confronta con l'indirizzo come è scritto e il secondo non copre il primo — e
+sono più larghe: Sveltia scrive stile a runtime, parla con `api.github.com` e
+scarica i suoi caratteri da jsdelivr. E quella riga comincia con `!
+Content-Security-Policy`, perché
 le regole di `_headers` si sommano invece di sovrascriversi: senza, la policy del
 sito e quella della redazione arriverebbero unite da una virgola, cioè due policy
 applicate insieme, e il CMS non salverebbe.

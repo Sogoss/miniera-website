@@ -2541,8 +2541,10 @@ nessun `.env`, nessun token. Non c'è niente da riscrivere prima di pubblicare, 
       nessun `Disallow` su `/admin` e `/componenti`, che restano fuori dall'indice
       col `noindex` che hanno già
 - [x] `dist/_headers` **generato**: i security header, e una CSP con gli hash dei
-      cinque blocchi in linea, più la riga di `/admin` con le sue due larghezze
-      dichiarate
+      cinque blocchi in linea, più le **due** righe di `/admin` — un motivo di
+      Cloudflare si confronta con l'indirizzo come è scritto, e `/admin/*` non
+      copre `/admin` — con le loro tre larghezze dichiarate, `connect-src`,
+      `style-src` e il `font-src` che i caratteri del bundle vogliono
 - [x] Le due foto segnaposto sono dichiarate in `placeholder.ts` e hanno le loro
       due guardie, sul sorgente e sul pubblicato
 - [ ] `guards-complete` fra i *required status checks*, e una fetta rossa ferma
@@ -2578,7 +2580,14 @@ nessun `.env`, nessun token. Non c'è niente da riscrivere prima di pubblicare, 
   sbagliato. Si ritira da sé alla PR 20, quando l'elenco si svuota
 - `checkInternalLinks` copre anche la 404, che è la pagina da cui è più facile
   scrivere un link a niente
-- Il conto delle guardie sale da 65 a 72 e **non va toccato niente**: sia
+- **Guardia** sulle sorgenti che il bundle del CMS scarica da fuori: la policy
+  di `/admin` le nomina tutte. Legge **il bundle**, non un elenco scritto in un
+  test, perché quel file è ignorato da git e sostituito a ogni installazione: una
+  quarta origine arriva con un aumento di versione e nessun diff da leggere. È
+  la guardia che mancava a `font-src`, e il difetto che ha trovato non fa
+  fallire niente — il banco rende, il banco salva, e Material Symbols essendo un
+  carattere a legature pubblica `edit` e `delete` al posto delle icone
+- Il conto delle guardie sale da 65 a 73 e **non va toccato niente**: sia
   `mutate-guards.mjs` sia le fette della CI derivano l'elenco dalla cartella e
   non da una lista scritta a mano. `npm run test:mutate` resta verde, e le nuove
   guardie ci entrano perché esistono, non perché qualcuno le ha aggiunte
@@ -2599,6 +2608,10 @@ nessun `.env`, nessun token. Non c'è niente da riscrivere prima di pubblicare, 
   guardare sono la CSP di `/admin` e il criterio dell'organizzazione sui token a
   granularità fine, che dopo il trasferimento può rifiutare il token del CMS —
   e sono due diagnosi diverse per lo stesso sintomo
+- **E `/admin` si guarda, non solo si usa**: i comandi hanno icone e non parole.
+  Con `font-src` stretto il banco rende e salva lo stesso, e ogni bottone
+  pubblica la propria legatura — `edit`, `delete`, `chevron_right`. Provato su
+  `/admin` **e** su `/admin/`, che sono due righe di `_headers` diverse
 - Una fetta rossa impedisce il merge: si acceca una guardia in un commit usa e
   getta sul branch, si guarda il bottone, si toglie
 - La 404 si raggiunge davvero, chiedendo un numero che non esiste
