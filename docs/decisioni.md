@@ -95,6 +95,22 @@ dentro la regola**: cosa toglie un distacco che venga *dopo* l'intestazione che
 la sua stessa regola ha appena messo, Cloudflare non lo documenta — la guardia
 diceva «e nessun `!` sopra» e leggeva solo se ci fosse. *(PR 17)*
 
+**`guards-complete` porta anche il verdetto delle fette, e prima non lo
+portava.** È l'unico controllo obbligatorio dei due che riguardi le guardie, e il
+commento che gli sta sopra prometteva che richiederlo bastasse. Non bastava:
+`scripts/mutate-guards.mjs` scrive il rapporto della fetta e **poi** mette il
+codice d'uscita, quindi una fetta che aveva trovato una guardia non tenuta da
+nessun test caricava lo stesso un rapporto completo — e la somma, che chiede
+«ogni guardia accecata da una fetta sola», tornava. Misurato alla PR 17 con una
+guardia esportata che nessun test copriva: `guards (3)` rossa,
+`guards-complete` verde, pull request *MERGEABLE*. Cioè una guardia che non sta
+guardando sarebbe entrata su `main` con il bottone disponibile e un avviso
+accanto — che è esattamente ciò contro cui `test:mutate` è stato scritto.
+Rimisurato dopo la correzione, con la stessa guardia al suo posto: **BLOCKED**.
+La matrice non si può richiedere al suo posto, perché i suoi contesti sono
+`guards (1)`…`guards (4)` e il numero delle fette finirebbe scritto nelle
+impostazioni del repository, dove non lo rilegge nessuno. *(PR 17)*
+
 **`font-src` di `/admin` nomina jsdelivr, ed è l'unica cosa qui che non
 scriviamo noi.** Il bundle di Sveltia porta i suoi `@font-face` — Material
 Symbols, Source Sans 3, Noto Mono — verso quel CDN, dentro JavaScript compilato

@@ -2547,8 +2547,9 @@ nessun `.env`, nessun token. Non c'è niente da riscrivere prima di pubblicare, 
       `style-src` e il `font-src` che i caratteri del bundle vogliono
 - [x] Le due foto segnaposto sono dichiarate in `placeholder.ts` e hanno le loro
       due guardie, sul sorgente e sul pubblicato
-- [ ] `guards-complete` fra i *required status checks*, e una fetta rossa ferma
-      un merge — provato
+- [x] `guards-complete` fra i *required status checks*, e una fetta rossa ferma
+      un merge — provato. **Alla prima misura non lo fermava**, e la correzione
+      sta in `ci.yml`: vedi i test manuali qui sotto
 - [ ] Un salvataggio da `/admin` arriva su `main` e fa partire una build —
       provato. **Dopo il merge**, come il rebuild e per una ragione simile: è la
       produzione a essere il posto dove un redattore scrive, e un salvataggio
@@ -2632,7 +2633,17 @@ nessun `.env`, nessun token. Non c'è niente da riscrivere prima di pubblicare, 
   vederlo intero vuol dire che **jsdelivr è l'elenco completo** — una seconda
   origine darebbe parole su alcuni comandi e simboli sugli altri.
 - Una fetta rossa impedisce il merge: si acceca una guardia in un commit usa e
-  getta sul branch, si guarda il bottone, si toglie
+  getta sul branch, si guarda il bottone, si toglie. **Fatta, e non lo
+  impediva.** Con una guardia esportata che nessun test copre — `verify` verde,
+  perché una guardia in più non rompe nessuna asserzione — la corsa ha dato
+  `guards (3)` rossa e `guards-complete` **verde**, con la pull request
+  *MERGEABLE*: `guards` non è fra i controlli obbligatori, e la fetta scrive il
+  rapporto *prima* di mettere il codice d'uscita, quindi la somma riceveva
+  quattro rapporti completi. Sistemato dentro `guards-complete`, che adesso
+  legge anche l'esito della matrice, e rimisurato con la stessa guardia al suo
+  posto: `guards-complete` rossa, stato **BLOCKED**. È la prova che il piano
+  chiedeva perché una configurazione che sembra fatta e non funziona è la stessa
+  forma dei due ruleset
 - La 404 si raggiunge davvero, chiedendo un numero che non esiste. **Fatta.**
 - La pagina di una serata aperta da un browser con la console aperta: nessuna
   violazione di CSP. È l'unico posto dove un hash sbagliato si vede

@@ -538,3 +538,14 @@ CI le guardie si dividono a fette su più job, e **un passo finale somma le
 fette**: una guardia coperta due volte, o nessuna, è rossa — è il «18 su 18» di
 prima, salito di un piano dentro la configurazione della CI. Quel che non
 cambia è che per ogni accecamento gira **la suite intera**.
+
+E quel passo finale **porta anche il verdetto delle fette**, che è la sola cosa
+richiesta per il merge. Non lo faceva: una fetta scrive il rapporto e *poi* mette
+il codice d'uscita, quindi una fetta che aveva trovato una guardia non tenuta
+caricava un rapporto completo lo stesso, la somma tornava e `guards-complete`
+passava. Misurato apposta alla PR 17 — `guards (3)` rossa, `guards-complete`
+verde, la pull request *mergeable* — perché il piano chiedeva di provarlo invece
+di dare per buona la configurazione. La matrice non si può richiedere al suo
+posto: i suoi contesti sono `guards (1)`…`guards (4)`, e il numero delle fette
+finirebbe scritto nelle impostazioni del repository, che è l'unico posto che
+nessuna guardia legge.
