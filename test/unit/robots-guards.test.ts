@@ -57,7 +57,12 @@ describe('checkRobotsIndexing', () => {
   it.each([
     ['/admin', 'Disallow: /admin'],
     ['/admin, with the trailing slash', 'Disallow: /admin/'],
+    // `*` is «and anything after», so these forbid the same page by another
+    // spelling — and a guard that reads only the bare form is one a rewrite
+    // walks past without meaning to.
+    ['/admin, with a wildcard', 'Disallow: /admin/*'],
     ['/componenti', 'Disallow: /componenti'],
+    ['/componenti, with a wildcard', 'Disallow: /componenti*'],
   ])('reports a Disallow on %s, which keeps it in the index', (_name, line) => {
     // The one that reads backwards: forbidding the crawl means the `noindex`
     // is never read, so the bare address can be listed anyway.
@@ -83,6 +88,16 @@ describe('checkRobotsIndexing', () => {
     // switches off. `#` starts a comment in robots.txt.
     const commented = `# Alla PR 20 questo file si rovescia. Non scrivere Disallow: /admin qui.\n${CLOSED}`;
     expect(checkRobotsIndexing(commented, { withDomain: false })).toEqual([]);
+  });
+
+  it('reads `Disallow: /*` as forbidding everything, like the bare slash', () => {
+    // The same line said the other way. Read literally it is not `/`, and the
+    // whole switch would then be the wrong way round on both sides at once.
+    expect(checkRobotsIndexing('User-agent: *\nDisallow: /*\n', { withDomain: false }))
+      .toEqual([]);
+    expect(
+      checkRobotsIndexing('User-agent: *\nDisallow: /*\n', { withDomain: true }).length,
+    ).toBeGreaterThan(0);
   });
 
   it('does not mistake /componenti-qualcosa for /componenti', () => {

@@ -35,9 +35,16 @@ function disallowedPaths(robots: string): string[] {
     .map((line) => line.replace(/^disallow\s*:/i, '').trim());
 }
 
+/** A `Disallow` value as the two checks below compare them: without the `*` a
+ *  crawler treats as «and anything after», and without a trailing slash. `/admin`,
+ *  `/admin/` and `/admin/*` forbid the same thing and are the same defect. */
+function forbidden(rule: string): string {
+  return rule.replace(/\*+$/, '').replace(/(.)\/$/, '$1');
+}
+
 /** Whether the file forbids the whole site to everybody. */
 function forbidsEverything(robots: string): boolean {
-  return disallowedPaths(robots).includes('/');
+  return disallowedPaths(robots).some((rule) => forbidden(rule) === '/');
 }
 
 function hasSitemap(robots: string): boolean {
@@ -83,15 +90,15 @@ export function checkRobotsIndexing(
     });
   }
 
-  for (const forbidden of NOINDEX_PATHS) {
+  for (const noindexed of NOINDEX_PATHS) {
     const listed = disallowedPaths(robots).find(
-      (rule) => rule !== '/' && rule.replace(/\/$/, '') === forbidden,
+      (rule) => forbidden(rule) !== '/' && forbidden(rule) === noindexed,
     );
 
     if (listed !== undefined) {
       violations.push({
         rule: 'robots',
-        detail: `${path} forbids \`${listed}\`, and that keeps it in the index rather than out of it: a crawler told not to read the page never sees the \`noindex\` it carries, and can list the bare address anyway. ${forbidden} stays out by its \`noindex\` — the sitemap of PR 20 is the other half, and this line is neither`,
+        detail: `${path} forbids \`${listed}\`, and that keeps it in the index rather than out of it: a crawler told not to read the page never sees the \`noindex\` it carries, and can list the bare address anyway. ${noindexed} stays out by its \`noindex\` — the sitemap of PR 20 is the other half, and this line is neither`,
       });
     }
   }

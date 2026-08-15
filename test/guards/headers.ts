@@ -17,7 +17,7 @@
  */
 import { createHash } from 'node:crypto';
 import { hashSource, inlineScripts, inlineStyles } from '../../src/lib/headers.ts';
-import { SECURITY_HEADERS } from '../../src/lib/headers.ts';
+import { DETACH_CSP, SECURITY_HEADERS } from '../../src/lib/headers.ts';
 import { type Violation } from './types.ts';
 
 /** The path each block of the file applies to, with its lines. Cloudflare's
@@ -115,7 +115,7 @@ export function checkInlineHashes(
 /**
  * The policy is still a policy.
  *
- * Four things, and each of them is a way the file goes on existing without
+ * Five things, and each of them is a way the file goes on existing without
  * doing anything.
  */
 export function checkHeaderPolicy(headers: string, path = 'dist/_headers'): Violation[] {
@@ -183,11 +183,23 @@ export function checkHeaderPolicy(headers: string, path = 'dist/_headers'): Viol
       rule: 'headers',
       detail: `${path} has no \`/admin/*\` rule: the editing desk takes the site's policy, which forbids everything Sveltia needs. The CMS stops saving, and the only person who finds out is whoever tried`,
     });
-  } else if (adminAt < siteAt) {
-    violations.push({
-      rule: 'headers',
-      detail: `${path} declares \`/admin/*\` before \`/*\`. Cloudflare lets the more specific rule stand for a header named twice, and reading them in this order is how somebody concludes the opposite — the editing desk would be served the site's policy`,
-    });
+  } else {
+    const admin = rules[adminAt]!;
+    const detaches = admin.lines.some((line) => line.replace(/\s+/g, ' ').trim() === DETACH_CSP);
+
+    if (adminAt < siteAt) {
+      violations.push({
+        rule: 'headers',
+        detail: `${path} declares \`/admin/*\` before \`/*\`. A \`${DETACH_CSP}\` only removes what an earlier rule has already added, so in this order the editing desk detaches nothing and then has the site's policy appended after its own`,
+      });
+    }
+
+    if (headerValue(admin, 'Content-Security-Policy') !== undefined && !detaches) {
+      violations.push({
+        rule: 'headers',
+        detail: `${path}: \`/admin/*\` declares a \`Content-Security-Policy\` and no \`${DETACH_CSP}\` above it. Both rules match that path and Cloudflare joins a header named twice with a comma — which in a CSP means two policies enforced at once, so the site's \`default-src 'self'\` goes on forbidding \`api.github.com\` however wide this row is. The CMS stops saving, and nothing here fails`,
+      });
+    }
   }
 
   return violations;

@@ -20,7 +20,7 @@ import {
   headerRules,
   styleAttributes,
 } from '../guards/headers.ts';
-import { hashSource, headersFile } from '../../src/lib/headers.ts';
+import { DETACH_CSP, hashSource, headersFile } from '../../src/lib/headers.ts';
 
 const sha256 = (source: string) =>
   hashSource(createHash('sha256').update(source, 'utf8').digest('base64'));
@@ -256,6 +256,20 @@ describe('checkHeaderPolicy', () => {
     const violations = checkHeaderPolicy(site);
     expect(violations).toHaveLength(1);
     expect(violations[0]!.detail).toContain('/admin/*');
+  });
+
+  it('reports an /admin/* policy that does not take the site one off first', () => {
+    // The one that shipped. Both rules match `/admin/…` and Cloudflare joins a
+    // header named twice with a comma — which in a CSP is two policies enforced
+    // at once, so the site's `default-src 'self'` goes on forbidding
+    // api.github.com however wide this row is written. The CMS does not save,
+    // and nothing anywhere fails.
+    const joined = HEADERS.split('\n')
+      .filter((line) => line.trim() !== DETACH_CSP)
+      .join('\n');
+    const violations = checkHeaderPolicy(joined);
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain('joins a header named twice');
   });
 
   it('reports the two rules written in the order that reverses their meaning', () => {

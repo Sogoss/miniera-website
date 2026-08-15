@@ -73,8 +73,15 @@ giusti il giorno che li scrivi e sbagliati il primo giorno che qualcuno tocca
 uno script: la pagina rende, la build è verde, e lo script non gira. Li calcola
 `src/lib/headers.ts` **da `dist/`** — quel che il browser hasha sono i byte che
 ha ricevuto, e in mezzo c'è `compressHTML`. `/admin` ha la sua riga, più larga e
-dichiarata, dopo quella del sito perché per un'intestazione nominata due volte
-Cloudflare lascia valere la regola più specifica. *(PR 17)*
+dichiarata, dopo quella del sito — e **prima la toglie**: le regole di
+`_headers` non si sovrascrivono, si sommano, e un'intestazione nominata due
+volte Cloudflare la unisce con una virgola. Una virgola in una CSP non è un
+elenco di sorgenti ma un elenco di *policy*, applicate tutte insieme: senza la
+riga `! Content-Security-Policy` il `default-src 'self'` del sito continuerebbe
+a vietare `api.github.com` per quanto larga sia la riga sotto, e il CMS non
+salverebbe. È l'unico difetto di questo file che non fallisce da nessuna parte —
+lo trova chi prova a salvare. L'ordine serve lo stesso, e adesso per una ragione
+vera: un `!` toglie solo quel che una regola precedente ha già messo. *(PR 17)*
 
 **Ma gli stili sono `'unsafe-inline'`, e la ragione è un difetto che abbiamo
 pubblicato.** La prima versione trattava gli stili come gli script, con gli

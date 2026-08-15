@@ -1,7 +1,7 @@
 // @ts-check
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
 import { hashSource, headersFile, inlineScripts } from './src/lib/headers.ts';
@@ -50,8 +50,12 @@ function headers() {
         const root = fileURLToPath(dir);
         const scripts = new Set();
 
+        /* The separator is the whole of it: without it the prefix also swallows
+           `dist/admin-…/`, whose pages would then run inline scripts that no
+           hash covers — blocked, silently, with the build green. */
+        const desk = join(root, 'admin') + sep;
         const pages = walk(root).filter(
-          (path) => path.endsWith('.html') && !path.startsWith(join(root, 'admin')),
+          (path) => path.endsWith('.html') && !path.startsWith(desk),
         );
 
         for (const page of pages) {

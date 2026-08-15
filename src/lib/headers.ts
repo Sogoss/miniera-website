@@ -151,14 +151,31 @@ export const SECURITY_HEADERS: readonly (readonly [string, string])[] = [
   ['Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()'],
 ];
 
+/** The line that takes a header back off, in Cloudflare's syntax: the name with
+ *  `! ` in front of it. Exported because the guard asks for it by name, and a
+ *  string spelled twice is a string that can be spelled two ways. */
+export const DETACH_CSP = '! Content-Security-Policy';
+
 /**
  * The whole `_headers` file.
  *
- * `/admin/*` comes **after** `/*` on purpose: Cloudflare applies every matching
- * rule, and for a header named twice the more specific rule is the one that
- * stands. Written the other way round the editing desk would be served the
- * site's policy and would not save — which is the first thing to look at if it
- * ever does not.
+ * **Two matching rules do not override each other — they add up.** Cloudflare
+ * applies every rule whose pattern matches, and «if a header is applied twice
+ * the values are joined with a comma separator»: `/admin/*` matches `/admin/*`
+ * *and* `/*`, so the editing desk would be sent both policies in one header. A
+ * comma in a `Content-Security-Policy` is not a list of sources, it is a list of
+ * **policies**, and a browser enforces all of them at once — so the site's
+ * `default-src 'self'`, which names no `connect-src`, would go on forbidding
+ * `api.github.com` however wide the row underneath it was written. The CMS would
+ * not save, which is the one failure this whole file is arranged to prevent, and
+ * the only person who would find out is whoever tried.
+ *
+ * So the row takes the site's policy **off** before declaring its own, with the
+ * `!` Cloudflare documents for exactly this — «remove a header which has been
+ * added by a more pervasive rule». The order still matters, and now for a reason
+ * that is true: a detach only removes what an earlier rule has already added, so
+ * `/admin/*` written above `/*` would detach nothing and then have the site's
+ * policy appended after it. `checkHeaderPolicy` holds both halves.
  *
  * No `Strict-Transport-Security`. It is a promise with a long expiry, made on
  * an address this project abandons at PR 20; it arrives with the domain, in the
@@ -174,6 +191,10 @@ export function headersFile(scripts: readonly string[]): string {
     `  Content-Security-Policy: ${sitePolicy(scripts)}`,
     '',
     '/admin/*',
+    /* Both rules match this path and Cloudflare joins what they say. Without
+       this line the editing desk is governed by the site's policy as well as
+       its own, and stops talking to GitHub. */
+    `  ${DETACH_CSP}`,
     `  Content-Security-Policy: ${ADMIN_POLICY}`,
     '',
   ];
