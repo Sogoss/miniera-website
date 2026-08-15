@@ -77,8 +77,8 @@ sostituisce un telefono vero.
 | 13 | Chi siamo, contatti, rassegna disabilitata | `pagine-istituzionali` | fatta |
 | 14 | Sveltia CMS | `cms-sveltia` | fatta |
 | 15 | La suite più veloce | `test-veloci` | fatta |
-| 16 | Il piano: messa in linea, controllo qualità, dominio | `piano-controllo-qualita` | da fare |
-| 17 | Messa in linea | `messa-in-linea` | da fare |
+| 16 | Il piano: messa in linea, controllo qualità, dominio | `piano-controllo-qualita` | fatta |
+| 17 | Messa in linea | `messa-in-linea` | fatta |
 | 18 | Proporzioni su schermo piccolo | `proporzioni-mobile` | da fare |
 | 19 | Controllo qualità | `controllo-qualita` | da fare |
 | 20 | Il dominio | `dominio` | da fare |
@@ -2290,8 +2290,69 @@ Il sito è finito abbastanza da essere aperto da un telefono, e non lo è mai
 stato. Questo passo lo mette in linea su `pages.dev` e non fa nient'altro che
 non si possa fare senza chiedere niente a nessuno.
 
+Rispetto al testo approvato alla PR 16 è cambiata una cosa sola, e non per una
+preferenza: **l'impostazione che quel testo dava per applicabile non esiste su
+questo repository.** Da lì viene il trasferimento qui sotto, e da lì vengono le
+prime due decisioni.
+
+### Prima del branch: il trasferimento
+
+Non è lavoro di questa PR ed è la sua precondizione, quindi va scritto qui e non
+lasciato a un messaggio.
+
+*Allow specified actors to bypass required pull requests* — la voce che la PR 16
+dava per applicabile — **non compare** sui repository privati di un account
+personale: GitHub la offre sui pubblici e sui privati con piano Team o
+Enterprise. Verificato guardando la schermata e leggendo la protezione con
+l'API: nella stessa sezione manca anche *Restrict who can dismiss pull request
+reviews*, che è l'altra voce con lo stesso requisito. Non è un passo dimenticato:
+la decisione registrata in [decisioni.md](decisioni.md) nomina un controllo che
+qui non c'è.
+
+Il ripiego provvisorio — togliere *Do not allow bypassing the above settings* —
+è **applicato adesso**, e va disfatto: funziona solo finché l'unico account che
+scrive dal CMS è un amministratore, e nel frattempo la prima delle tre regole del
+[CLAUDE.md](../CLAUDE.md) — *su `main` non si spinge mai direttamente* — torna
+a essere buona volontà invece di essere applicata dal repository.
+
+Quindi, **in quest'ordine**, prima di aprire il branch:
+
+1. ~~Un'organizzazione gratuita, e il repository trasferito lì e reso
+   **pubblico**.~~ **Fatto il 15 agosto 2026**: `miniera-culturale/website`,
+   pubblico. Protezione, controlli obbligatori e squash-only sono sopravvissuti
+   al trasferimento senza doverli riscrivere; il rename è avvenuto dopo, e non
+   tocca le regole.
+2. Le regole di `main` rifatte — **non riapplicate**: la prova qui sotto ha
+   mostrato che quelle di prima non bastavano, e `main` passa a due ruleset.
+3. Solo dopo il branch, e solo dopo il branch il collegamento a Cloudflare.
+
+L'ordine è vincolante e non è pignoleria: è **questa PR** a installare la GitHub
+App di Cloudflare, a creare il progetto Pages e a mettere il secret del deploy
+hook, e tutti e tre sono legati all'account che possiede il repository.
+[questioni-aperte.md](questioni-aperte.md) dice che il trasferimento va fatto
+«prima della PR 20» e sbaglia per difetto di tre passi: dopo la 17 significa
+rifare il progetto, il collegamento e il secret, che è esattamente il costo che
+quella voce voleva evitare.
+
+La storia è stata scansionata prima di decidere: 1,13 MiB, nessuna chiave,
+nessun `.env`, nessun token. Non c'è niente da riscrivere prima di pubblicare, ed
+è la sola parte irreversibile del rendere pubblico un repository.
+
 ### Decisioni prese scrivendo la PR
 
+- **Repository pubblico, in un'organizzazione.** Riscrive «Repository privato»
+  in [decisioni.md](decisioni.md), che era una decisione presa quando la domanda
+  era un'altra. Pubblico perché è ciò che fa comparire la lista di bypass su
+  tutti i piani, e perché lì dentro non c'è niente che non sia già pubblicato:
+  il programma di serate pubbliche, la documentazione, e un numero di telefono
+  che il sito stampa da sé. In un'organizzazione perché la domanda aperta alla
+  PR 16 è *di chi è il progetto*, e un sito la cui pubblicazione passa
+  dall'account personale di chi l'ha costruito ha una persona sola nel percorso
+  critico. **Il costo va scritto accanto alla scelta**: in un'org gratuita un
+  repository *privato* non ha né protezione dei branch né ruleset, quindi
+  tornare privati un domani vuol dire pagare Team o restare senza le regole che
+  questo repository dichiara di applicare. È un'opzione che si perde, non una
+  funzionalità, e si perde consapevolmente.
 - **`site` resta commentato**, per la ragione scritta alla PR 16.
 - **E allora `pages.dev` non si fa indicizzare.** Un `pages.dev` di produzione è
   pubblico e scansionabile — a differenza dei deploy preview, che Cloudflare
@@ -2299,69 +2360,224 @@ non si possa fare senza chiedere niente a nessuno.
   motore a sceglierne uno. Finché `site` non c'è, `robots.txt` vieta tutto; alla
   PR 20 si inverte e prende il rimando alla sitemap. La guardia legge la stessa
   riga di configurazione e pretende l'una o l'altra cosa: è l'interruttore di
-  `og:url` applicato all'indicizzazione
+  `og:url` applicato all'indicizzazione.
+- **Ma `/admin` e `/componenti` non si vietano in `robots.txt`, e questo cambia
+  il testo della PR 16.** Un `Disallow` non toglie un indirizzo dall'indice: dice
+  al crawler di non leggere la pagina, e una pagina che non viene letta è una
+  pagina il cui `noindex` non viene mai visto — l'indirizzo può comparire lo
+  stesso, nudo, senza titolo. Le due pagine hanno già il `noindex`
+  (`componenti.astro` per decisione della PR 6, `public/admin/index.html` per
+  decisione della PR 14), ed è quello il meccanismo che funziona: vietarle in
+  `robots.txt` lo spegnerebbe. Oggi non cambia niente, perché `Disallow: /` copre
+  tutto; cambia alla PR 20, che è il momento in cui il difetto si pubblicherebbe.
+  Quindi la guardia pretende **le due cose insieme**: il divieto generale
+  concorde con `site`, e in nessuno dei due stati un `Disallow` su quelle due
+  pagine. La sitemap le esclude, che è l'altro modo giusto, e sta alla PR 20.
+- **La CSP si genera dal pubblicato, non si scrive a mano.** Questo sito ha
+  **cinque blocchi in linea** — lo script che toglie `no-js` in `Base.astro`,
+  quello di `Modal.astro`, i due di `Programme.astro`, e lo `<style is:inline>`
+  di `CycleAccents` — tutti `is:inline` per ragioni già decise e tutti fuori
+  dalla portata di `script-src 'self'`. Le vie sono due: `'unsafe-inline'`, che è
+  una CSP scritta per passare; o gli hash, che sono esatti e che **cambiano ogni
+  volta che una di quelle righe cambia**. Un `_headers` scritto a mano con gli
+  hash dentro è giusto il giorno che lo si scrive e sbagliato il primo giorno che
+  qualcuno tocca uno script — e il modo in cui lo si scopre è un visitatore con
+  la console aperta, non un test. Quindi: `src/lib/headers.ts`, modulo puro come
+  `cycles.ts` e `shapes.ts`, e un'integrazione su `astro:build:done` che scrive
+  `dist/_headers`. **Gli hash si calcolano da `dist/` e non dal sorgente**, che è
+  la lezione ricorrente di questo repository: quel che il browser hasha è ciò che
+  è stato pubblicato, e fra i due c'è `compressHTML`.
+- **`/admin` ha la sua CSP, più larga e dichiarata.** Sveltia è un'applicazione
+  compilata che inietta stile a runtime e parla con `api.github.com`: la sua
+  riga di `_headers` avrà `'unsafe-inline'` su `style-src` e i domini di GitHub
+  su `connect-src`, e ognuno dei due va scritto con accanto il motivo. Non è
+  un'eccezione nascosta in fondo a un file: `/admin` è JavaScript con permessi di
+  scrittura sul repository, ed è il punto del sito dove una CSP lavora davvero —
+  quindi è anche il punto dove una CSP sbagliata rompe il CMS in silenzio, e la
+  prova è un salvataggio vero, non un'occhiata al file.
+- **Niente HSTS qui.** `Strict-Transport-Security` è una promessa a scadenza
+  lunga fatta su un indirizzo che alla PR 20 verrà abbandonato. Arriva col
+  dominio, insieme a tutto il resto che dipende da `site`.
 - **La 404 entra qui.** Un indirizzo sbagliato esiste dal primo giorno in cui il
   sito è in linea, non dal giorno del dominio — e su un sito dove il numero *è*
   l'indirizzo e i numeri si bruciano, è una pagina che qualcuno vedrà davvero.
-  È una pagina come le altre: stesso layout, stesse guardie, nessuna eccezione
+  È una pagina come le altre: stesso layout, stesse guardie, nessuna eccezione.
+  **Non porta `data-cycle`**, perché non è una serata: prende l'accento
+  predefinito di `:where(:root)`, che è esattamente il caso per cui quella
+  specificità zero è stata scelta alla PR 4.
 - **Il rebuild notturno lo fa una GitHub Action**, non Cloudflare, che non ha un
   cron per le build: uno `schedule` che chiama un Deploy Hook. E `schedule` è in
   UTC, che è la regola 11 vista da un'altra parte — quel che conta non sono le
   03:00, è che sia **dopo la mezzanotte italiana**, perché è lì che una serata
   cambia stato. `01:00` UTC lo è in entrambe le stagioni, e la ragione va scritta
-  accanto al cron invece di essere dedotta
+  accanto al cron invece di essere dedotta. Il workflow porta anche
+  `workflow_dispatch`, perché altrimenti l'unico modo di provarlo è aspettare la
+  notte. E porta scritto che **GitHub disattiva gli `schedule` dopo sessanta
+  giorni senza attività**: su un sito che d'estate può non ricevere un commit per
+  due mesi, è il modo in cui il rebuild smette di girare senza che niente
+  fallisca.
+- **E `decisioni.md` dice ancora «cron notturno alle 03:00».** Sono due frasi che
+  si contraddicono in due file, e nessuna guardia le legge. Va riscritta con la
+  ragione dell'01:00 UTC accanto, perché è la ragione a essere il contenuto: un
+  orario senza il suo fuso è la regola 11 che si perde in prosa.
 - **Le due foto segnaposto prendono il trattamento della regola 20.** Hanno
-  scritto sopra «immagine segnaposto» e oggi le pubblica la home senza che niente
-  le veda: `checkNoPlaceholders` legge `data-placeholder` nel markup, e una foto
-  non ha un blocco che la marca. Vanno dichiarate in `placeholder.ts`, accanto a
-  `PLACEHOLDER_NUMBER` e a `STALE_VENUES`, con una guardia sul contenuto e sul
-  pubblicato armata da `site` come l'altra: restano legittime finché il sito non
-  ha un indirizzo suo, ed è il giorno dopo che diventano una bugia
-- **Le due impostazioni del repository si applicano qui**, e sono in ritardo di
-  una PR: verificato con l'API, i controlli obbligatori sono `["verify"]` e le
-  bypass allowance non esistono. Quindi oggi una fetta rossa di `test:mutate` non
-  ferma un merge, e il CMS consegnato alla PR 14 non salva
+  scritto sopra «immagine segnaposto» in un commento del contenuto e oggi le
+  pubblica la home senza che niente le veda: `checkNoPlaceholders` legge
+  `data-placeholder` nel markup, e una foto non ha un blocco che la marca. Vanno
+  dichiarate in `placeholder.ts`, accanto a `PLACEHOLDER_NUMBER` e a
+  `STALE_VENUES`. **La guardia sul pubblicato cerca lo stem del nome**, non il
+  nome: Astro pubblica `serata-esempio.CkE-x2wp.png`, e una guardia che cercasse
+  il nome intero non troverebbe mai niente e sarebbe verde per sempre.
+- **E la guardia sul sorgente guarda la cartella, non i contenuti.** Una foto in
+  `src/assets/photos/` che non è dichiarata segnaposto è una foto che nessuno ha
+  marcato — è la forma che prende qui «un segnaposto si dichiara», e regge anche
+  quando le foto le carica il CMS invece di una mano.
+- **`main` lascia la protezione classica e passa a due ruleset**, e questa è la
+  correzione più grossa al testo della PR 16: **l'impostazione che quel testo
+  dava per risolutiva non fa funzionare il CMS.** Provato su un branch usa e
+  getta, con commit fatti via API dei contenuti, che è come commetta Sveltia e
+  non un `git push`:
+
+  | Configurazione | Esito |
+  |---|---|
+  | PR obbligatoria + bypass + controlli obbligatori | 409, *Required status check «verify» is expected* |
+  | PR obbligatoria + bypass, senza controlli | commit passato |
+  | Ruleset con PR + controlli, con bypass | commit passato |
+  | Stesso ruleset, bypass tolto | 409 su entrambe le regole |
+
+  `bypass_pull_request_allowances` scavalca **solo** la pull request. I controlli
+  obbligatori di una protezione classica non hanno nessuna lista di eccezioni, e
+  `verify` non può passare su un commit che non è ancora stato accettato: il CMS
+  resta fuori. In un ruleset il bypass vale per la regola intera, controlli
+  compresi — e la quarta riga è lì perché «ha funzionato» e «la regola non stava
+  guardando» si assomigliano troppo.
+
+  I ruleset sono **due**, e la divisione è il contenuto della decisione:
+  `integrità` — niente force push, niente cancellazione, storia lineare — **senza
+  bypass per nessuno**; e `revisione` — pull request e i due controlli — con il
+  bypass al team `redazione`. Con un ruleset solo, dare il bypass al CMS gli
+  regalerebbe anche il force push su `main`.
+
+  **Il bypass è a un team e non a un account**, perché alla PR 20 il CMS entra in
+  OAuth e commetta con l'identità di chi ha fatto l'accesso: un account «della
+  redazione» sarebbe una credenziale condivisa da ritirare fra tre passi. E **la
+  protezione classica va cancellata**, non lasciata lì: classica e ruleset si
+  sommano, e la classica continuerebbe a bloccare il CMS con i suoi controlli.
+  È la configurazione che sembra fatta e non funziona.
+
+  **E il bypass ha un prezzo che va detto: un salvataggio dal CMS non passa dai
+  test.** Arriva su `main` e basta; `verify` gira dopo, sul commit già entrato.
+  Se un contenuto rompe una guardia — una data senza scostamento, un ciclo che
+  non esiste — la build diventa rossa a cose fatte, e quello che il visitatore
+  vede resta l'ultimo deploy riuscito, che è il comportamento giusto e non lo
+  dice nessuno. È il prezzo di non far aspettare tredici minuti a chi inserisce
+  una serata, ed è retto da un'altra parte: il form del CMS è tenuto in pari con
+  lo schema Zod dalle guardie della PR 14, quindi la maggior parte dei contenuti
+  sbagliati non si riesce nemmeno a scrivere. Quel che resta scoperto va guardato
+  dove si vede: la scheda Actions dopo un salvataggio.
+
+  **Quello che questa PR non può ancora ottenere, e va scritto invece che
+  scoperto:** finché l'unico membro di `redazione` è chi ha costruito il sito, il
+  bypass che fa funzionare il CMS fa passare anche lui, e la prima regola del
+  [CLAUDE.md](../CLAUDE.md) resta applicata a tutti tranne che a una persona. Non
+  è una configurazione sbagliata, è una conseguenza di avere una persona sola:
+  diventa vera il giorno che il redattore è un account suo dentro quel team, e
+  quel giorno chi ha costruito il sito esce dal team.
+- **`site_url` nel `config.yml` del CMS resta commentato.** `pages.dev` è un
+  indirizzo che muore alla PR 20: puntarci il CMS vuol dire un collegamento «vedi
+  il sito» che il giorno del dominio porta al posto sbagliato, e non fallisce da
+  nessuna parte. È lo stesso ragionamento di `site`, applicato al file accanto.
+- **I tre «PR 15» in `public/admin/config.yml` puntano al passo sbagliato.** La
+  PR 16 ha rinumerato cinquantacinque riferimenti e ha spazzato `src/`, `test/` e
+  `docs/`, non `public/`. Due parlano del dominio e dell'OAuth, che sono la PR 20;
+  il terzo parla del deploy preview, che è **questa** e che diventa vera col
+  merge. È lo stesso difetto che la PR 16 ha corretto altrove, sopravvissuto in
+  una cartella che nessuno pensa a guardare perché non sembra codice.
+- **E la riga 16 della tabella dice ancora *da fare*.** La PR 16 ha corretto la
+  riga 15 per lo stesso motivo e non l'ha fatto per sé stessa. È la regola di
+  processo che si viola da sola nel momento esatto in cui la si applica.
 
 ### Obiettivi
 
+- [x] Repository trasferito in `miniera-culturale/website`, pubblico, con la
+      protezione e le impostazioni di merge sopravvissute intatte al passaggio
+- [ ] `main` sui due ruleset, la protezione classica cancellata, il team
+      `redazione` col bypass su `revisione` e nessun bypass su `integrità`
+- [ ] I nove riferimenti a `Sogoss/miniera-website` puntano a
+      `miniera-culturale/website`, i due test che asseriscono quella stringa
+      compresi, `public/admin/config.yml` e le due righe di `docs/README.md` —
+      un `git clone` seguito da un `cd`, e la seconda si dimentica
+- [ ] Il nome visualizzato dell'organizzazione è **La Miniera Culturale in
+      Periferia** per esteso, e il perché sta in [decisioni.md](decisioni.md):
+      lo slug abbrevia, e la regola 7 si perde in un posto che nessuna guardia
+      guarda
 - [ ] Progetto collegato a Cloudflare Pages: build a ogni commit su `main`, e
       **deploy preview su ogni PR** — che è anche l'anteprima che il CMS non ha
 - [ ] Rebuild notturno dopo la mezzanotte italiana, e si vede una serata passare
       da *in programma* a *già svolta*
 - [ ] `src/pages/404.astro`: il layout, il marchio, e la via di ritorno al
       programma
-- [ ] `public/robots.txt` — indicizzazione vietata finché non c'è il dominio,
-      `/admin` e `/componenti` fuori — e `public/_headers` con i security header,
-      CSP compresa: `/admin` è JavaScript con permessi di scrittura sul
-      repository, ed è il punto del sito dove una CSP lavora davvero
-- [ ] Le due foto segnaposto sono dichiarate in `placeholder.ts` e hanno la loro
-      guardia
+- [ ] `public/robots.txt` — indicizzazione vietata finché non c'è il dominio, e
+      nessun `Disallow` su `/admin` e `/componenti`, che restano fuori dall'indice
+      col `noindex` che hanno già
+- [ ] `dist/_headers` **generato**: i security header, e una CSP con gli hash dei
+      cinque blocchi in linea, più la riga di `/admin` con le sue due larghezze
+      dichiarate
+- [ ] Le due foto segnaposto sono dichiarate in `placeholder.ts` e hanno le loro
+      due guardie, sul sorgente e sul pubblicato
 - [ ] `guards-complete` fra i *required status checks*, e una fetta rossa ferma
       un merge — provato
-- [ ] Bypass su `main` per l'account del CMS: un salvataggio da `/admin` arriva e
-      fa partire una build — provato
+- [ ] Un salvataggio da `/admin` arriva su `main` e fa partire una build —
+      provato
+- [ ] `decisioni.md` dice repository pubblico e cron alle 01:00 UTC, con le
+      ragioni; `questioni-aperte.md` chiude la voce sulla proprietà e corregge il
+      «prima della PR 20»
+- [ ] I tre «PR 15» del `config.yml` e la riga 16 della tabella dicono la cosa
+      giusta
 
 ### Test automatici
 
 - La 404 entra in `published-pages.test.ts` senza eccezioni: lingua, charset,
   viewport, un solo `<h1>`, salta-a con bersaglio focusabile, accenti e forme
 - **Guardia** su `robots.txt`: senza `site` vieta tutto, con `site` non lo fa —
-  letta dalla configurazione e non ricordata, con i due casi negativi
+  letta dalla configurazione e non ricordata — e in nessuno dei due stati vieta
+  `/admin` o `/componenti`. Tre casi negativi, uno per ciascuna delle tre cose
+- **Guardia** sulla CSP pubblicata: ogni `<script>` e ogni `<style>` in linea di
+  `dist/` ha il suo hash in `dist/_headers`, e `script-src` non porta
+  `'unsafe-inline'` fuori da `/admin`. È la guardia che si accorge del cambio di
+  una riga di script, che è il modo in cui questa CSP muore
+- **Guardia** sui security header: l'insieme dichiarato è presente, e `_headers`
+  non esiste in `public/` — una seconda copia scritta a mano di un file generato
+  è la stessa questione delle regole `[data-cycle]`
 - **Guardia**: nessuna serata pubblicata porta una foto dell'elenco segnaposto
   quando `site` è impostato. Il caso negativo oggi scatterebbe su due
+- **Guardia**: nessuna foto in `src/assets/photos/` fuori dall'elenco dichiarato
 - `checkInternalLinks` copre anche la 404, che è la pagina da cui è più facile
   scrivere un link a niente
+- Il conto delle guardie sale da 65 e **non va toccato niente**: sia
+  `mutate-guards.mjs` sia le fette della CI derivano l'elenco dalla cartella e
+  non da una lista scritta a mano. `npm run test:mutate` resta verde, e le nuove
+  guardie ci entrano perché esistono, non perché qualcuno le ha aggiunte
 
 ### Test manuali
 
 - Un commit su `main` pubblica entro pochi minuti; una PR apre il suo preview
-- Il rebuild notturno scatta e sposta davvero una serata
+- Il rebuild notturno scatta e sposta davvero una serata — la prima volta con
+  `workflow_dispatch`, poi la notte vera
 - **Le prove rimandate dalla PR 7 e dalla PR 8**, che adesso hanno un indirizzo:
   su iPhone lo snap non salta quando la barra di Safari si ritrae e l'apertura
   cade sulla prima serata futura; su Android lo stesso giro; e il salto da una
   tacca della Timeline arriva a destinazione senza essere interrotto dallo snap
-- Un salvataggio dal CMS arriva su `main`; una fetta rossa impedisce il merge
+- **Un salvataggio dal CMS con la CSP addosso**, che è la prova che il file
+  generato non ha rotto il posto per cui esiste. Se fallisce, i due posti dove
+  guardare sono la CSP di `/admin` e il criterio dell'organizzazione sui token a
+  granularità fine, che dopo il trasferimento può rifiutare il token del CMS —
+  e sono due diagnosi diverse per lo stesso sintomo
+- Una fetta rossa impedisce il merge: si acceca una guardia in un commit usa e
+  getta sul branch, si guarda il bottone, si toglie
 - La 404 si raggiunge davvero, chiedendo un numero che non esiste
+- La pagina di una serata aperta da un browser con la console aperta: nessuna
+  violazione di CSP. È l'unico posto dove un hash sbagliato si vede
 
 ---
 
