@@ -36,6 +36,23 @@ export const NAVIGATION: readonly NavItem[] = [
   { label: 'Contatti', href: '/contatti' },
 ];
 
+/**
+ * The addresses that are all digits and are not an evening.
+ *
+ * There is one, and it is `/404`. Left to the digit rule below, the page a
+ * wrong address lands on publishes a navigation saying the reader is standing
+ * in the programme — a page that renders perfectly and tells them the opposite
+ * of what has just happened.
+ *
+ * It is not an exception to the rule so much as a fact about the address space:
+ * `/404` can never be an evening's address either, because the host serves that
+ * file for everything it does not have. An association that one day reaches its
+ * four-hundred-and-fourth evening collides with it whatever this module says,
+ * and that is a decision for whoever is there — not a reason to leave today's
+ * 404 lying.
+ */
+const RESERVED = new Set(['/404']);
+
 /** A path as this module compares them: leading slash, no trailing one. */
 function normalise(pathname: string): string {
   const trimmed = (pathname || '/').trim().split(/[?#]/)[0] ?? '/';
@@ -68,8 +85,9 @@ export function currentHref(pathname: string): string | undefined {
   const path = normalise(pathname);
 
   /* Only digits, which is exactly what src/pages/[number].astro publishes:
-     the editorial number of an evening, nothing else. */
-  const wanted = /^\/\d+$/.test(path) ? '/' : path;
+     the editorial number of an evening, nothing else — with one address that
+     is all digits and is not an evening. */
+  const wanted = /^\/\d+$/.test(path) && !RESERVED.has(path) ? '/' : path;
 
   return NAVIGATION.find((item) => item.href !== undefined && item.href === wanted)?.href;
 }
