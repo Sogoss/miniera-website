@@ -6,7 +6,11 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
 import { hashSource, headersFile, inlineScripts, inlineStyles } from './src/lib/headers.ts';
 
-/** Every file under a directory, deepest first or not — order does not matter. */
+/** Every file under a directory, deepest first or not — order does not matter.
+ *
+ * @param {string} dir
+ * @returns {string[]}
+ */
 function walk(dir) {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const path = join(dir, entry.name);
@@ -14,7 +18,11 @@ function walk(dir) {
   });
 }
 
-/** What a browser hashes: the bytes between the tags, as they were sent. */
+/** What a browser hashes: the bytes between the tags, as they were sent.
+ *
+ * @param {string} source
+ * @returns {string}
+ */
 function sha256(source) {
   return createHash('sha256').update(source, 'utf8').digest('base64');
 }
@@ -31,6 +39,8 @@ function sha256(source) {
  * dist/admin/ is left out of the collection: the editing desk is not a page of
  * this site, it has its own row in the file, and hashing Sveltia's shell into
  * the site's policy would be widening the site to fit the CMS.
+ *
+ * @returns {import('astro').AstroIntegration}
  */
 function headers() {
   return {
