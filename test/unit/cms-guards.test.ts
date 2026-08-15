@@ -354,7 +354,7 @@ describe('checkCmsConfigAgainstSchema', () => {
   const schema = cmsSchema();
 
   const valid = {
-    backend: { name: 'github', repo: 'Sogoss/miniera-website', branch: 'main' },
+    backend: { name: 'github', repo: 'miniera-culturale/website', branch: 'main' },
     media_folder: 'src/assets/photos',
     collections: [
       {

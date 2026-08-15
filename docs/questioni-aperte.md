@@ -188,7 +188,7 @@ script è quello che gli si mette davanti.
 
 ### Di chi sono il repository e il progetto Cloudflare
 
-**Aperta il 15 agosto 2026, alla PR 16.** Il repository è `Sogoss/miniera-website`
+**Aperta il 15 agosto 2026, alla PR 16.** Il repository era `Sogoss/miniera-website`
 e quella stringa è scritta nel `config.yml` del CMS, cioè nel sito pubblicato. Le
 impostazioni da applicare alla PR 17 parlano invece dell'«account del
 committente», e la PR 20 registra un'applicazione OAuth **su un'origine** e un

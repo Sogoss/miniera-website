@@ -16,7 +16,7 @@
 
 backend:
   name: github
-  repo: Sogoss/miniera-website
+  repo: miniera-culturale/website
   branch: main
 
   # Personal access token only, for as long as there is no site.

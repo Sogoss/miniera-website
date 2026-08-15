@@ -86,8 +86,8 @@ scelta che chiude porte.
 
 ## Repository
 
-`https://github.com/Sogoss/miniera-website` — privato, branch predefinito
-`main`.
+`https://github.com/miniera-culturale/website` — pubblico, dell'associazione,
+branch predefinito `main`.
 
 Cartelle:
 

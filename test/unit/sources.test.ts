@@ -701,7 +701,7 @@ describe('public/admin/config.yml', () => {
     // nothing builds from, everything else here is still perfectly correct.
     const backend = (config as { backend?: Record<string, unknown> }).backend ?? {};
     expect(backend.name).toBe('github');
-    expect(backend.repo).toBe('Sogoss/miniera-website');
+    expect(backend.repo).toBe('miniera-culturale/website');
     expect(backend.branch).toBe('main');
   });
 });

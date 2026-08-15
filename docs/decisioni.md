@@ -18,7 +18,24 @@ con static assets, ma Pages resta pienamente supportato e per un sito statico
 pubblicato con git push è più semplice. Migrabile se un domani servisse logica
 dinamica.
 
-**Repository privato.** `github.com/Sogoss/miniera-website`.
+**Repository pubblico, in un'organizzazione.**
+`github.com/miniera-culturale/website`, dal 15 agosto 2026 — era
+`Sogoss/miniera-website`, privato. Pubblico perché è la condizione a cui GitHub
+offre le eccezioni alla protezione di `main` senza cui il CMS non salva, e
+perché lì dentro non c'è niente che il sito non pubblichi già. In
+un'organizzazione perché un sito la cui pubblicazione passa dall'account
+personale di chi l'ha costruito ha una persona sola nel percorso critico. **Il
+prezzo, che va saputo:** in un'organizzazione gratuita un repository *privato*
+non ha né protezione dei branch né ruleset, quindi tornare privati costa il
+piano Team. *(15 agosto 2026)*
+
+**Il nome dell'organizzazione è per esteso, lo slug no.** Lo slug è
+`miniera-culturale`, il nome visualizzato è **La Miniera Culturale in
+Periferia**. Uno slug non è il marchio e non ricade nella regola 7; il nome
+visualizzato sì, perché è quello che si legge come il nome dell'associazione.
+Scritto qui perché è l'unico modo di impedire che fra sei mesi qualcuno
+«sistemi» il nome visualizzato per farlo combaciare con lo slug. *(15 agosto
+2026)*
 
 **Rebuild a ogni commit più cron notturno alle 03:00.** Un sito statico non sa
 che ora è: "già svolto" e la posizione di apertura dello scroller si calcolano
