@@ -1,8 +1,74 @@
 // @ts-check
+import { createHash } from 'node:crypto';
+import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
+import { hashSource, headersFile, inlineScripts, inlineStyles } from './src/lib/headers.ts';
+
+/** Every file under a directory, deepest first or not — order does not matter. */
+function walk(dir) {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(dir, entry.name);
+    return entry.isDirectory() ? walk(path) : [path];
+  });
+}
+
+/** What a browser hashes: the bytes between the tags, as they were sent. */
+function sha256(source) {
+  return createHash('sha256').update(source, 'utf8').digest('base64');
+}
+
+/**
+ * Writes dist/_headers once the pages exist.
+ *
+ * It has to be here and not in public/ because the Content-Security-Policy
+ * contains the hash of every inline script and style the build produced, and
+ * those are known only afterwards — see src/lib/headers.ts for why hashes and
+ * not `'unsafe-inline'`, and why they are taken from dist/ rather than from the
+ * source.
+ *
+ * dist/admin/ is left out of the collection: the editing desk is not a page of
+ * this site, it has its own row in the file, and hashing Sveltia's shell into
+ * the site's policy would be widening the site to fit the CMS.
+ */
+function headers() {
+  return {
+    name: 'headers-file',
+    hooks: {
+      'astro:build:done': ({ dir, logger }) => {
+        const root = fileURLToPath(dir);
+        const scripts = new Set();
+        const styles = new Set();
+
+        const pages = walk(root).filter(
+          (path) => path.endsWith('.html') && !path.startsWith(join(root, 'admin')),
+        );
+
+        for (const page of pages) {
+          const html = readFileSync(page, 'utf8');
+          for (const body of inlineScripts(html)) scripts.add(hashSource(sha256(body)));
+          for (const body of inlineStyles(html)) styles.add(hashSource(sha256(body)));
+        }
+
+        /* Sorted so that two builds of the same site produce the same file:
+           an unstable order would show up as a diff in every deployment and
+           make a real change to the policy impossible to see. */
+        const file = headersFile([...scripts].sort(), [...styles].sort());
+        writeFileSync(join(root, '_headers'), file, 'utf8');
+
+        logger.info(
+          `_headers: ${scripts.size} script hash(es) and ${styles.size} style hash(es) over ${pages.length} page(s)`,
+        );
+      },
+    },
+  };
+}
 
 // https://astro.build/config
 export default defineConfig({
+  integrations: [headers()],
+
   // The domain has not been bought yet (decided: we come back to it once the
   // site is finished). When it exists it goes here: it feeds the canonical
   // URLs, the sitemap and the Open Graph meta of the event pages, which are

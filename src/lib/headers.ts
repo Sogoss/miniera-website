@@ -1,0 +1,153 @@
+/* The response headers Cloudflare Pages sends, generated rather than written.
+ *
+ * Same family as cycles.ts and shapes.ts: a file the build emits, built by a
+ * pure function so that a test can ask what it says without running a build.
+ * What makes it belong here rather than in scripts/ is that the answer depends
+ * on the site — on what the pages actually contain — and not on how the site is
+ * assembled.
+ *
+ * **Why it cannot be written by hand.** This site publishes nine pages and not
+ * one external script: every line of JavaScript it runs is `is:inline`, by four
+ * separate decisions that all had good reasons — the class that comes off
+ * <html> before anything is painted, the modal, the two of the scroller — plus
+ * the `<style is:inline>` of CycleAccents and whatever Astro decides to inline.
+ * A Content-Security-Policy that reaches them has two forms: `'unsafe-inline'`,
+ * which is a policy written to pass, or hashes, which are exact. Hashes change
+ * every time one of those lines changes, and a hash written by hand in a file
+ * nobody rebuilds is right the day it is written and wrong the first day
+ * somebody edits a script — with no test, no build failure and no sign at all,
+ * because the page still renders. What sees it is a visitor with the console
+ * open.
+ *
+ * **And they are taken from dist/, not from the source.** What a browser hashes
+ * is the bytes it received, and between the two there is `compressHTML` and
+ * whatever else the build does to a document. It is the same lesson as the
+ * collapsed CSS fallback, in a third disguise.
+ *
+ * `/admin` gets its own, wider and declared. It is the one place here where a
+ * policy does real work — JavaScript with write access to the repository — and
+ * also the one place where a policy that is too tight breaks something in a way
+ * only a person can notice: the CMS refusing to save. Every relaxation on that
+ * row is written with what needs it.
+ */
+
+/** A `<script>` with no `src`: the browser runs its body, so the body is what
+ *  a hash has to cover. `[^>]*` never crosses the `>`, so an attribute cannot
+ *  swallow the tag. */
+const INLINE_SCRIPT = /<script\b(?![^>]*\bsrc\s*=)[^>]*>([\s\S]*?)<\/script\s*>/gi;
+
+const INLINE_STYLE = /<style\b[^>]*>([\s\S]*?)<\/style\s*>/gi;
+
+/** Exactly the bytes between the tags, which is what the browser hashes: not
+ *  trimmed, not normalised. A hash of something tidier is a hash of nothing. */
+function bodies(html: string, pattern: RegExp): string[] {
+  return [...html.matchAll(pattern)].map((match) => match[1] ?? '');
+}
+
+export function inlineScripts(html: string): string[] {
+  return bodies(html, INLINE_SCRIPT);
+}
+
+export function inlineStyles(html: string): string[] {
+  return bodies(html, INLINE_STYLE);
+}
+
+/** A CSP source expression for a base64 SHA-256 digest. */
+export function hashSource(digestBase64: string): string {
+  return `'sha256-${digestBase64}'`;
+}
+
+/**
+ * The policy for the site itself.
+ *
+ * `'self'` stays on `script-src` beside the hashes even though there is no
+ * external script today: the moment a component drops `is:inline` Astro emits
+ * `/_astro/….js`, and a policy that breaks on an ordinary change is a policy
+ * somebody replaces with `'unsafe-inline'` in a hurry.
+ *
+ * Only what differs from `default-src` is spelled out. `frame-ancestors` is the
+ * modern half of the `X-Frame-Options` beside it; both are sent because the
+ * browser floor of this project reaches back to Safari 15.4.
+ */
+export function sitePolicy(scripts: readonly string[], styles: readonly string[]): string {
+  return [
+    "default-src 'self'",
+    "base-uri 'none'",
+    "form-action 'none'",
+    "frame-ancestors 'none'",
+    "object-src 'none'",
+    `script-src 'self' ${scripts.join(' ')}`.trimEnd(),
+    `style-src 'self' ${styles.join(' ')}`.trimEnd(),
+  ].join('; ');
+}
+
+/**
+ * The policy for the editing desk, which is not a page of this site.
+ *
+ * Every widening is here with the thing that needs it, and this is the row the
+ * manual test of PR 17 exercises: a policy that is too tight does not fail a
+ * build, it fails a save — and the person it fails is a volunteer who has been
+ * told the form is all there is.
+ */
+export const ADMIN_POLICY = [
+  "default-src 'self'",
+  "base-uri 'none'",
+  "form-action 'none'",
+  "frame-ancestors 'none'",
+  "object-src 'none'",
+  // Sveltia is a compiled application that writes its own styles as it renders.
+  // There is no build of ours to take a hash from.
+  "style-src 'self' 'unsafe-inline'",
+  // The bundle is served by us out of public/admin/ — see scripts/sync-cms.mjs
+  // for why it is not a CDN.
+  "script-src 'self'",
+  // The GitHub API is the backend: this is the line that lets an editor save.
+  // raw.githubusercontent.com is where it reads media back from the repository.
+  "connect-src 'self' https://api.github.com https://raw.githubusercontent.com",
+  // A photograph being uploaded is previewed from a blob: URL before it is
+  // anywhere, and avatars come from GitHub.
+  "img-src 'self' data: blob: https://avatars.githubusercontent.com",
+].join('; ');
+
+/** Headers every response carries, whatever it is. */
+export const SECURITY_HEADERS: readonly (readonly [string, string])[] = [
+  // A .txt served as text/html is the whole of the sniffing problem.
+  ['X-Content-Type-Options', 'nosniff'],
+  // The path of a page is not the business of the site it links to; the origin
+  // is, because that is how a referral is recognised as one.
+  ['Referrer-Policy', 'strict-origin-when-cross-origin'],
+  ['X-Frame-Options', 'DENY'],
+  // Nothing here asks for any of them, and a page that never asks is the
+  // cheapest place to say no.
+  ['Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()'],
+];
+
+/**
+ * The whole `_headers` file.
+ *
+ * `/admin/*` comes **after** `/*` on purpose: Cloudflare applies every matching
+ * rule, and for a header named twice the more specific rule is the one that
+ * stands. Written the other way round the editing desk would be served the
+ * site's policy and would not save — which is the first thing to look at if it
+ * ever does not.
+ *
+ * No `Strict-Transport-Security`. It is a promise with a long expiry, made on
+ * an address this project abandons at PR 20; it arrives with the domain, in the
+ * step that has one to make it about.
+ */
+export function headersFile(scripts: readonly string[], styles: readonly string[]): string {
+  const lines = [
+    '# Generated by the astro:build:done hook in astro.config.mjs — see',
+    '# src/lib/headers.ts. Editing this file by hand lasts until the next build.',
+    '',
+    '/*',
+    ...SECURITY_HEADERS.map(([name, value]) => `  ${name}: ${value}`),
+    `  Content-Security-Policy: ${sitePolicy(scripts, styles)}`,
+    '',
+    '/admin/*',
+    `  Content-Security-Policy: ${ADMIN_POLICY}`,
+    '',
+  ];
+
+  return lines.join('\n');
+}
