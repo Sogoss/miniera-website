@@ -3,6 +3,7 @@
  * This is the positive half: the fixtures next door prove the guards can
  * fail, these prove the repository currently passes them.
  */
+import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
@@ -36,8 +37,8 @@ import { cmsConfig, cmsSchema } from '../support/cms.ts';
 import { schemaCollections, schemaFields } from '../support/schema.ts';
 import { checkEmailSource, checkWhatsappSource } from '../guards/contact.ts';
 import { EMAIL, WHATSAPP_NUMBER } from '../../src/lib/contact.ts';
-import { checkPlaceholderSource } from '../guards/placeholder.ts';
-import { placeholderTexts } from '../../src/lib/placeholder.ts';
+import { checkDeclaredPhotos, checkPlaceholderSource } from '../guards/placeholder.ts';
+import { PLACEHOLDER_PHOTOS, placeholderTexts } from '../../src/lib/placeholder.ts';
 import { checkStaleVenue } from '../guards/venue.ts';
 import { FORMER_ADDRESSES, fullAddress } from '../../src/lib/venues.ts';
 import { checkAccentContrast, checkHandWrittenCycleRules } from '../guards/cycles.ts';
@@ -46,6 +47,7 @@ import {
   checkAmbientTime,
   checkLocalDateMethods,
   checkMissingTimeZone,
+  checkRebuildSchedule,
 } from '../guards/dates.ts';
 import { findNumberDateConflicts } from '../../src/lib/events.ts';
 import { checkDisplayFontWeightRange } from '../guards/fonts.ts';
@@ -701,7 +703,7 @@ describe('public/admin/config.yml', () => {
     // nothing builds from, everything else here is still perfectly correct.
     const backend = (config as { backend?: Record<string, unknown> }).backend ?? {};
     expect(backend.name).toBe('github');
-    expect(backend.repo).toBe('Sogoss/miniera-website');
+    expect(backend.repo).toBe('miniera-culturale/website');
     expect(backend.branch).toBe('main');
   });
 });
@@ -816,5 +818,52 @@ describe('package.json', () => {
     // published Italian hours for the wrong reason and the suite agreed.
     const scripts = (manifest as { scripts?: Record<string, string> }).scripts ?? {};
     expect(scripts.build ?? '').toContain('TZ=UTC');
+  });
+});
+
+/* The two photographs the association did not take.
+ *
+ * Declared in src/lib/placeholder.ts because the marking cannot reach them —
+ * `data-placeholder` is an attribute on a block of text, and this is a picture.
+ * What is asked here is only that the declaration still points at something:
+ * armed at a filename that no longer exists, the published guard hunts a stem
+ * nothing will ever have and reports nothing, which is indistinguishable from
+ * a site that has no placeholder photographs left. */
+describe('the photographs that stand in for photographs', () => {
+  const PHOTOS = 'src/assets/photos';
+  const present = readdirSync(join(repoRoot, PHOTOS));
+
+  it('are still on the disk, so that the guard is armed at something', () => {
+    expect(checkDeclaredPhotos(PLACEHOLDER_PHOTOS, present, PHOTOS).map((v) => v.detail))
+      .toEqual([]);
+  });
+
+  it('are all of what is in that folder, today', () => {
+    // Not a rule — the day the association sends its own, this is the
+    // assertion that has to be *read* and changed, and it is written as an
+    // equality so that adding a photograph cannot pass unnoticed. A guard
+    // demanding every photograph be declared a placeholder would report the
+    // real ones, and a guard that fires on correct work is one somebody
+    // switches off.
+    expect([...present].sort()).toEqual([...PLACEHOLDER_PHOTOS].sort());
+  });
+});
+
+/* The one clock read that is not in the code.
+ *
+ * «Already happened» is worked out at build time, so the site goes on saying
+ * the day it was built until something builds it again — and Pages has no
+ * scheduler, so the clock is a cron in a workflow. GitHub runs `schedule` in
+ * UTC and says so nowhere near the file: rule 11, one layer outside anything a
+ * formatter could be asked about. */
+describe('the nightly rebuild', () => {
+  const REBUILD = '.github/workflows/rebuild.yml';
+
+  it('exists, because nothing else moves an evening into the past', () => {
+    expect(exists(REBUILD)).toBe(true);
+  });
+
+  it('lands after Italian midnight in both seasons', () => {
+    expect(checkRebuildSchedule(read(REBUILD), REBUILD).map((v) => v.detail)).toEqual([]);
   });
 });

@@ -16,6 +16,7 @@ import {
   checkLocalDateMethods,
   checkMachineDateText,
   checkMissingTimeZone,
+  checkRebuildSchedule,
 } from '../guards/dates.ts';
 
 describe('checkMissingTimeZone', () => {
@@ -301,5 +302,60 @@ describe('checkMachineDateText', () => {
       `<span>24 set 26</span>`,
     ].join('\n');
     expect(checkMachineDateText(html, 'dist/index.html')).toEqual([]);
+  });
+});
+
+describe('checkRebuildSchedule', () => {
+  const at = (cron: string) => `on:\n  schedule:\n    - cron: '${cron}'\n`;
+
+  it('accepts the hour this repository uses', () => {
+    // 01:00 UTC is 02:00 in winter and 03:00 in summer: past midnight in both.
+    expect(checkRebuildSchedule(at('0 1 * * *'))).toEqual([]);
+  });
+
+  it('accepts an hour that wraps past midnight in both seasons', () => {
+    // 23:00 UTC is 00:00 and 01:00 of the next day in Turin — which is after
+    // Italian midnight, and the case a naive «hour must be small» would refuse.
+    expect(checkRebuildSchedule(at('30 23 * * *'))).toEqual([]);
+  });
+
+  it('reports an hour that is before midnight for half the year', () => {
+    // The one this guard exists for: `0 22 * * *` reads like a sensible late
+    // hour and is 23:00 in Turin in winter. The build meant to move an evening
+    // into the past runs while it is still that evening.
+    const violations = checkRebuildSchedule(at('0 22 * * *'), '.github/workflows/rebuild.yml');
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain('23:00 in Turin');
+  });
+
+  it('reports an hour that is too late in the Italian morning', () => {
+    // 06:00 UTC is 08:00 in summer: the first readers of the day get the
+    // programme of the day before.
+    expect(checkRebuildSchedule(at('0 6 * * *'))).toHaveLength(2);
+  });
+
+  it('reports a schedule that is right in one season only', () => {
+    // 22:00 UTC is 00:00 in summer and 23:00 in winter. Half right is the
+    // shape that survives a review.
+    const violations = checkRebuildSchedule(at('0 22 * * *'));
+    expect(violations).toHaveLength(1);
+  });
+
+  it('reports a workflow with no schedule at all', () => {
+    const violations = checkRebuildSchedule('on:\n  workflow_dispatch:\n');
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain('no `cron`');
+  });
+
+  it('reports a cron whose hour cannot be read', () => {
+    // `*/15` and `1,13` are legal cron and are not an hour: a schedule nobody
+    // can work out is one nobody can call correct.
+    expect(checkRebuildSchedule(at('0 */6 * * *'))).toHaveLength(1);
+    expect(checkRebuildSchedule(at('0 1,13 * * *'))).toHaveLength(1);
+  });
+
+  it('reads every cron a workflow declares', () => {
+    const two = `on:\n  schedule:\n    - cron: '0 1 * * *'\n    - cron: '0 22 * * *'\n`;
+    expect(checkRebuildSchedule(two)).toHaveLength(1);
   });
 });

@@ -1,0 +1,54 @@
+name: rebuild
+
+# A static site does not know what time it is.
+#
+# «Already happened», the state of every scene, and which evening the scroller
+# opens on are all worked out at build time from one clock read — so a site
+# built on Tuesday goes on saying Tuesday's truth until something builds it
+# again. Cloudflare Pages builds on a push and has no cron of its own, so the
+# clock lives here: a schedule that asks Pages for a build through a deploy
+# hook.
+#
+# 01:00 and the zone is the whole of the decision. GitHub runs `schedule` in
+# **UTC** — rule 11 of CLAUDE.md seen from outside the code — and what has to be
+# true is not the hour but that it falls **after Italian midnight**, because
+# midnight in Turin is when an evening changes side. 01:00 UTC is 02:00 in
+# winter and 03:00 in summer: after midnight in both, with no daylight-saving
+# edge to reason about twice a year. `checkRebuildSchedule` holds it.
+on:
+  schedule:
+    - cron: '0 1 * * *'
+  # Without this the only way to try it is to wait for the night, and a thing
+  # nobody can run is a thing nobody checks.
+  workflow_dispatch:
+
+# It asks another service for a build. It reads nothing here and writes nothing
+# here, and saying so is cheaper than the day somebody adds a step that would.
+permissions: {}
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: ask Cloudflare Pages for a build
+        env:
+          HOOK: ${{ secrets.CLOUDFLARE_DEPLOY_HOOK_URL }}
+        run: |
+          # An absent secret is the failure that hides: curl would be handed an
+          # empty URL, and a workflow that quietly does nothing every night
+          # looks exactly like one that works — until somebody notices an
+          # evening that has been «in programma» for a week.
+          if [ -z "${HOOK}" ]; then
+            echo "::error::CLOUDFLARE_DEPLOY_HOOK_URL is not set. It comes from the Pages project — Settings, Builds & deployments, Deploy hooks — and until it is here nothing rebuilds at night."
+            exit 1
+          fi
+
+          # -f so that an HTTP error is an exit code and not a green tick with
+          # a body nobody reads.
+          curl -fsS -X POST "${HOOK}" -o /dev/null -w 'Cloudflare answered %{http_code}\n'
+
+# GitHub disables a scheduled workflow after 60 days without activity in the
+# repository. On a site whose content arrives in bursts — a season is planned,
+# then nothing for two months — that is a real possibility and not a footnote:
+# the rebuild stops, nothing fails, and the programme goes stale. If it happens,
+# GitHub emails and the workflow is re-enabled from the Actions tab.

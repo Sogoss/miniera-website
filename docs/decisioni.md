@@ -18,11 +18,137 @@ con static assets, ma Pages resta pienamente supportato e per un sito statico
 pubblicato con git push è più semplice. Migrabile se un domani servisse logica
 dinamica.
 
-**Repository privato.** `github.com/Sogoss/miniera-website`.
+**Repository pubblico, in un'organizzazione.**
+`github.com/miniera-culturale/website`, dal 15 agosto 2026 — era
+`Sogoss/miniera-website`, privato. Pubblico perché è la condizione a cui GitHub
+offre le eccezioni alla protezione di `main` senza cui il CMS non salva, e
+perché lì dentro non c'è niente che il sito non pubblichi già. In
+un'organizzazione perché un sito la cui pubblicazione passa dall'account
+personale di chi l'ha costruito ha una persona sola nel percorso critico. **Il
+prezzo, che va saputo:** in un'organizzazione gratuita un repository *privato*
+non ha né protezione dei branch né ruleset, quindi tornare privati costa il
+piano Team. *(15 agosto 2026)*
 
-**Rebuild a ogni commit più cron notturno alle 03:00.** Un sito statico non sa
-che ora è: "già svolto" e la posizione di apertura dello scroller si calcolano
-alla build.
+**Il nome dell'organizzazione è per esteso, lo slug no.** Lo slug è
+`miniera-culturale`, il nome visualizzato è **La Miniera Culturale in
+Periferia**. Uno slug non è il marchio e non ricade nella regola 7; il nome
+visualizzato sì, perché è quello che si legge come il nome dell'associazione.
+Scritto qui perché è l'unico modo di impedire che fra sei mesi qualcuno
+«sistemi» il nome visualizzato per farlo combaciare con lo slug. *(15 agosto
+2026)*
+
+**Rebuild a ogni commit più cron notturno all'01:00 UTC.** Un sito statico non
+sa che ora è: «già svolto» e la posizione di apertura dello scroller si
+calcolano alla build. Il cron lo esegue una GitHub Action che chiama un deploy
+hook, perché Pages non ha uno scheduler suo. **L'ora è in UTC e non è un
+dettaglio**: `schedule` di GitHub è sempre in UTC, e quel che deve essere vero
+non è l'ora ma che cada *dopo la mezzanotte italiana*, perché è lì che una
+serata cambia lato. L'01:00 UTC sono le 02:00 d'inverno e le 03:00 d'estate:
+dopo mezzanotte in entrambe. Diceva «alle 03:00» senza dire di dove, che è la
+regola 11 persa in prosa. `checkRebuildSchedule` è la guardia.
+*(corretta alla PR 17)*
+
+**La 404 è una pagina come le altre.** Un indirizzo sbagliato esiste dal primo
+giorno in cui il sito è in linea, non dal giorno del dominio — e su un sito dove
+il numero di una serata *è* il suo indirizzo è una pagina che qualcuno vedrà
+davvero. Non porta `data-cycle`, perché non è una serata: prende l'arancio di
+`:where(:root)`, che è il caso per cui quella specificità è stata scelta. E
+niente `noindex`: Pages la serve con stato 404, e un codice di stato è il modo
+forte di dirlo. *(PR 17)*
+
+**`/admin` e `/componenti` non si vietano in `robots.txt`, mai.** Un `Disallow`
+non toglie un indirizzo dall'indice: dice al crawler di non *leggere* la pagina,
+e una pagina non letta è una pagina il cui `noindex` non si vede mai — quindi
+l'indirizzo nudo può finire in elenco lo stesso. Il `noindex` ce l'hanno già ed
+è quello che funziona; la sitemap della PR 20 è l'altra metà. Il piano diceva il
+contrario, e oggi non cambierebbe niente perché `Disallow: /` copre tutto: il
+difetto si pubblicherebbe alla PR 20. *(PR 17)*
+
+**La CSP si genera dal pubblicato, non si scrive a mano.** Questo sito non ha
+nemmeno uno script esterno: sono tutti `is:inline`, per quattro decisioni
+separate che avevano le loro ragioni. Una policy che li raggiunge ha due forme,
+`'unsafe-inline'` — una policy scritta per passare — o gli hash. Gli hash
+cambiano a ogni carattere di script che cambia, quindi scritti a mano sono
+giusti il giorno che li scrivi e sbagliati il primo giorno che qualcuno tocca
+uno script: la pagina rende, la build è verde, e lo script non gira. Li calcola
+`src/lib/headers.ts` **da `dist/`** — quel che il browser hasha sono i byte che
+ha ricevuto, e in mezzo c'è `compressHTML`. `/admin` ha la sua riga, più larga e
+dichiarata, dopo quella del sito — e **prima la toglie**: le regole di
+`_headers` non si sovrascrivono, si sommano, e un'intestazione nominata due
+volte Cloudflare la unisce con una virgola. Una virgola in una CSP non è un
+elenco di sorgenti ma un elenco di *policy*, applicate tutte insieme: senza la
+riga `! Content-Security-Policy` il `default-src 'self'` del sito continuerebbe
+a vietare `api.github.com` per quanto larga sia la riga sotto, e il CMS non
+salverebbe. È l'unico difetto di questo file che non fallisce da nessuna parte —
+lo trova chi prova a salvare. L'ordine serve lo stesso, e adesso per una ragione
+vera: un `!` toglie solo quel che una regola precedente ha già messo. *(PR 17)*
+
+**E le righe del banco di redazione sono due, `/admin` e `/admin/*`.** Un motivo
+di `_headers` Cloudflare lo confronta con l'indirizzo chiesto **come è scritto**:
+`/admin/*` vuole la barra, quindi non copre `/admin` — che è l'indirizzo che
+digita una persona. Se Pages a quel punto reindirizzi o serva direttamente
+l'indice è affar suo e non è una cosa che questo repository fissi; servito
+direttamente, il banco prenderebbe la sola policy del sito, senza `connect-src`,
+e la prima cosa che fa un redattore sarebbe rifiutata senza che da nessuna parte
+compaia niente. Una riga costa una riga. **E il `!` sta sopra la sua policy anche
+dentro la regola**: cosa toglie un distacco che venga *dopo* l'intestazione che
+la sua stessa regola ha appena messo, Cloudflare non lo documenta — la guardia
+diceva «e nessun `!` sopra» e leggeva solo se ci fosse. *(PR 17)*
+
+**`guards-complete` porta anche il verdetto delle fette, e prima non lo
+portava.** È l'unico controllo obbligatorio dei due che riguardi le guardie, e il
+commento che gli sta sopra prometteva che richiederlo bastasse. Non bastava:
+`scripts/mutate-guards.mjs` scrive il rapporto della fetta e **poi** mette il
+codice d'uscita, quindi una fetta che aveva trovato una guardia non tenuta da
+nessun test caricava lo stesso un rapporto completo — e la somma, che chiede
+«ogni guardia accecata da una fetta sola», tornava. Misurato alla PR 17 con una
+guardia esportata che nessun test copriva: `guards (3)` rossa,
+`guards-complete` verde, pull request *MERGEABLE*. Cioè una guardia che non sta
+guardando sarebbe entrata su `main` con il bottone disponibile e un avviso
+accanto — che è esattamente ciò contro cui `test:mutate` è stato scritto.
+Rimisurato dopo la correzione, con la stessa guardia al suo posto: **BLOCKED**.
+La matrice non si può richiedere al suo posto, perché i suoi contesti sono
+`guards (1)`…`guards (4)` e il numero delle fette finirebbe scritto nelle
+impostazioni del repository, dove non lo rilegge nessuno. *(PR 17)*
+
+**`font-src` di `/admin` nomina jsdelivr, ed è l'unica cosa qui che non
+scriviamo noi.** Il bundle di Sveltia porta i suoi `@font-face` — Material
+Symbols, Source Sans 3, Noto Mono — verso quel CDN, dentro JavaScript compilato
+che noi installiamo e non costruiamo. L'auto-hosting dei caratteri è una regola
+sulle *pagine di questo sito*, e `/admin` non è una di quelle; riscrivere gli
+`@font-face` di qualcun altro sarebbe una toppa da riapplicare a ogni
+aggiornamento. Bloccato, non fallisce niente: il banco rende e salva, e siccome
+Material Symbols è un carattere **a legature**, ogni comando pubblica la propria
+legatura al posto dell'icona — `edit`, `delete`, `chevron_right`. Non lo trova
+nessuna build: lo trova chi apre `/admin` e legge dei nomi. La guardia è
+`checkAdminFetchSources`, e legge **il bundle**, non un elenco scritto qui: quel
+file è ignorato da git e sostituito a ogni installazione, quindi una quarta
+origine può arrivare con un aumento di versione e nessun diff da leggere. Un
+test accanto pretende che il bundle scarichi ancora qualcosa da fuori: il giorno
+che smette, quella riga larga esce. *(PR 17)*
+
+**Ma gli stili sono `'unsafe-inline'`, e la ragione è un difetto che abbiamo
+pubblicato.** La prima versione trattava gli stili come gli script, con gli
+hash. **Un hash in `style-src` copre un elemento `<style>` e non un attributo
+`style`** — quelli sono `style-src-attr` e vogliono `'unsafe-hashes'` — e questo
+design system passa le misure proprio così: `Brand` scrive `--brand-height:
+14px`, `GuestRow` `--guest-size`, `EpisodeBadge` e `SignatureBand` le loro. Con
+gli attributi bloccati ogni proprietà personalizzata ricadeva sul valore
+predefinito del foglio del componente, e il sito è andato in linea con la barra
+alta il doppio: pagina che rende, build verde, tutte le guardie passate, markup
+corretto. L'ha trovato il committente aprendo due deployment affiancati.
+
+La via più stretta sarebbe stata `'unsafe-hashes'` con l'hash di ogni valore —
+il generatore legge già `dist/`, quindi raccoglierli è poca cosa — ed è quella
+sbagliata qui: `'unsafe-hashes'` è capito dai browser **da Safari 15.4**, che è
+esattamente la soglia di questo progetto, e un browser che non lo capisce
+riproduce in silenzio il difetto appena spedito. Uno stile iniettato è una leva
+molto più corta di uno script iniettato, e `script-src` resta esatto. `'unsafe-
+inline'` e gli hash non convivono — la presenza di un hash fa ignorare
+`'unsafe-inline'` — quindi gli hash degli elementi escono con la scelta.
+`checkStyleAttributes` è la guardia che mancava, e chiede la sola domanda che
+conta: **non «c'è un hash» ma «un browser lo applicherebbe»**. *(corretta alla
+PR 17, dopo il primo deployment)*
 
 ## Stile
 
@@ -1597,7 +1723,49 @@ pubblicazione invece che prima — la CI gira anche sul push a `main`, quindi si
 vede comunque. L'alternativa era far scrivere Sveltia su un branch `contenuti` e
 portarlo su `main` con una PR: nessuna eccezione, ma il redattore salva e non
 pubblica, e qualcuno deve fondere. Si applica nelle impostazioni del repository e
-si verifica alla PR 17. *(deciso alla PR 14, applicato alla PR 17)*
+si verifica alla PR 17. *(deciso alla PR 14, **corretto alla PR 17**: vedi
+qui sotto — la forma scelta non funzionava)*
+
+**Il bypass sulla pull request non basta: `main` sta su due ruleset.** La
+decisione qui sopra nominava «bypass pull request allowances», e alla PR 17 si è
+scoperto che **non fa salvare il CMS**. Provato su un branch usa e getta, con
+commit fatti via API dei contenuti — che è come commetta Sveltia, non un `git
+push`:
+
+| Configurazione | Esito |
+|---|---|
+| PR obbligatoria + bypass + controlli obbligatori | 409, *Required status check «verify» is expected* |
+| PR obbligatoria + bypass, senza controlli | commit passato |
+| Ruleset con PR + controlli, con bypass | commit passato |
+| Stesso ruleset, bypass tolto | 409 su entrambe le regole |
+
+`bypass_pull_request_allowances` scavalca **solo** la pull request. I controlli
+obbligatori di una protezione classica non hanno nessuna lista di eccezioni, e
+`verify` non può passare su un commit che non è ancora stato accettato: il CMS
+resta fuori comunque. In un ruleset il bypass vale per la regola intera,
+controlli compresi — e la quarta riga della tabella è lì perché «ha funzionato» e
+«la regola non stava guardando» si assomigliano troppo per fidarsi della prima
+senza la seconda.
+
+Quindi `main` ha **due ruleset e nessuna protezione classica**, che va cancellata
+perché le due si sommano e la classica continuerebbe a bloccare il CMS:
+
+- `integrita` — niente cancellazione, niente force push, storia lineare.
+  **Nessun bypass, per nessuno.**
+- `revisione` — pull request e i due controlli, aggiornati prima del merge, con
+  `squash` come unico metodo di merge. **Bypass: il team `redazione`.**
+
+Due e non uno, perché il bypass si dà a un ruleset e non a una regola: con uno
+solo, il team che salva dal CMS potrebbe anche riscrivere la storia di `main`. Il
+bypass è a un **team** e non a un account perché alla PR 20 il CMS entra in OAuth
+e commetta con l'identità di chi ha fatto l'accesso — chi sta in quel team è una
+voce di [questioni-aperte.md](questioni-aperte.md). I ruleset puntano a
+`~DEFAULT_BRANCH` e non a `refs/heads/main`, così seguono il branch predefinito
+se cambiasse nome invece di restare su un nome che non esiste più. E `squash` è
+dichiarato **due volte** — nel ruleset e nelle impostazioni del repository —
+perché «il merge è sempre squash and merge» è una delle tre regole senza
+eccezioni e stava in piedi su un solo interruttore, che un amministratore può
+ribaltare senza lasciare traccia. *(PR 17)*
 
 **Il `config.yml` si convalida anche contro lo schema JSON di Sveltia**, che il
 pacchetto pubblica e che quindi è quello della versione fissata dal lockfile.

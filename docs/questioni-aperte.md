@@ -90,22 +90,6 @@ voce qui sopra e la stessa telefonata.
 
 ## Da fare alla PR 17
 
-### L'eccezione sulla protezione di `main`, per il redattore
-
-**Aperta il 14 agosto 2026, alla PR 14; la decisione è già presa** — sta in
-[decisioni.md](decisioni.md) — e quel che resta è applicarla, perché sono
-impostazioni del repository e non righe di codice.
-
-Il CMS commetta direttamente su `main`, e `main` pretende una pull request con
-`enforce_admins` acceso: finché resta così, un salvataggio da `/admin` viene
-rifiutato e il redattore legge un errore di git dentro un form che esiste per non
-fargli sapere che git c'è.
-
-Da fare, sull'account del committente: *Settings → Branches → main → Allow
-specified actors to bypass required pull requests*, con l'account che usa il CMS.
-Da verificare alla PR 17: un salvataggio dal CMS arriva su `main` e fa partire la
-build.
-
 ### La prova su un telefono vero
 
 *(Alla PR 16 questa voce è passata dalla vecchia «Pubblicazione» alla PR 17,
@@ -154,6 +138,23 @@ sull'account GitHub dell'associazione, e il Worker sul suo account Cloudflare.
 Quello che cambia qui dentro è una riga di `public/admin/config.yml` —
 `auth_methods: [oauth, token]` con il `base_url` accanto.
 
+### Chi sta nel team `redazione`
+
+**Aperta il 15 agosto 2026, alla PR 17.** Il bypass che fa salvare il CMS sta sul
+team `redazione` e non su un account, apposta: alla PR 20 il CMS entra in OAuth e
+commetta con l'identità di chi ha fatto l'accesso, quindi un account «di
+redazione» sarebbe una credenziale condivisa da distribuire adesso e da ritirare
+allora.
+
+Il punto è che oggi in quel team c'è **una persona sola, ed è chi ha costruito il
+sito**. Finché è così, il bypass che fa passare il CMS fa passare anche lui: la
+prima regola del [CLAUDE.md](../CLAUDE.md) — *su `main` non si spinge mai
+direttamente* — è applicata a tutti tranne che a uno. Non è una configurazione
+sbagliata, è la conseguenza di avere una persona sola, e si scioglie da sé il
+giorno che il redattore ha un account suo: entra lui nel team, **esce chi ha
+costruito il sito**, e da quel momento la regola è vera per tutti. Va fatto quel
+giorno, e non c'è niente che lo ricordi se non questa voce.
+
 ### L'anteprima di un link su WhatsApp e su Facebook
 
 Rimandata dalla PR 9, che è la PR in cui gli indirizzi delle serate esistono e i
@@ -186,22 +187,25 @@ configurazione. E qualunque sia la risposta, va scritta: *«non misuriamo niente
 è una decisione, `decisioni.md` è il posto, e il giorno che qualcuno propone uno
 script è quello che gli si mette davanti.
 
-### Di chi sono il repository e il progetto Cloudflare
+### ~~Di chi sono il repository e il progetto Cloudflare~~ — il repository, chiuso
 
-**Aperta il 15 agosto 2026, alla PR 16.** Il repository è `Sogoss/miniera-website`
-e quella stringa è scritta nel `config.yml` del CMS, cioè nel sito pubblicato. Le
-impostazioni da applicare alla PR 17 parlano invece dell'«account del
-committente», e la PR 20 registra un'applicazione OAuth **su un'origine** e un
-Worker su un account Cloudflare.
+**Aperta il 15 agosto 2026 alla PR 16, chiusa lo stesso giorno alla PR 17** per
+metà. Il repository era `Sogoss/miniera-website` e adesso è
+`miniera-culturale/website`, di un'organizzazione: la risposta è
+«all'associazione», ed è scritta in [decisioni.md](decisioni.md).
 
-La domanda è una sola: a chi appartengono, alla fine, il repository e il progetto
-Cloudflare. Se la risposta è «all'associazione», il trasferimento va fatto
-**prima** della PR 20 e non dopo: dopo significa rifare l'applicazione OAuth, il
-Worker, il collegamento del dominio e la riga del `config.yml`, che è l'unica
-parte cara di tutto il giro. Se la risposta è «restano dove sono», va scritta
-lo stesso, perché è la continuità del sito a dipenderne — un sito la cui
-pubblicazione passa dall'account personale di chi l'ha costruito è un sito con
-una persona sola nel percorso critico.
+**La voce diceva «il trasferimento va fatto prima della PR 20», e sbagliava per
+difetto di tre passi.** È la PR 17 a legare il progetto all'account: installa la
+GitHub App di Cloudflare, crea il progetto Pages e mette il secret del deploy
+hook. Farlo dopo significava rifare quei tre, non solo l'OAuth. Il trasferimento
+è avvenuto **prima** del branch, ed è per questo che è costato nove stringhe
+invece di una giornata.
+
+**Resta aperta l'altra metà: il progetto Cloudflare.** Va creato sull'account di
+chi possiede il sito, non su quello di chi lo costruisce, e la domanda è la
+stessa — con la differenza che qui non c'è nessun trasferimento gratuito da
+fare dopo: un progetto Pages si ricollega, ma il dominio e il Worker della PR 20
+gli stanno attaccati.
 
 ### L'immagine delle anteprime social
 

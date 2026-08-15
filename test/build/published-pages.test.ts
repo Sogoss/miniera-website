@@ -16,6 +16,8 @@ import {
   checkSkipLink,
   checkSkipLinkStyle,
 } from '../guards/document.ts';
+import { checkPlaceholderPhotos } from '../guards/placeholder.ts';
+import { PLACEHOLDER_PHOTOS } from '../../src/lib/placeholder.ts';
 import { checkInternalLinks } from '../guards/routes.ts';
 import {
   checkClipShapeReferences,
@@ -254,4 +256,36 @@ describe('every published page', () => {
       }
     }
   });
+
+  it.each(pages.map((page) => [page.path, page] as const))(
+    '%s publishes no photograph that stands in for a photograph',
+    (_path, page) => {
+      // Armed by `site`, exactly as `checkNoPlaceholders` is. Two generated
+      // pictures on a pages.dev nobody can find are a site being built; the
+      // same two under the association's own address are the association
+      // showing a hall that is not its hall — and unlike the lorem ipsum,
+      // nothing on the page says so.
+      expect(
+        checkPlaceholderPhotos(page.html, PLACEHOLDER_PHOTOS, { withDomain }, page.path)
+          .map((v) => v.detail),
+      ).toEqual([]);
+    },
+  );
+
+  it.runIf(PLACEHOLDER_PHOTOS.length > 0)(
+    'would report the ones published today, if the domain were set',
+    () => {
+      // The anti-vacuity half, on the real pages rather than on a fixture:
+      // every assertion above is satisfied today because `site` is not set, and
+      // a guard pointed at the wrong stem would satisfy them in exactly the
+      // same way. This is what tells the two apart.
+      //
+      // It retires itself: PR 20 replaces the photographs and empties the list,
+      // and with an empty list there is nothing to be non-vacuous about.
+      const found = pages.flatMap((page) =>
+        checkPlaceholderPhotos(page.html, PLACEHOLDER_PHOTOS, { withDomain: true }, page.path),
+      );
+      expect(found.length).toBeGreaterThan(0);
+    },
+  );
 });

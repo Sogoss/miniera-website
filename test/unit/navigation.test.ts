@@ -58,6 +58,25 @@ describe('currentHref', () => {
     expect(currentHref('/78/')).toBe('/');
   });
 
+  it('does not read the 404 as an evening', () => {
+    // `/404` is all digits and is not an evening, and it is the only address
+    // that is both. Left to the digit rule it marks «Programma», so the page a
+    // wrong address lands on tells the reader they are standing in the
+    // programme — which is the opposite of what has just happened to them.
+    //
+    // Found by the build assertions on PR 17, the day the 404 existed: no unit
+    // test could have asked this before there was a page at that address.
+    expect(currentHref('/404')).toBeUndefined();
+    expect(currentHref('/404/')).toBeUndefined();
+  });
+
+  it('still reads a number that only resembles the 404 as an evening', () => {
+    // The reservation is that one address, not a shape. `/4040` is an evening
+    // this association will never reach, and `/40` is one it already passed.
+    expect(currentHref('/4040')).toBe('/');
+    expect(currentHref('/40')).toBe('/');
+  });
+
   it('marks nothing on a page that is in no voice', () => {
     // The gallery is a service page, out of the index and out of the
     // navigation. «At most one voice is current» is the assertion, and this is

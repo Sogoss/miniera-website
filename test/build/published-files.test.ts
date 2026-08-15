@@ -3,8 +3,10 @@ import { buildFaviconIco } from '../../scripts/build-favicon.mjs';
 import { checkDesignRuntimeArtifacts } from '../guards/artifacts.ts';
 import { checkItalianDataAttributes } from '../guards/language.ts';
 import { checkNoReactRuntime } from '../guards/react.ts';
+import { checkRobotsIndexing } from '../guards/robots.ts';
 import { copiedFromPublic, listPublishedFiles, readPublishedFiles } from '../support/dist.ts';
 import { readBytes } from '../support/paths.ts';
+import astroConfig from '../../astro.config.mjs';
 
 describe('what the build publishes', () => {
   it('produced a home page', () => {
@@ -65,5 +67,18 @@ describe('what the build publishes', () => {
     // work the first time someone builds on another platform.
     const { bytes } = await buildFaviconIco();
     expect(readBytes('dist/favicon.ico').equals(bytes)).toBe(true);
+  });
+
+  it('publishes a robots.txt that agrees with whether the site has a domain', () => {
+    // The third thing armed by `site` in astro.config.mjs, after `og:url` and
+    // `checkNoPlaceholders`. Read from dist/ and not from public/, because
+    // what a crawler asks for is what was published — and asked of the
+    // configuration rather than of a memory of which side we are on.
+    const published = readPublishedFiles().find(({ path }) => path === 'dist/robots.txt');
+    expect(published, 'dist/robots.txt was not published').toBeDefined();
+
+    const withDomain = Boolean((astroConfig as { site?: string }).site);
+    const violations = checkRobotsIndexing(published!.text, { withDomain }, 'dist/robots.txt');
+    expect(violations.map((v) => v.detail)).toEqual([]);
   });
 });

@@ -1,4 +1,4 @@
-/* Negative tests for the three guards over the text this site does not have.
+/* Negative tests for the five guards over the text this site does not have.
  *
  * The placeholders are deliberately unmistakable, which is most of the work:
  * nobody reads «Lorem ipsum dolor sit amet» as something an association said.
@@ -8,11 +8,13 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  checkDeclaredPhotos,
   checkNoPlaceholders,
+  checkPlaceholderPhotos,
   checkPlaceholderSource,
   checkPlaceholderText,
 } from '../guards/placeholder.ts';
-import { placeholderTexts } from '../../src/lib/placeholder.ts';
+import { PLACEHOLDER_PHOTOS, placeholderTexts } from '../../src/lib/placeholder.ts';
 
 const LOREM = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.';
 const TEXTS = [LOREM, 'Nome Cognome'];
@@ -118,5 +120,90 @@ describe('checkNoPlaceholders', () => {
 
   it('ignores a marked block that is commented out', () => {
     expect(checkNoPlaceholders('<!-- <div data-placeholder>a</div> -->')).toEqual([]);
+  });
+});
+
+/* The photographs, which are the one placeholder the marking cannot reach: a
+   picture has no `data-placeholder` around it and looks exactly like the real
+   thing will look. */
+
+/* What Astro publishes: the stem, a hash, and an extension that is not the
+   one on the disk. A guard hunting `serata-esempio.png` finds nothing here. */
+const PUBLISHED = `<img src="/_astro/serata-esempio.BrSdkrOv_1lOivg.webp" alt="" />`;
+
+describe('checkPlaceholderPhotos', () => {
+  it('says nothing while the site has no address of its own', () => {
+    // Two generated pictures on a pages.dev nobody can find are a site being
+    // built. The same two under the association's name are something else.
+    expect(checkPlaceholderPhotos(PUBLISHED, PLACEHOLDER_PHOTOS, { withDomain: false }))
+      .toEqual([]);
+  });
+
+  it('reports one once the domain is set', () => {
+    const violations = checkPlaceholderPhotos(
+      PUBLISHED,
+      PLACEHOLDER_PHOTOS,
+      { withDomain: true },
+      'dist/index.html',
+    );
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain('serata-esempio.png');
+  });
+
+  it('finds it through the hash the build puts in the name', () => {
+    // The assertion that this guard can fire at all: the name it is given and
+    // the name on the page are never the same string.
+    expect(PUBLISHED).not.toContain('serata-esempio.png');
+    expect(checkPlaceholderPhotos(PUBLISHED, PLACEHOLDER_PHOTOS, { withDomain: true }))
+      .toHaveLength(1);
+  });
+
+  it('counts every size in a srcset separately', () => {
+    const srcset = `<img srcset="/_astro/sala-esempio.A_1.webp 400w, /_astro/sala-esempio.A_2.webp 800w">`;
+    expect(checkPlaceholderPhotos(srcset, PLACEHOLDER_PHOTOS, { withDomain: true }))
+      .toHaveLength(2);
+  });
+
+  it('does not mistake a longer name that starts the same way', () => {
+    // `serata-esempio-2024.webp` is a different photograph, and one nobody
+    // declared: the dot after the stem is what separates them.
+    const other = `<img src="/_astro/serata-esempio-2024.Bx1_a.webp">`;
+    expect(checkPlaceholderPhotos(other, PLACEHOLDER_PHOTOS, { withDomain: true })).toEqual([]);
+  });
+
+  it('says nothing about a page carrying a real photograph', () => {
+    const real = `<img src="/_astro/serata-81-ritratto.Cx9.webp">`;
+    expect(checkPlaceholderPhotos(real, PLACEHOLDER_PHOTOS, { withDomain: true })).toEqual([]);
+  });
+});
+
+describe('checkDeclaredPhotos', () => {
+  it('accepts a list that still points at files', () => {
+    expect(checkDeclaredPhotos(PLACEHOLDER_PHOTOS, [...PLACEHOLDER_PHOTOS])).toEqual([]);
+  });
+
+  it('reads a path as well as a bare name', () => {
+    expect(
+      checkDeclaredPhotos(PLACEHOLDER_PHOTOS, PLACEHOLDER_PHOTOS.map((p) => `src/assets/photos/${p}`)),
+    ).toEqual([]);
+  });
+
+  it('reports a declaration whose file has gone', () => {
+    // The one that matters, because the failure it prevents is silence: a
+    // renamed photograph leaves checkPlaceholderPhotos hunting a stem that can
+    // never appear, and reporting nothing is exactly what it would do anyway.
+    const violations = checkDeclaredPhotos(['sala-esempio.png'], ['sala-vera.jpg']);
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain('sala-esempio.png');
+  });
+
+  it('reports each one separately', () => {
+    expect(checkDeclaredPhotos(PLACEHOLDER_PHOTOS, [])).toHaveLength(2);
+  });
+
+  it('says nothing when nothing is declared', () => {
+    // Which is what PR 20 leaves behind: the real photographs arrive, the list
+    // empties, and both guards go quiet because there is nothing to watch.
+    expect(checkDeclaredPhotos([], ['sala-vera.jpg'])).toEqual([]);
   });
 });

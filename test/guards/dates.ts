@@ -360,3 +360,70 @@ export function checkAmbientTime(source: string, path: string): Violation[] {
 
   return violations;
 }
+
+/* The offsets Italy has, in hours ahead of UTC: CET in winter, CEST in summer.
+   Written out rather than computed, because computing them needs a date and
+   the question here has none — it is asked of every night of the year at once. */
+const ITALIAN_OFFSETS = [1, 2];
+
+/** The hours of the Italian morning a rebuild may land in.
+ *
+ *  The lower bound is the requirement: past midnight, because midnight in Turin
+ *  is when an evening changes side, and a build before it publishes yesterday's
+ *  programme for a whole day. The upper one is a judgement — by six in the
+ *  morning nobody has looked at the site yet, and a build later than that is a
+ *  window in which the first readers of the day get the stale answer. */
+const EARLIEST = 0;
+const LATEST = 6;
+
+/**
+ * The nightly rebuild happens after Italian midnight, in both seasons.
+ *
+ * GitHub runs `schedule` in UTC and says so nowhere near the file. `0 22 * * *`
+ * is a perfectly ordinary-looking line that means 23:00 in Turin in winter —
+ * before midnight, so the build that was supposed to move an evening into the
+ * past runs while it is still today, and the site says «in programma» about an
+ * evening that happened last night. Nothing fails: it is rule 11 again, one
+ * layer out of the code, where no formatter can be asked to name a zone.
+ *
+ * Reads the cron lines out of the workflow text rather than being told them,
+ * for the reason every expectation here is derived: a copy written in a test
+ * answers a question about the test.
+ */
+export function checkRebuildSchedule(workflow: string, path = 'the workflow'): Violation[] {
+  const violations: Violation[] = [];
+  const crons = [...workflow.matchAll(/^\s*-\s*cron:\s*['"]([^'"]+)['"]/gm)];
+
+  if (crons.length === 0) {
+    violations.push({
+      rule: 'dates',
+      detail: `${path} declares no \`cron\`: nothing rebuilds the site at night, and a static site that is never rebuilt goes on publishing the day it was built. Pages has no scheduler of its own — this file is the clock`,
+    });
+    return violations;
+  }
+
+  for (const cron of crons) {
+    const fields = cron[1]!.trim().split(/\s+/);
+    const hour = Number(fields[1]);
+
+    if (fields.length !== 5 || !Number.isInteger(hour)) {
+      violations.push({
+        rule: 'dates',
+        detail: `${path}:${lineNumber(workflow, cron.index)} has \`${cron[1]}\`, whose hour field cannot be read as a single hour. A rebuild on a schedule nobody can work out is one nobody can say is after Italian midnight`,
+      });
+      continue;
+    }
+
+    for (const offset of ITALIAN_OFFSETS) {
+      const local = (hour + offset) % 24;
+      if (local >= EARLIEST && local < LATEST) continue;
+
+      violations.push({
+        rule: 'dates',
+        detail: `${path}:${lineNumber(workflow, cron.index)} runs at ${String(hour).padStart(2, '0')}:00 UTC, which is ${String(local).padStart(2, '0')}:00 in Turin at UTC+${offset}. GitHub schedules in UTC and the site changes an evening's side at Italian midnight, so a rebuild has to land between 00:00 and 0${LATEST}:00 there — in **both** seasons, or it is right for half the year`,
+      });
+    }
+  }
+
+  return violations;
+}

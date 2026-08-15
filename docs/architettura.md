@@ -64,6 +64,32 @@ Node 24, fissata in `.nvmrc`, con `engine-strict` che fa fallire
 l'installazione su una versione diversa invece di riscrivere di nascosto il
 `package-lock.json`.
 
+### Cosa la build pubblica oltre alle pagine
+
+`dist/_headers` non è scritto da nessuno: lo emette un'integrazione su
+`astro:build:done`, da `src/lib/headers.ts`. Contiene i security header e la
+Content-Security-Policy, e la policy contiene l'**hash di ogni script e di ogni
+stile in linea** che la build ha prodotto — questo sito non ha un solo script
+esterno, quindi senza quegli hash non gira niente. Si calcolano da `dist/` e non
+dal sorgente, perché quel che un browser hasha sono i byte che ha ricevuto.
+`/admin` ha le sue righe — due, `/admin` e `/admin/*`, perché un motivo si
+confronta con l'indirizzo come è scritto e il secondo non copre il primo — e
+sono più larghe: Sveltia scrive stile a runtime, parla con `api.github.com` e
+scarica i suoi caratteri da jsdelivr. E quella riga comincia con `!
+Content-Security-Policy`, perché
+le regole di `_headers` si sommano invece di sovrascriversi: senza, la policy del
+sito e quella della redazione arriverebbero unite da una virgola, cioè due policy
+applicate insieme, e il CMS non salverebbe.
+
+`public/robots.txt` invece è scritto a mano, e dice l'opposto di quel che dirà:
+finché non c'è un dominio vieta tutto, perché il `pages.dev` di produzione è
+pubblico e scansionabile. Si rovescia alla PR 20, e a leggere da che parte
+dell'interruttore siamo è una guardia e non una memoria.
+
+Il rebuild notturno è `.github/workflows/rebuild.yml`, che chiama un deploy hook
+di Pages: `schedule` è in UTC, e l'ora è scelta perché cada dopo la mezzanotte
+italiana in entrambe le stagioni.
+
 ### Perché niente Tailwind
 
 Il design system che arriva da Claude Design è già un sistema di token
@@ -86,8 +112,8 @@ scelta che chiude porte.
 
 ## Repository
 
-`https://github.com/Sogoss/miniera-website` — privato, branch predefinito
-`main`.
+`https://github.com/miniera-culturale/website` — pubblico, dell'associazione,
+branch predefinito `main`.
 
 Cartelle:
 
@@ -95,7 +121,7 @@ Cartelle:
 design-export/     export di Claude Design, versionato come specifica
 docs/              questa documentazione
 public/admin/      il CMS: la shell e il config.yml; il bundle lo copia la build
-scripts/           utilità di manutenzione (caratteri, favicon, bundle del CMS)
+scripts/           utilità (caratteri, favicon, bundle del CMS, regole di main)
 src/assets/fonts/  i woff2 self-hostati e le loro licenze
 src/content/       i contenuti: eventi, cicli, sedi, relatori
 src/styles/        i token del design e lo strato base
@@ -121,10 +147,15 @@ Due inneschi, entrambi necessari:
 
 1. **A ogni commit.** È il comportamento predefinito di Cloudflare Pages
    collegato a GitHub. Copre le modifiche fatte dal CMS.
-2. **Ogni notte alle 03:00, ora italiana.** Perché un sito statico non sa che
-   ora è: se un evento è passato, e su quale evento si apre lo scroller, sono
-   informazioni calcolate al momento della build. Senza il rebuild notturno
-   una serata resterebbe "in programma" all'infinito.
+2. **Ogni notte all'01:00 UTC**, che sono le 02:00 d'inverno e le 03:00
+   d'estate a Torino. Perché un sito statico non sa che ora è: se una serata è
+   passata, e su quale si apre lo scroller, sono informazioni calcolate al
+   momento della build. Senza il rebuild notturno una serata resterebbe «in
+   programma» all'infinito. **L'ora è dichiarata in UTC perché è in UTC che
+   `schedule` la esegue** — quel che conta non è l'ora ma che cada dopo la
+   mezzanotte italiana, in entrambe le stagioni, ed è la regola 11 vista da
+   fuori dal codice. Lo fa una GitHub Action che chiama un deploy hook: Pages
+   non ha uno scheduler suo.
 
 Il piano gratuito di Cloudflare Pages consente 500 build al mese. Un rebuild
 al giorno ne consuma trenta: resta ampio margine per i commit del CMS.

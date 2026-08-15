@@ -29,8 +29,8 @@ regole che è facile violare senza accorgersene — stanno in
 ## Riprendere il lavoro su una macchina nuova
 
 ```bash
-git clone https://github.com/Sogoss/miniera-website.git
-cd miniera-website
+git clone https://github.com/miniera-culturale/website.git
+cd website
 npm install
 npm run dev
 ```

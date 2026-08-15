@@ -351,3 +351,40 @@ describe('parseArgs', () => {
     expect(() => parseArgs(['--shards=2/4'])).toThrow(/unknown argument/);
   });
 });
+
+/* The number of checks, which was written in prose in four places and drifted.
+ *
+ * PR 17 added seven and the documentation went on saying sixty-five — in
+ * CLAUDE.md, in the CI comment, and in the plan. None of it fails: a count in a
+ * sentence is read by people and by nothing else, and the sentence that is
+ * wrong is the one telling a newcomer how big this thing is.
+ *
+ * So it is stated **once**, in CLAUDE.md, and this holds that statement against
+ * the enumeration the tool itself uses. The other places now say «once per
+ * check» and name no number. The two mentions inside the PR 15 section of the
+ * plan are left alone on purpose: they are a measurement of what was true then,
+ * and correcting them would be falsifying a record rather than fixing a fact.
+ */
+describe('the number of checks CLAUDE.md states', () => {
+  const STATED = /le guardie sono (\d+)/;
+
+  it('is the number there actually are', () => {
+    const claude = read('CLAUDE.md');
+    const match = STATED.exec(claude);
+
+    expect(
+      match,
+      'CLAUDE.md no longer says «le guardie sono N». Either put the sentence back or delete this test with a reason — a count nothing checks is the one that drifted',
+    ).not.toBeNull();
+
+    const counted = (sourceFiles() as string[]).reduce(
+      (total: number, path: string) => total + checksIn(read(path)).length,
+      0,
+    );
+
+    expect(
+      Number(match![1]),
+      `CLAUDE.md says ${match![1]} checks and there are ${counted}. The number is stated in one place so that this can hold it: update the sentence`,
+    ).toBe(counted);
+  });
+});

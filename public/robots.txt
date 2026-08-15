@@ -1,0 +1,22 @@
+# Nessuna indicizzazione, finché il sito non ha un indirizzo suo.
+#
+# Oggi il sito sta su un `pages.dev`, che è pubblico e scansionabile — i deploy
+# preview li marca Cloudflare, quello di produzione no. Il giorno del dominio ci
+# sarebbero due siti identici e un motore di ricerca a sceglierne uno, e quello
+# scelto sarebbe l'indirizzo che nessuno linka.
+#
+# Alla PR 20 questo file si rovescia: l'indicizzazione si apre e arriva la riga
+# `Sitemap:`. È lo stesso interruttore di `og:url` — `site` in astro.config.mjs
+# — e a leggerlo è `checkRobotsIndexing`, che pretende l'una o l'altra cosa
+# invece di ricordarsi quale delle due.
+#
+# `/admin` e `/componenti` non sono qui, ed è voluto: un `Disallow` non toglie
+# un indirizzo dall'indice, dice al crawler di non *leggere* la pagina — e una
+# pagina non letta è una pagina il cui `noindex` non si vede mai, quindi
+# l'indirizzo nudo può finire in elenco lo stesso. Il `noindex` ce l'hanno già,
+# ed è quello che funziona. Oggi non cambierebbe niente, perché la riga qui
+# sotto copre tutto; cambierebbe alla PR 20, che è quando il difetto si
+# pubblicherebbe.
+
+User-agent: *
+Disallow: /

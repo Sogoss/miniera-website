@@ -139,3 +139,77 @@ export function checkNoPlaceholders(markup: string, path = 'the page'): Violatio
     detail: `${path}:${lineNumber(clean, index)} publishes a \`${MARK}\` block, and this site now has a domain. Lorem ipsum under a real address is read as what the association says — the texts are in src/lib/placeholder.ts and this is the day they come out`,
   }));
 }
+
+/** How a photograph names itself once a build has been at it.
+ *
+ *  `serata-esempio.png` is published as
+ *  `/_astro/serata-esempio.BrSdkrOv_1lOivg.webp`: the stem survives, the
+ *  extension does not, and neither does anything after it. A guard hunting the
+ *  filename would find nothing, for ever, and be green about it. */
+function stem(file: string): string {
+  const base = file.slice(file.lastIndexOf('/') + 1);
+  const dot = base.indexOf('.');
+  return dot === -1 ? base : base.slice(0, dot);
+}
+
+/**
+ * A placeholder photograph published under a real domain.
+ *
+ * Armed by `site` in astro.config.mjs, exactly as `checkNoPlaceholders` is, and
+ * for the same reason: two generated pictures on a `pages.dev` nobody can find
+ * are a site being built, and the same two under the association's own address
+ * are the association showing photographs of a hall that is not its hall.
+ *
+ * `photos` is `PLACEHOLDER_PHOTOS`, passed in rather than imported — the module
+ * that owns the list is the one that states it.
+ */
+export function checkPlaceholderPhotos(
+  markup: string,
+  photos: Iterable<string>,
+  options: { withDomain: boolean },
+  path = 'the page',
+): Violation[] {
+  if (!options.withDomain) return [];
+
+  const violations: Violation[] = [];
+
+  for (const photo of photos) {
+    /* The stem followed by the dot the hash is separated by: enough to tell
+       `serata-esempio.CkE.webp` from a file that merely starts the same way. */
+    const pattern = new RegExp(`${stem(photo).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\.`, 'g');
+    let match: RegExpExecArray | null;
+
+    while ((match = pattern.exec(markup)) !== null) {
+      violations.push({
+        rule: 'placeholder',
+        detail: `${path}:${lineNumber(markup, match.index)} publishes \`${photo}\`, and this site now has a domain. It is a generated picture standing in for a photograph nobody has taken yet — under a real address it is read as a photograph of this association's hall. The list is in src/lib/placeholder.ts and this is the day it empties`,
+      });
+    }
+  }
+
+  return violations;
+}
+
+/**
+ * A declared placeholder photograph that is no longer on the disk.
+ *
+ * The tripwire above is armed at a filename, and a filename is a thing somebody
+ * renames. Once the declaration and the folder disagree, the guard goes on
+ * hunting a stem that can never appear and reports nothing — green, for the one
+ * reason a green result must never mean. This is the assertion that the list is
+ * still pointed at something.
+ */
+export function checkDeclaredPhotos(
+  photos: Iterable<string>,
+  present: Iterable<string>,
+  path = 'src/assets/photos',
+): Violation[] {
+  const there = new Set([...present].map((file) => file.slice(file.lastIndexOf('/') + 1)));
+
+  return [...photos]
+    .filter((photo) => !there.has(photo))
+    .map((photo) => ({
+      rule: 'placeholder',
+      detail: `\`PLACEHOLDER_PHOTOS\` in src/lib/placeholder.ts declares \`${photo}\` and there is no such file in ${path}. Either the photograph was replaced — in which case the declaration comes out with it — or it was renamed, and \`checkPlaceholderPhotos\` is now hunting a name nothing will ever have: a guard that cannot fire, reporting nothing`,
+    }));
+}

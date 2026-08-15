@@ -493,7 +493,7 @@ npm run preview      # anteprima della build
 npm test             # guardie e test, con una build dentro
 npm run test:mutate  # acceca ogni guardia a turno e pretende che la suite se
                      # ne accorga — due minuti, la gira la CI a fette. È la
-                     # suite intera una volta per guardia, e le guardie sono 65:
+                     # suite intera una volta per guardia, e le guardie sono 73:
                      # ciò che è cambiato è che le corse vanno in parallelo,
                      # non che ne giri una parte
 npm run check        # astro check, typecheck
@@ -533,8 +533,19 @@ la coprono.
 che sostituisce quell'unico export mentre il modulo viene caricato — e non
 riscrivendo i file, come faceva fino alla PR 14. Da lì viene tutto il resto: se
 niente sul disco cambia non c'è niente da rimettere a posto, una corsa
-interrotta non lascia tracce e sessantacinque corse possono andare insieme. In
+interrotta non lascia tracce e settantatré corse possono andare insieme. In
 CI le guardie si dividono a fette su più job, e **un passo finale somma le
 fette**: una guardia coperta due volte, o nessuna, è rossa — è il «18 su 18» di
 prima, salito di un piano dentro la configurazione della CI. Quel che non
 cambia è che per ogni accecamento gira **la suite intera**.
+
+E quel passo finale **porta anche il verdetto delle fette**, che è la sola cosa
+richiesta per il merge. Non lo faceva: una fetta scrive il rapporto e *poi* mette
+il codice d'uscita, quindi una fetta che aveva trovato una guardia non tenuta
+caricava un rapporto completo lo stesso, la somma tornava e `guards-complete`
+passava. Misurato apposta alla PR 17 — `guards (3)` rossa, `guards-complete`
+verde, la pull request *mergeable* — perché il piano chiedeva di provarlo invece
+di dare per buona la configurazione. La matrice non si può richiedere al suo
+posto: i suoi contesti sono `guards (1)`…`guards (4)`, e il numero delle fette
+finirebbe scritto nelle impostazioni del repository, che è l'unico posto che
+nessuna guardia legge.
