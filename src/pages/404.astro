@@ -1,0 +1,59 @@
+---
+/* The page for an address this site does not answer.
+ *
+ * It exists from the first day the site is online and not from the day it has a
+ * domain, and on a site where the number of an evening *is* its address it is a
+ * page somebody will actually see: `/79` is a perfectly reasonable thing to
+ * type, and the archive is not loaded yet.
+ *
+ * It carries no `cycle`. A 404 is not an evening, so it takes the brand orange
+ * that `:where(:root)` declares — which is exactly the case that specificity
+ * was chosen for in PR 4, rather than a colour picked here.
+ *
+ * No `noindex`: Cloudflare Pages serves this file with a 404 status, and a
+ * status code is what tells a crawler this address is not a page. A meta tag
+ * would be saying the same thing in the weaker of the two ways.
+ *
+ * The way back is three links and not one, because the reader who lands here
+ * has already been wrong once about where things are.
+ */
+import Base from '../layouts/Base.astro';
+import Button from '../components/Button.astro';
+import '../styles/pages.css';
+
+const DESCRIPTION =
+  'Questo indirizzo non corrisponde a nessuna pagina del sito della Miniera Culturale in Periferia.';
+---
+
+<Base
+  title="Pagina non trovata — La Miniera Culturale in Periferia"
+  description={DESCRIPTION}
+  mainId="contenuto"
+  skipLabel="Salta al contenuto"
+>
+  <article class="page">
+    <header class="page-head">
+      <span class="page-kicker">Errore 404</span>
+      <h1 class="page-title">Questa pagina non c'è</h1>
+      <p class="page-lead">
+        L'indirizzo che hai aperto non corrisponde a niente su questo sito. Può
+        essere un collegamento vecchio, un refuso, o il numero di una serata che
+        non è ancora stata caricata in archivio.
+      </p>
+    </header>
+
+    <section class="page-section" aria-labelledby="dove-andare">
+      <h2 id="dove-andare">Da dove ripartire</h2>
+      <p>
+        Ogni serata ha il suo numero, e quel numero è il suo indirizzo: il
+        programma le contiene tutte, dalla prossima all'indietro fino alla prima.
+      </p>
+
+      <div class="page-actions">
+        <Button href="/" size="lg">Vai al programma</Button>
+        <Button href="/chi-siamo" size="lg" variant="secondary">Chi siamo</Button>
+        <Button href="/contatti" size="lg" variant="secondary">Contatti</Button>
+      </div>
+    </section>
+  </article>
+</Base>
