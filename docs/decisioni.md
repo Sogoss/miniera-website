@@ -1614,7 +1614,49 @@ pubblicazione invece che prima — la CI gira anche sul push a `main`, quindi si
 vede comunque. L'alternativa era far scrivere Sveltia su un branch `contenuti` e
 portarlo su `main` con una PR: nessuna eccezione, ma il redattore salva e non
 pubblica, e qualcuno deve fondere. Si applica nelle impostazioni del repository e
-si verifica alla PR 17. *(deciso alla PR 14, applicato alla PR 17)*
+si verifica alla PR 17. *(deciso alla PR 14, **corretto alla PR 17**: vedi
+qui sotto — la forma scelta non funzionava)*
+
+**Il bypass sulla pull request non basta: `main` sta su due ruleset.** La
+decisione qui sopra nominava «bypass pull request allowances», e alla PR 17 si è
+scoperto che **non fa salvare il CMS**. Provato su un branch usa e getta, con
+commit fatti via API dei contenuti — che è come commetta Sveltia, non un `git
+push`:
+
+| Configurazione | Esito |
+|---|---|
+| PR obbligatoria + bypass + controlli obbligatori | 409, *Required status check «verify» is expected* |
+| PR obbligatoria + bypass, senza controlli | commit passato |
+| Ruleset con PR + controlli, con bypass | commit passato |
+| Stesso ruleset, bypass tolto | 409 su entrambe le regole |
+
+`bypass_pull_request_allowances` scavalca **solo** la pull request. I controlli
+obbligatori di una protezione classica non hanno nessuna lista di eccezioni, e
+`verify` non può passare su un commit che non è ancora stato accettato: il CMS
+resta fuori comunque. In un ruleset il bypass vale per la regola intera,
+controlli compresi — e la quarta riga della tabella è lì perché «ha funzionato» e
+«la regola non stava guardando» si assomigliano troppo per fidarsi della prima
+senza la seconda.
+
+Quindi `main` ha **due ruleset e nessuna protezione classica**, che va cancellata
+perché le due si sommano e la classica continuerebbe a bloccare il CMS:
+
+- `integrita` — niente cancellazione, niente force push, storia lineare.
+  **Nessun bypass, per nessuno.**
+- `revisione` — pull request e i due controlli, aggiornati prima del merge, con
+  `squash` come unico metodo di merge. **Bypass: il team `redazione`.**
+
+Due e non uno, perché il bypass si dà a un ruleset e non a una regola: con uno
+solo, il team che salva dal CMS potrebbe anche riscrivere la storia di `main`. Il
+bypass è a un **team** e non a un account perché alla PR 20 il CMS entra in OAuth
+e commetta con l'identità di chi ha fatto l'accesso — chi sta in quel team è una
+voce di [questioni-aperte.md](questioni-aperte.md). I ruleset puntano a
+`~DEFAULT_BRANCH` e non a `refs/heads/main`, così seguono il branch predefinito
+se cambiasse nome invece di restare su un nome che non esiste più. E `squash` è
+dichiarato **due volte** — nel ruleset e nelle impostazioni del repository —
+perché «il merge è sempre squash and merge» è una delle tre regole senza
+eccezioni e stava in piedi su un solo interruttore, che un amministratore può
+ribaltare senza lasciare traccia. *(PR 17)*
 
 **Il `config.yml` si convalida anche contro lo schema JSON di Sveltia**, che il
 pacchetto pubblica e che quindi è quello della versione fissata dal lockfile.
