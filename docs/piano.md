@@ -2578,7 +2578,7 @@ nessun `.env`, nessun token. Non c'è niente da riscrivere prima di pubblicare, 
   sbagliato. Si ritira da sé alla PR 20, quando l'elenco si svuota
 - `checkInternalLinks` copre anche la 404, che è la pagina da cui è più facile
   scrivere un link a niente
-- Il conto delle guardie sale da 65 e **non va toccato niente**: sia
+- Il conto delle guardie sale da 65 a 72 e **non va toccato niente**: sia
   `mutate-guards.mjs` sia le fette della CI derivano l'elenco dalla cartella e
   non da una lista scritta a mano. `npm run test:mutate` resta verde, e le nuove
   guardie ci entrano perché esistono, non perché qualcuno le ha aggiunte

@@ -49,9 +49,14 @@ jobs:
   # named in none of them.
   #
   # Its own job, in shards, because it is the suite once per check and there are
-  # sixty-five of them: run in one place it was 786 of the 834 seconds of this
-  # workflow. A runner has four vCPU, so the parallelism inside a job runs out
-  # quickly — four jobs have sixteen.
+  # dozens of them: measured at sixty-five checks, run in one place, it was 786
+  # of the 834 seconds of this workflow. A runner has four vCPU, so the
+  # parallelism inside a job runs out quickly — four jobs have sixteen.
+  #
+  # The count is deliberately not repeated here. It is stated once, in
+  # CLAUDE.md, and a test holds that statement against the enumeration: written
+  # in two places it drifts, which it did — this comment said sixty-five while
+  # PR 17 was adding the seventy-second.
   guards:
     runs-on: ubuntu-latest
     strategy:
@@ -69,7 +74,7 @@ jobs:
           cache: npm
       - run: npm ci
 
-      # The blinded runs reuse this rather than building sixty-five times.
+      # The blinded runs reuse this rather than building once per check.
       - run: npm run build
 
       - name: blind this shard of the checks

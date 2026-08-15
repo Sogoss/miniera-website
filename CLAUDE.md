@@ -493,7 +493,7 @@ npm run preview      # anteprima della build
 npm test             # guardie e test, con una build dentro
 npm run test:mutate  # acceca ogni guardia a turno e pretende che la suite se
                      # ne accorga — due minuti, la gira la CI a fette. È la
-                     # suite intera una volta per guardia, e le guardie sono 65:
+                     # suite intera una volta per guardia, e le guardie sono 72:
                      # ciò che è cambiato è che le corse vanno in parallelo,
                      # non che ne giri una parte
 npm run check        # astro check, typecheck
@@ -533,7 +533,7 @@ la coprono.
 che sostituisce quell'unico export mentre il modulo viene caricato — e non
 riscrivendo i file, come faceva fino alla PR 14. Da lì viene tutto il resto: se
 niente sul disco cambia non c'è niente da rimettere a posto, una corsa
-interrotta non lascia tracce e sessantacinque corse possono andare insieme. In
+interrotta non lascia tracce e settantadue corse possono andare insieme. In
 CI le guardie si dividono a fette su più job, e **un passo finale somma le
 fette**: una guardia coperta due volte, o nessuna, è rossa — è il «18 su 18» di
 prima, salito di un piano dentro la configurazione della CI. Quel che non
