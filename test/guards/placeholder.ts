@@ -21,10 +21,10 @@
  *
  * And a placeholder must not survive the site getting an address of its own.
  * That is `checkNoPlaceholders`, armed by `site` in astro.config.mjs exactly as
- * `og:url` is: the day PR 16 sets the domain, this turns red and the only way
+ * `og:url` is: the day PR 20 sets the domain, this turns red and the only way
  * past it is the real text. Which is the point — a real domain with lorem ipsum
  * on it is the one thing worse than no domain. docs/questioni-aperte.md says so
- * where PR 16 will read it.
+ * where PR 20 will read it.
  */
 import { elementsWith } from './document.ts';
 import { stripMarkupComments } from './language.ts';

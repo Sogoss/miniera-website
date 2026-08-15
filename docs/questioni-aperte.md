@@ -1,6 +1,6 @@
 # Questioni aperte
 
-Aggiornato al 14 agosto 2026. Chiudendo una voce, spostala in
+Aggiornato al 15 agosto 2026. Chiudendo una voce, spostala in
 [decisioni.md](decisioni.md) con il motivo.
 
 ## Blocca la stima
@@ -42,7 +42,7 @@ reversibile e prima o poi qualcuno vorrà stampare la foto di una serata.
 
 Non è ancora stato deciso dove.
 
-## Blocca la PR 16
+## Blocca la PR 20
 
 ### I testi, i numeri e le persone delle pagine istituzionali
 
@@ -65,13 +65,30 @@ Serve dal committente, in una volta sola:
 
 **E blocca la pubblicazione, per costruzione.** Con `site` impostato in
 `astro.config.mjs` un solo blocco `data-placeholder` in `dist/` è una
-violazione: la PR 16 non può chiudere finché questa voce è aperta. È voluto e
+violazione: la PR 20 non può chiudere finché questa voce è aperta. È voluto e
 sta scritto qui perché allora non sia una sorpresa — un dominio vero con un
 lorem ipsum sopra è l'unica cosa peggiore di non avere il dominio. Se il
 committente decidesse di pubblicare comunque, la strada è togliere le sezioni
 che non hanno testo, non togliere il marcatore.
 
-## Da fare alla PR 16
+### Quante serate vere servono per pubblicare
+
+**Aperta il 15 agosto 2026, alla PR 16.** Il sito ha cinque serate d'esempio, una
+sede, quattro relatori e tre cicli. La mitigazione concordata su questa pagina —
+*«la beta può avere dieci serate di esempio»* — non è mai diventata un passo con
+un numero, una quantità e qualcuno che lo fa: è una frase in un documento, e la
+differenza fra le due cose è che una frase non ferma niente.
+
+Non è la migrazione dell'archivio, che è giustamente fuori dalla beta. È il
+minimo perché pubblicare abbia senso: quante serate vere, con quali fotografie, e
+se fra queste ci sia almeno una serata futura — perché lo scroller si apre sulla
+prima ancora da fare, e senza nessuna serata futura si apre sull'ultima passata,
+che è una pagina giusta con addosso l'aria di un sito abbandonato.
+
+Serve dal committente insieme ai testi delle pagine istituzionali, che sono la
+voce qui sopra e la stessa telefonata.
+
+## Da fare alla PR 17
 
 ### L'eccezione sulla protezione di `main`, per il redattore
 
@@ -86,8 +103,36 @@ fargli sapere che git c'è.
 
 Da fare, sull'account del committente: *Settings → Branches → main → Allow
 specified actors to bypass required pull requests*, con l'account che usa il CMS.
-Da verificare alla PR 16: un salvataggio dal CMS arriva su `main` e fa partire la
+Da verificare alla PR 17: un salvataggio dal CMS arriva su `main` e fa partire la
 build.
+
+### La prova su un telefono vero
+
+*(Alla PR 16 questa voce è passata dalla vecchia «Pubblicazione» alla PR 17,
+con il resto della coda: la prova aspetta un URL stabile, e `pages.dev` ne dà
+uno senza che si compri niente.)*
+
+Rimandata dalla PR 7, e non perché non conti: è la prova che regge la decisione
+`svh` invece di `dvh`, cioè che lo snap non salti quando la barra degli
+indirizzi di Safari si ritrae. Chi lavora al progetto non ha un iPhone, e i due
+modi di provarlo prima — un tunnel verso il server di sviluppo, un servizio con
+device remoti — costavano più attenzione di quanta ne valga: alla PR 17 il sito è
+in linea e lo apre chiunque, da qualunque telefono.
+
+Quello che intanto regge il rischio è costruttivo e non una speranza: l'altezza
+delle scene è `--scene-height`, cioè `svh` con il ripiego a `vh` in `@supports`,
+e ogni scena dichiara la propria altezza intrinseca — che è ciò che tiene ferme
+le posizioni di snap e rende esatto il salto di apertura. Il residuo è che la
+posizione iniziale cada di poco fuori posto, che è visibile e correggibile.
+
+Da provare, in ordine: che lo snap non salti mentre la barra si ritrae; che
+l'apertura cada esattamente sulla prima serata futura; che il salto da una tacca
+della Timeline arrivi a destinazione senza essere interrotto dallo snap —
+rimandato qui dalla PR 8, per lo stesso motivo e con lo stesso rischio retto per
+costruzione: il salto è quello nativo del browser sul frammento, non uno
+`scrollTo` scritto da noi.
+
+## Da fare alla PR 20
 
 ### L'accesso al CMS col bottone, invece che col token
 
@@ -104,7 +149,7 @@ segreto del client, perché una pagina statica non può tenerlo. L'origine è il
 sito pubblicato. Il relay è un Worker, `sveltia-cms-auth`, che Sveltia pubblica
 apposta e che sta su Cloudflare come il resto.
 
-Serve dal committente, alla PR 16 e in una volta sola: l'applicazione OAuth
+Serve dal committente, alla PR 20 e in una volta sola: l'applicazione OAuth
 sull'account GitHub dell'associazione, e il Worker sul suo account Cloudflare.
 Quello che cambia qui dentro è una riga di `public/admin/config.yml` —
 `auth_methods: [oauth, token]` con il `base_url` accanto.
@@ -120,30 +165,43 @@ solo quando quella riga compare.
 Da provare, allora: che l'anteprima esca con titolo, descrizione e figura, e che
 la figura sia quella della serata e non la stessa per tutte.
 
-### La prova su un telefono vero
+## Da decidere prima della PR 20
 
-Rimandata dalla PR 7, e non perché non conti: è la prova che regge la decisione
-`svh` invece di `dvh`, cioè che lo snap non salti quando la barra degli
-indirizzi di Safari si ritrae. Chi lavora al progetto non ha un iPhone, e i due
-modi di provarlo adesso — un tunnel verso il server di sviluppo, un servizio con
-device remoti — costano più attenzione di quanta ne valga finché non c'è un URL
-stabile: alla PR 16 il sito è pubblicato e lo apre chiunque, da qualunque
-telefono.
+### Se il sito misura le visite, e cosa dice a chi lo chiede
 
-Quello che intanto regge il rischio è costruttivo e non una speranza: l'altezza
-delle scene è `--scene-height`, cioè `svh` con il ripiego a `vh` in `@supports`,
-e ogni scena dichiara la propria altezza intrinseca — che è ciò che tiene ferme
-le posizioni di snap e rende esatto il salto di apertura. Il residuo è che la
-posizione iniziale cada di poco fuori posto, che è visibile e correggibile.
+**Aperta il 15 agosto 2026, alla PR 16.** Non c'è nessuna decisione registrata
+sulle statistiche, il che vuol dire che oggi il sito non ne raccoglie — ed è una
+posizione difendibile, ma non è mai stata presa: è un'assenza, e un'assenza non
+si difende quando qualcuno chiede *«quante persone hanno visto la serata?»*.
 
-Da provare, in ordine: che lo snap non salti mentre la barra si ritrae; che
-l'apertura cada esattamente sulla prima serata futura; che lo scorrimento
-morbido di una tacca della Timeline arrivi a destinazione senza essere
-interrotto dallo snap — rimandato qui dalla PR 8, per lo stesso motivo e con lo
-stesso rischio retto per costruzione: il salto è quello nativo del browser sul
-frammento, non uno `scrollTo` scritto da noi.
+Le due strade non sono simmetriche. **Cloudflare Web Analytics** è gratuito, sta
+sullo stesso account dell'hosting, non usa cookie e non segue una persona da un
+sito all'altro: con quello, in Italia, non serve né banner né consenso.
+Qualunque cosa lo faccia — Google Analytics per primo — porta con sé un banner,
+un'informativa e un trasferimento di dati fuori dall'Unione, cioè tre cose che un
+sito statico di quartiere non ha nessun motivo di portarsi.
 
-## Da decidere prima della PR 16
+Da decidere prima della PR 20, perché la seconda strada cambia la pagina e non la
+configurazione. E qualunque sia la risposta, va scritta: *«non misuriamo niente»*
+è una decisione, `decisioni.md` è il posto, e il giorno che qualcuno propone uno
+script è quello che gli si mette davanti.
+
+### Di chi sono il repository e il progetto Cloudflare
+
+**Aperta il 15 agosto 2026, alla PR 16.** Il repository è `Sogoss/miniera-website`
+e quella stringa è scritta nel `config.yml` del CMS, cioè nel sito pubblicato. Le
+impostazioni da applicare alla PR 17 parlano invece dell'«account del
+committente», e la PR 20 registra un'applicazione OAuth **su un'origine** e un
+Worker su un account Cloudflare.
+
+La domanda è una sola: a chi appartengono, alla fine, il repository e il progetto
+Cloudflare. Se la risposta è «all'associazione», il trasferimento va fatto
+**prima** della PR 20 e non dopo: dopo significa rifare l'applicazione OAuth, il
+Worker, il collegamento del dominio e la riga del `config.yml`, che è l'unica
+parte cara di tutto il giro. Se la risposta è «restano dove sono», va scritta
+lo stesso, perché è la continuità del sito a dipenderne — un sito la cui
+pubblicazione passa dall'account personale di chi l'ha costruito è un sito con
+una persona sola nel percorso critico.
 
 ### L'immagine delle anteprime social
 
@@ -156,7 +214,7 @@ Va scelta, non generata a caso: il marchio su fondo blu è la strada ovvia, nel
 formato 1200×630 che le anteprime si aspettano. È una decisione di contenuto e
 di design, quindi non la prende una guardia — e per questo la suite **non**
 pretende `og:image` quando arriva il dominio: pretenderlo avrebbe aperto la
-PR 16 su un test rosso che si poteva chiudere solo inventando l'immagine.
+PR 20 su un test rosso che si poteva chiudere solo inventando l'immagine.
 Quello che la suite pretende è che, se una pagina ne pubblica una, sia assoluta.
 
 ## Minori
@@ -169,8 +227,16 @@ pigro, e lo dicono di sé stesse — c'è scritto «immagine segnaposto» sopra.
 assegnate alle serate 78 e 81, con un commento nel frontmatter.
 
 Escono quando arrivano le foto vere dell'associazione, che è parte della
-migrazione dell'archivio qui sopra. Non c'è niente da decidere: c'è da
-ricordarsene.
+migrazione dell'archivio qui sopra.
+
+> **Corretta alla PR 16.** Questa voce diceva «non c'è niente da decidere: c'è da
+> ricordarsene», ed è la frase che questo repository esiste per non dover
+> scrivere. `checkNoPlaceholders` legge `data-placeholder` nel markup, una foto
+> non ha un blocco che la marca, e `dist/index.html` pubblica quelle due immagini
+> con zero marcature: l'interruttore del dominio, che ferma la build sul lorem
+> ipsum di `/chi-siamo`, le lascerebbe passare. Alla PR 17 entrano nell'elenco di
+> `placeholder.ts` con la loro guardia, come la regola 20 prescrive — e allora
+> non ci sarà più niente da ricordare.
 
 ### Un ritratto vero da mettere davanti alle forme
 
@@ -196,7 +262,7 @@ titoli di fila.
 
 `og:type` resta `website` anche sulle rotte delle serate, che sono
 semanticamente degli eventi. Sta in `Base.astro`, cioè nel layout condiviso, e
-il posto dove si tocca è la PR 16 insieme al resto dei meta.
+il posto dove si tocca è la PR 20 insieme al resto dei meta.
 
 ### Link a mappa per le sedi
 
@@ -226,7 +292,7 @@ regola 20 impedisce che resti così il giorno che il sito ha un dominio.
 le quattro voci con il suo *in arrivo*, come testo e non come link — un `<a>`
 senza indirizzo non è un link, e una pagina «Coming soon» sarebbe un indirizzo
 condivisibile e indicizzabile per qualcosa che non ha niente da dire, più una
-rotta che la sitemap della PR 16 dovrebbe ricordarsi di escludere.
+rotta che la sitemap della PR 20 dovrebbe ricordarsi di escludere.
 
 Resta aperto se e quando diventi una pagina vera. Il giorno che succede, la voce
 prende un `href` in `src/lib/navigation.ts` e nient'altro cambia — e finché quel

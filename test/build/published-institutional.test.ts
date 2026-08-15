@@ -168,7 +168,7 @@ describe('the placeholders', () => {
     '%s carries none at all once the site has a domain',
     (_path, page) => {
       /* Armed by `site` in astro.config.mjs, exactly as `og:url` is: on the day
-         PR 16 sets the domain this turns red, and the only way past it is the
+         PR 20 sets the domain this turns red, and the only way past it is the
          real text. That is deliberate and it is written down in
          docs/questioni-aperte.md — a real address with lorem ipsum under it is
          the one thing worse than no address. */

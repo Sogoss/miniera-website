@@ -93,9 +93,16 @@ Fatto:
   personale di GitHub: l'accesso col bottone arriva col dominio, vedi
   [questioni-aperte.md](questioni-aperte.md)
 
+- La suite è più veloce di tre volte e mezzo: `npm run test:mutate` — che acceca
+  ogni guardia a turno per vedere se la suite se ne accorge — è passato da 6m30s
+  a 1m58s, e l'accecamento avviene in memoria invece che riscrivendo i file, così
+  una corsa interrotta non lascia niente da rimettere a posto
+
 Da fare: l'elenco completo dei passi, in ordine e uno per PR, sta in
-[piano.md](piano.md). In sintesi — la pubblicazione e le proporzioni su schermo
-piccolo. La migrazione delle 81 serate storiche resta fuori dalla beta, vedi
+[piano.md](piano.md). In sintesi — la messa in linea su `pages.dev`, le
+proporzioni su schermo piccolo, un controllo qualità a mano su dispositivi e
+impostazioni veri, e per ultimo il dominio, che è il solo passo che aspetta il
+committente. La migrazione delle 81 serate storiche resta fuori dalla beta, vedi
 [questioni-aperte.md](questioni-aperte.md).
 
 Lo scroller del programma è `src/components/Programme.astro`, e le rotte che lo
