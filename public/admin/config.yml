@@ -25,7 +25,7 @@ backend:
   # know what a token is — is an OAuth authorization code flow, and it needs an
   # origin registered with GitHub plus a relay to hold the client secret. The
   # origin does not exist until the site is published, so both arrive with the
-  # domain in PR 15, and this line becomes `[oauth, token]` with a `base_url`
+  # domain in PR 20, and this line becomes `[oauth, token]` with a `base_url`
   # next to it. Leaving OAuth on meanwhile would offer a button that goes to
   # Netlify's endpoint and fails there.
   auth_methods: [token]
@@ -47,8 +47,10 @@ app_title: La Miniera Culturale in Periferia
 # (rule 7).
 logo_url: /favicon.svg
 
-# The domain arrives in PR 15, here and in astro.config.mjs. Until then there is
-# nothing to preview and no site to link to.
+# The domain arrives in PR 20, here and in astro.config.mjs. Until then there is
+# nothing to link to that will not move: PR 17 publishes the site on pages.dev,
+# and that address dies the day the domain exists. Pointing the editing desk at
+# it means a «view the site» link that goes to the wrong place, failing nowhere.
 # site_url: https://www.laminieraculturale.it
 
 # Where the photographs are. Every image field overrides this with a path
@@ -93,7 +95,7 @@ editor:
   # No preview pane. Sveltia's is a generic rendering of the fields, and this
   # site is a full-screen scroller with a snap and an accent per cycle: a
   # preview that looks nothing like it is a promise the site does not keep. The
-  # real one is the deploy preview, which arrives with PR 15.
+  # real one is the deploy preview, which arrives with PR 17.
   preview: false
 
 collections:
