@@ -2668,5 +2668,25 @@ finché i testi veri non ci sono.
   descrizione e **la figura della serata**, non la stessa per tutte
 - Il rebuild notturno continua a girare sul dominio nuovo
 - Un salvataggio dal CMS fatto con il bottone, senza token
-- Una rilettura delle pagine istituzionali con i testi veri dentro: è la prima
-  volta che si vedono nel layout
+
+**La coda del collaudo della PR 19, che senza i contenuti veri non si poteva
+chiudere.** I passi vanno in sequenza e non c'è un secondo giro dopo questo:
+quello che la PR 19 ha guardato su cinque serate d'esempio, due fotografie
+generate e del lorem ipsum, qui si guarda sulle cose vere — ed è l'ultima volta
+che qualcuno lo guarda prima di chiunque altro.
+
+- **Le pagine istituzionali con i testi dentro**: è la prima volta che si vedono
+  nel layout, ed è dove si scopre che una colonna tarata sul lorem ipsum non
+  regge un paragrafo vero
+- **Accenti e caratteri speciali scritti per intero** in ogni testo nuovo: è la
+  regola che il [CLAUDE.md](../CLAUDE.md) dichiara senza guardia — *«si legge»* —
+  e i testi che arrivano dall'associazione non sono ancora passati sotto nessun
+  occhio
+- **I titoli veri alle larghezze vere**: la PR 19 li ha provati su casi estremi
+  fabbricati, qui ci sono quelli che l'associazione usa davvero
+- **Le fotografie vere dentro le forme di ritaglio**, che chiude la questione
+  lasciata aperta dalla PR 6, e il **testo sopra una fotografia vera**, dove il
+  contrasto è quello della foto e non quello del token
+- **Le proporzioni della PR 18 su una scena piena**: un'immagine vera al posto
+  del segnaposto cambia il peso della colonna, ed è la sola cosa della taratura
+  che non si poteva vedere allora
