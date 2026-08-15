@@ -2550,7 +2550,12 @@ nessun `.env`, nessun token. Non c'è niente da riscrivere prima di pubblicare, 
 - [ ] `guards-complete` fra i *required status checks*, e una fetta rossa ferma
       un merge — provato
 - [ ] Un salvataggio da `/admin` arriva su `main` e fa partire una build —
-      provato
+      provato. **Dopo il merge**, come il rebuild e per una ragione simile: è la
+      produzione a essere il posto dove un redattore scrive, e un salvataggio
+      fatto da un preview proverebbe la stessa cosa da un indirizzo che non
+      userà nessuno. Il banco però è già provato fin lì — accesso col token,
+      quattro collection lette, immagini viste, icone al posto delle parole, su
+      `/admin` e su `/admin/`
 - [x] `decisioni.md` dice repository pubblico e cron alle 01:00 UTC, con le
       ragioni; `questioni-aperte.md` chiude la voce sulla proprietà e corregge il
       «prima della PR 20»
@@ -2602,19 +2607,33 @@ nessun `.env`, nessun token. Non c'è niente da riscrivere prima di pubblicare, 
 - **Le prove rimandate dalla PR 7 e dalla PR 8**, che adesso hanno un indirizzo:
   su iPhone lo snap non salta quando la barra di Safari si ritrae e l'apertura
   cade sulla prima serata futura; su Android lo stesso giro; e il salto da una
-  tacca della Timeline arriva a destinazione senza essere interrotto dallo snap
+  tacca della Timeline arriva a destinazione senza essere interrotto dallo snap.
+  **Android: fatto sul preview del branch.**
 - **Un salvataggio dal CMS con la CSP addosso**, che è la prova che il file
   generato non ha rotto il posto per cui esiste. Se fallisce, i due posti dove
   guardare sono la CSP di `/admin` e il criterio dell'organizzazione sui token a
   granularità fine, che dopo il trasferimento può rifiutare il token del CMS —
-  e sono due diagnosi diverse per lo stesso sintomo
+  e sono due diagnosi diverse per lo stesso sintomo. **Il secondo si è
+  presentato davvero**: un'organizzazione gratuita non offre i token a
+  granularità fine finché non li abilita, quindi l'org non compare come
+  *resource owner* e un token del proprio account riceve un 404 sul repository —
+  che si legge come «repo inesistente» e non come «permesso negato». Il resto
+  del banco è provato con quel token: le quattro collection si leggono, le
+  immagini si vedono, quindi `connect-src` e `img-src` fanno il loro lavoro.
+  **Il salvataggio si prova dopo il merge**, che è anche il modo in cui somiglia
+  a quello vero: un redattore scrive sulla produzione, non su un preview.
 - **E `/admin` si guarda, non solo si usa**: i comandi hanno icone e non parole.
   Con `font-src` stretto il banco rende e salva lo stesso, e ogni bottone
   pubblica la propria legatura — `edit`, `delete`, `chevron_right`. Provato su
-  `/admin` **e** su `/admin/`, che sono due righe di `_headers` diverse
+  `/admin` **e** su `/admin/`, che sono due righe di `_headers` diverse.
+  **Fatto, da Android**: freccia, lente, cartelle delle collection, matita e
+  nuvola sono simboli. E dice una seconda cosa che nessun test dice: siccome
+  Material Symbols è l'unico dei tre caratteri che si vede quando manca,
+  vederlo intero vuol dire che **jsdelivr è l'elenco completo** — una seconda
+  origine darebbe parole su alcuni comandi e simboli sugli altri.
 - Una fetta rossa impedisce il merge: si acceca una guardia in un commit usa e
   getta sul branch, si guarda il bottone, si toglie
-- La 404 si raggiunge davvero, chiedendo un numero che non esiste
+- La 404 si raggiunge davvero, chiedendo un numero che non esiste. **Fatta.**
 - La pagina di una serata aperta da un browser con la console aperta: nessuna
   violazione di CSP. È l'unico posto dove un hash sbagliato si vede
 
