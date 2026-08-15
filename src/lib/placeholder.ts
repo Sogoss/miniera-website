@@ -50,6 +50,29 @@ export const PLACEHOLDER_IMAGES = {
   portrait: 'Ritratto da inserire',
 } as const;
 
+/**
+ * The photographs this site publishes and this association did not take.
+ *
+ * Two, in `src/assets/photos/`, and they are the one kind of placeholder the
+ * marking cannot reach: `checkNoPlaceholders` reads `data-placeholder` out of
+ * the markup, and a photograph is not a block of text with a frame around it —
+ * it is the picture of an evening, in the shape the site clips it to, looking
+ * exactly like the real thing will look. Nothing anywhere says it is a stand-in
+ * except a comment in the content file, which is not published and not read.
+ *
+ * So they are declared here, beside the sentences, and the guards do the two
+ * things the marking would have done. Filenames and not stems, because what a
+ * person can check is what is on the disk — the stem is what a build makes of
+ * it, and deriving it is the guard's business.
+ *
+ * There is deliberately **no** guard demanding that every photograph in that
+ * folder be declared. The day the association sends its own, a guard like that
+ * would report them — a guard firing on correct work is the kind somebody
+ * switches off, and it would take the two real ones with it. Declaring is a
+ * human act here, as it is for `PLACEHOLDER_NUMBER`.
+ */
+export const PLACEHOLDER_PHOTOS = ['sala-esempio.png', 'serata-esempio.png'] as const;
+
 export type PlaceholderPerson = { name: string; role: string };
 export type PlaceholderValue = { title: string; body: string };
 export type PlaceholderFigure = { value: string; label: string };

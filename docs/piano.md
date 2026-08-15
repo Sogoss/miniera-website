@@ -2428,10 +2428,17 @@ nessun `.env`, nessun token. Non c'è niente da riscrivere prima di pubblicare, 
   `STALE_VENUES`. **La guardia sul pubblicato cerca lo stem del nome**, non il
   nome: Astro pubblica `serata-esempio.CkE-x2wp.png`, e una guardia che cercasse
   il nome intero non troverebbe mai niente e sarebbe verde per sempre.
-- **E la guardia sul sorgente guarda la cartella, non i contenuti.** Una foto in
-  `src/assets/photos/` che non è dichiarata segnaposto è una foto che nessuno ha
-  marcato — è la forma che prende qui «un segnaposto si dichiara», e regge anche
-  quando le foto le carica il CMS invece di una mano.
+- **E la guardia sul sorgente chiede che la dichiarazione punti ancora a
+  qualcosa, non che ogni foto sia dichiarata.** Scrivendola era «una foto in
+  `src/assets/photos/` che nessuno ha marcato è una violazione», e sarebbe stata
+  una guardia che alla PR 20 segnala le fotografie vere dell'associazione — una
+  guardia che scatta su un lavoro giusto è la forma che qualcuno spegne, e
+  spegnendola porterebbe via anche le due che servono. Quello che invece è
+  invisibile è il caso opposto: un nome cambiato lascia `checkPlaceholderPhotos`
+  armata su uno stem che non comparirà mai più, e una guardia che non può
+  scattare non si distingue da un sito che non ha più segnaposto. Che la cartella
+  contenga oggi esattamente quelle due è **un'asserzione e non una regola**,
+  scritta come un'uguaglianza perché aggiungere una foto vada letto.
 - **`main` lascia la protezione classica e passa a due ruleset**, e questa è la
   correzione più grossa al testo della PR 16: **l'impostazione che quel testo
   dava per risolutiva non fa funzionare il CMS.** Provato su un branch usa e
@@ -2551,7 +2558,11 @@ nessun `.env`, nessun token. Non c'è niente da riscrivere prima di pubblicare, 
   è la stessa questione delle regole `[data-cycle]`
 - **Guardia**: nessuna serata pubblicata porta una foto dell'elenco segnaposto
   quando `site` è impostato. Il caso negativo oggi scatterebbe su due
-- **Guardia**: nessuna foto in `src/assets/photos/` fuori dall'elenco dichiarato
+- **Guardia**: ogni foto dichiarata segnaposto esiste ancora sul disco, più
+  l'asserzione che oggi in quella cartella non ce ne sono altre — e la metà
+  anti-vacuità sulle pagine vere: con `site` acceso la guardia **deve** trovarne
+  due, altrimenti quello che passa oggi passerebbe identico puntata sul nome
+  sbagliato. Si ritira da sé alla PR 20, quando l'elenco si svuota
 - `checkInternalLinks` copre anche la 404, che è la pagina da cui è più facile
   scrivere un link a niente
 - Il conto delle guardie sale da 65 e **non va toccato niente**: sia
