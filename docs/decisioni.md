@@ -37,9 +37,44 @@ Scritto qui perché è l'unico modo di impedire che fra sei mesi qualcuno
 «sistemi» il nome visualizzato per farlo combaciare con lo slug. *(15 agosto
 2026)*
 
-**Rebuild a ogni commit più cron notturno alle 03:00.** Un sito statico non sa
-che ora è: "già svolto" e la posizione di apertura dello scroller si calcolano
-alla build.
+**Rebuild a ogni commit più cron notturno all'01:00 UTC.** Un sito statico non
+sa che ora è: «già svolto» e la posizione di apertura dello scroller si
+calcolano alla build. Il cron lo esegue una GitHub Action che chiama un deploy
+hook, perché Pages non ha uno scheduler suo. **L'ora è in UTC e non è un
+dettaglio**: `schedule` di GitHub è sempre in UTC, e quel che deve essere vero
+non è l'ora ma che cada *dopo la mezzanotte italiana*, perché è lì che una
+serata cambia lato. L'01:00 UTC sono le 02:00 d'inverno e le 03:00 d'estate:
+dopo mezzanotte in entrambe. Diceva «alle 03:00» senza dire di dove, che è la
+regola 11 persa in prosa. `checkRebuildSchedule` è la guardia.
+*(corretta alla PR 17)*
+
+**La 404 è una pagina come le altre.** Un indirizzo sbagliato esiste dal primo
+giorno in cui il sito è in linea, non dal giorno del dominio — e su un sito dove
+il numero di una serata *è* il suo indirizzo è una pagina che qualcuno vedrà
+davvero. Non porta `data-cycle`, perché non è una serata: prende l'arancio di
+`:where(:root)`, che è il caso per cui quella specificità è stata scelta. E
+niente `noindex`: Pages la serve con stato 404, e un codice di stato è il modo
+forte di dirlo. *(PR 17)*
+
+**`/admin` e `/componenti` non si vietano in `robots.txt`, mai.** Un `Disallow`
+non toglie un indirizzo dall'indice: dice al crawler di non *leggere* la pagina,
+e una pagina non letta è una pagina il cui `noindex` non si vede mai — quindi
+l'indirizzo nudo può finire in elenco lo stesso. Il `noindex` ce l'hanno già ed
+è quello che funziona; la sitemap della PR 20 è l'altra metà. Il piano diceva il
+contrario, e oggi non cambierebbe niente perché `Disallow: /` copre tutto: il
+difetto si pubblicherebbe alla PR 20. *(PR 17)*
+
+**La CSP si genera dal pubblicato, non si scrive a mano.** Questo sito non ha
+nemmeno uno script esterno: sono tutti `is:inline`, per quattro decisioni
+separate che avevano le loro ragioni. Una policy che li raggiunge ha due forme,
+`'unsafe-inline'` — una policy scritta per passare — o gli hash. Gli hash
+cambiano a ogni carattere di script che cambia, quindi scritti a mano sono
+giusti il giorno che li scrivi e sbagliati il primo giorno che qualcuno tocca
+uno script: la pagina rende, la build è verde, e lo script non gira. Li calcola
+`src/lib/headers.ts` **da `dist/`** — quel che il browser hasha sono i byte che
+ha ricevuto, e in mezzo c'è `compressHTML`. `/admin` ha la sua riga, più larga e
+dichiarata, dopo quella del sito perché per un'intestazione nominata due volte
+Cloudflare lascia valere la regola più specifica. *(PR 17)*
 
 ## Stile
 

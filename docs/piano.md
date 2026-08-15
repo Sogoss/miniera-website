@@ -2508,38 +2508,43 @@ nessun `.env`, nessun token. Non c'è niente da riscrivere prima di pubblicare, 
 
 - [x] Repository trasferito in `miniera-culturale/website`, pubblico, con la
       protezione e le impostazioni di merge sopravvissute intatte al passaggio
-- [ ] `main` sui due ruleset, la protezione classica cancellata, il team
+- [x] `main` sui due ruleset, la protezione classica cancellata, il team
       `redazione` col bypass su `revisione` e nessun bypass su `integrità`
-- [ ] I nove riferimenti a `Sogoss/miniera-website` puntano a
+- [x] I nove riferimenti a `Sogoss/miniera-website` puntano a
       `miniera-culturale/website`, i due test che asseriscono quella stringa
       compresi, `public/admin/config.yml` e le due righe di `docs/README.md` —
       un `git clone` seguito da un `cd`, e la seconda si dimentica
-- [ ] Il nome visualizzato dell'organizzazione è **La Miniera Culturale in
+- [x] Il nome visualizzato dell'organizzazione è **La Miniera Culturale in
       Periferia** per esteso, e il perché sta in [decisioni.md](decisioni.md):
       lo slug abbrevia, e la regola 7 si perde in un posto che nessuna guardia
       guarda
 - [ ] Progetto collegato a Cloudflare Pages: build a ogni commit su `main`, e
       **deploy preview su ogni PR** — che è anche l'anteprima che il CMS non ha
 - [ ] Rebuild notturno dopo la mezzanotte italiana, e si vede una serata passare
-      da *in programma* a *già svolta*
-- [ ] `src/pages/404.astro`: il layout, il marchio, e la via di ritorno al
+      da *in programma* a *già svolta*. **Si prova dopo il merge, e va detto
+      perché non è pigrizia**: GitHub registra `schedule` e `workflow_dispatch`
+      solo dal branch predefinito, quindi finché `rebuild.yml` vive sul branch
+      non è né eseguibile a mano né programmato — `gh workflow run` risponde
+      *404, not found on the default branch*. È l'unico obiettivo di questa PR
+      che non si può chiudere prima di chiuderla
+- [x] `src/pages/404.astro`: il layout, il marchio, e la via di ritorno al
       programma
-- [ ] `public/robots.txt` — indicizzazione vietata finché non c'è il dominio, e
+- [x] `public/robots.txt` — indicizzazione vietata finché non c'è il dominio, e
       nessun `Disallow` su `/admin` e `/componenti`, che restano fuori dall'indice
       col `noindex` che hanno già
-- [ ] `dist/_headers` **generato**: i security header, e una CSP con gli hash dei
+- [x] `dist/_headers` **generato**: i security header, e una CSP con gli hash dei
       cinque blocchi in linea, più la riga di `/admin` con le sue due larghezze
       dichiarate
-- [ ] Le due foto segnaposto sono dichiarate in `placeholder.ts` e hanno le loro
+- [x] Le due foto segnaposto sono dichiarate in `placeholder.ts` e hanno le loro
       due guardie, sul sorgente e sul pubblicato
 - [ ] `guards-complete` fra i *required status checks*, e una fetta rossa ferma
       un merge — provato
 - [ ] Un salvataggio da `/admin` arriva su `main` e fa partire una build —
       provato
-- [ ] `decisioni.md` dice repository pubblico e cron alle 01:00 UTC, con le
+- [x] `decisioni.md` dice repository pubblico e cron alle 01:00 UTC, con le
       ragioni; `questioni-aperte.md` chiude la voce sulla proprietà e corregge il
       «prima della PR 20»
-- [ ] I tre «PR 15» del `config.yml` e la riga 16 della tabella dicono la cosa
+- [x] I tre «PR 15» del `config.yml` e la riga 16 della tabella dicono la cosa
       giusta
 
 ### Test automatici
@@ -2574,7 +2579,9 @@ nessun `.env`, nessun token. Non c'è niente da riscrivere prima di pubblicare, 
 
 - Un commit su `main` pubblica entro pochi minuti; una PR apre il suo preview
 - Il rebuild notturno scatta e sposta davvero una serata — la prima volta con
-  `workflow_dispatch`, poi la notte vera
+  `workflow_dispatch`, poi la notte vera. **Tutte e due dopo il merge**: un
+  workflow che non sta sul branch predefinito GitHub non lo registra, quindi da
+  qui non è né programmato né lanciabile a mano
 - **Le prove rimandate dalla PR 7 e dalla PR 8**, che adesso hanno un indirizzo:
   su iPhone lo snap non salta quando la barra di Safari si ritrae e l'apertura
   cade sulla prima serata futura; su Android lo stesso giro; e il salto da una
