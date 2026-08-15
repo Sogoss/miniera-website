@@ -115,7 +115,7 @@ Cartelle:
 design-export/     export di Claude Design, versionato come specifica
 docs/              questa documentazione
 public/admin/      il CMS: la shell e il config.yml; il bundle lo copia la build
-scripts/           utilità di manutenzione (caratteri, favicon, bundle del CMS)
+scripts/           utilità (caratteri, favicon, bundle del CMS, regole di main)
 src/assets/fonts/  i woff2 self-hostati e le loro licenze
 src/content/       i contenuti: eventi, cicli, sedi, relatori
 src/styles/        i token del design e lo strato base

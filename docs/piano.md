@@ -16,9 +16,14 @@ Aggiornato al 15 agosto 2026.
    ricordare è che **ogni** PR prende un numero, anche quella che tocca solo la
    documentazione: quando ne serve una fuori programma, entra nell'elenco con la
    sua riga invece di lasciare un buco.
-3. **Un branch per PR**, che parte da `main` aggiornato. **Su `main` non si
-   spinge mai direttamente**: ogni modifica passa da una PR, compresa quella di
-   una riga e compresa la documentazione.
+3. **Un branch per PR**, che parte da `main` aggiornato — e **da `main`
+   sempre**, mai da un altro branch di lavoro. Non è una preferenza di stile: la
+   CI si innesca su `pull_request: branches: [main]`, quindi una PR impilata su
+   un'altra base **non fa partire nessun controllo**, e i due controlli
+   obbligatori restano in attesa per sempre. Non fallisce niente: il bottone di
+   merge resta grigio senza dire perché. **Su `main` non si spinge mai
+   direttamente**: ogni modifica passa da una PR, compresa quella di una riga e
+   compresa la documentazione.
 4. **Merge sempre in squash and merge.** Il repository è configurato perché sia
    l'unico metodo possibile: merge commit e rebase sono disabilitati, il branch
    viene cancellato dopo il merge.
@@ -30,7 +35,10 @@ Aggiornato al 15 agosto 2026.
 7. **Le decisioni si registrano nella PR che le prende**, in
    [decisioni.md](decisioni.md), e la voce corrispondente esce da
    [questioni-aperte.md](questioni-aperte.md).
-8. Quando una PR viene chiusa, la sua riga qui sotto passa a *fatta*.
+8. **La riga di una PR passa a *fatta* dentro la PR stessa**, prima della
+   chiusura — non dopo. Dopo non c'è nessun momento in cui qualcuno la scriva, e
+   la tabella comincia a mentire di una riga: è già successo due volte, alla
+   PR 15 e alla PR 16, e la seconda l'ha fatto **mentre correggeva la prima**.
 
 ## Strategia di test
 
