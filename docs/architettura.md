@@ -42,7 +42,7 @@ la regola 21 del [CLAUDE.md](../CLAUDE.md).
 [token]`. Il bottone «Sign in with GitHub», che è la via per chi non sa cos'è un
 token, ha bisogno di un'applicazione OAuth registrata su un'origine e di un
 relay che ne tenga il segreto: l'origine è il sito pubblicato, quindi arriva con
-il dominio alla PR 16.
+il dominio alla PR 20.
 
 **L'interfaccia del CMS è in inglese**: Sveltia ha diciassette traduzioni e
 nessuna italiana. Italiane sono le etichette e gli aiuti dei campi, che sono
@@ -60,7 +60,9 @@ nostri.
 | Hosting | Cloudflare Pages, piano gratuito | — |
 | CLI hosting | wrangler | 4.120 |
 
-Node 22.12 o superiore.
+Node 24, fissata in `.nvmrc`, con `engine-strict` che fa fallire
+l'installazione su una versione diversa invece di riscrivere di nascosto il
+`package-lock.json`.
 
 ### Perché niente Tailwind
 

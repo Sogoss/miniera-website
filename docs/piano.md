@@ -4,7 +4,7 @@ Il sito si costruisce per passi numerati, uno per PR. Questo documento è
 l'elenco dei passi, in ordine, con quello che ciascuno deve dimostrare prima di
 poter essere chiuso.
 
-Aggiornato al 13 agosto 2026.
+Aggiornato al 15 agosto 2026.
 
 ## Come si lavora
 
@@ -76,9 +76,19 @@ sostituisce un telefono vero.
 | 12 | La prenotazione dentro il modale | `modale-prenotazione` | fatta |
 | 13 | Chi siamo, contatti, rassegna disabilitata | `pagine-istituzionali` | fatta |
 | 14 | Sveltia CMS | `cms-sveltia` | fatta |
-| 15 | La suite più veloce | `test-veloci` | da fare |
-| 16 | Pubblicazione | `pubblicazione` | da fare |
-| 17 | Proporzioni su schermo piccolo | `proporzioni-mobile` | da fare |
+| 15 | La suite più veloce | `test-veloci` | fatta |
+| 16 | Il piano: messa in linea, controllo qualità, dominio | `piano-controllo-qualita` | da fare |
+| 17 | Messa in linea | `messa-in-linea` | da fare |
+| 18 | Proporzioni su schermo piccolo | `proporzioni-mobile` | da fare |
+| 19 | Controllo qualità | `controllo-qualita` | da fare |
+| 20 | Il dominio | `dominio` | da fare |
+
+> **La coda è cambiata alla PR 16.** Era «16 Pubblicazione, 17 Proporzioni»: un
+> passo solo teneva insieme il collegamento a Cloudflare Pages, che non dipende
+> da nessuno, e l'acquisto del dominio, che dipende dal committente — e ci teneva
+> legate anche le prove su telefono, e con esse le proporzioni. Le proporzioni
+> sono quindi passate da 17 a 18, e non perché sia cambiato quello che chiedono.
+> Il perché sta nella PR 16, qui sotto.
 
 Fuori dalla beta, bloccate da [questioni-aperte.md](questioni-aperte.md):
 migrazione delle foto e caricamento delle 81 serate storiche.
@@ -666,7 +676,7 @@ In breve:
 - Ogni pagina porta tutte le forme che il componente dichiara, e nessun `id`
   italiano dell'export arriva in `dist/`
 - I meta Open Graph di base ci sono, e **`og:url` e `og:image` sono pretesi
-  appena `site` è impostato**: il test si accende da solo alla PR 16
+  appena `site` è impostato**: il test si accende da solo alla PR 20
 - Il salta-a è il primo link del `<body>` e punta a un `id` che esiste — non a
   uno che gli somiglia: `#programma` non è soddisfatto da `id="programma-2"`,
   ed è il primo difetto che il caso negativo ha trovato nella guardia appena
@@ -697,7 +707,7 @@ In breve:
 > alle guardie del documento anche le pagine copiate da `public/`, cioè la
 > PR 14 non avrebbe potuto chiudere verde con la shell di Sveltia in
 > `public/admin/`; e pretendere `og:image` all'arrivo del dominio avrebbe aperto
-> la PR 16 su una suite rossa chiudibile solo inventando un'immagine che nessuno
+> la PR 20 su una suite rossa chiudibile solo inventando un'immagine che nessuno
 > ha scelto. L'immagine è una questione aperta, non un test.
 
 ### Test manuali
@@ -1067,7 +1077,7 @@ Per esteso in [decisioni.md](decisioni.md), sotto *Lo scroller*. In breve:
 > pubblichi due bottoni non è impedito nel componente: lo prende il test sul
 > conteggio, che però diventa rosso indicando il file del contenuto invece del
 > punto dove si decide — costa una regola editoriale, non una correzione. Il
-> `max-height: 80vh` del pannello passa alla PR 17, che è dove le proporzioni su
+> `max-height: 80vh` del pannello passa alla PR 18, che è dove le proporzioni su
 > schermo piccolo si tarano una volta sola. E lo **stile della serata annullata**
 > non è stato scritto: `data-state="cancelled"` si pubblica e nessuna regola lo
 > legge. La barratura passa alla PR 9, dove una serata annullata ha già fra gli
@@ -1098,7 +1108,7 @@ Per esteso in [decisioni.md](decisioni.md), sotto *Lo scroller*. In breve:
 - Con un contenuto finto da 81 serate, la pagina resta fluida su un telefono di
   qualche anno fa — è la misura rimandata in `vincoli-tecnici.md`
 
-> **I tre test su telefono sono rimandati alla PR 16**, dove il sito ha un URL
+> **I tre test su telefono sono rimandati alla PR 17**, dove il sito ha un URL
 > stabile che apre chiunque. Non è una spunta data per buona: chi lavora al
 > progetto non ha un iPhone, e provarlo adesso vorrebbe dire un tunnel verso il
 > server di sviluppo o un device remoto — più attenzione di quanta ne valga
@@ -1106,7 +1116,7 @@ Per esteso in [decisioni.md](decisioni.md), sotto *Lo scroller*. In breve:
 > costruzione, non per fiducia: `--scene-height` è `svh` con il ripiego in
 > `@supports`, e ogni scena dichiara la propria altezza intrinseca, che è ciò
 > che tiene ferme le posizioni di snap. Il debito è scritto in
-> [questioni-aperte.md](questioni-aperte.md), sotto *Da fare alla PR 16*.
+> [questioni-aperte.md](questioni-aperte.md), sotto *Da fare alla PR 17*.
 
 ---
 
@@ -1261,7 +1271,7 @@ Per esteso in [decisioni.md](decisioni.md), sotto *La Timeline*. In breve:
 > **Due prove restano da fare, dichiarate e non date per buone.** Su un iPhone
 > vero: toccare una tacca lontana e verificare che lo scorrimento morbido arrivi
 > a destinazione senza essere interrotto dallo snap.
-> [questioni-aperte.md](questioni-aperte.md) la colloca già alla PR 16, per
+> [questioni-aperte.md](questioni-aperte.md) la colloca già alla PR 17, per
 > nome, e per lo stesso motivo della PR 7 — prima non c'è un URL stabile e chi
 > lavora al progetto non ha un iPhone. Nel frattempo il rischio è retto dal
 > fatto che il salto è quello nativo del browser sul frammento e non uno
@@ -1332,7 +1342,7 @@ breve:
 - Ogni rotta pubblica titolo e descrizione della sua serata, non del sito, e
   `og:description` dice la stessa cosa del meta
 - **Quando `site` è impostato**, ogni rotta con una foto pubblica `og:image`
-  assoluto: scritto ora, si accende alla PR 16
+  assoluto: scritto ora, si accende alla PR 20
 - Gli `<h1>` di due rotte sono diversi, e quello della radice non nomina nessuna
   serata
 - **Guardia** `checkEveningRoutes`: ogni `data-number` pubblicato trova la sua
@@ -1412,14 +1422,14 @@ breve:
 > **l'immagine da anteprima si generava anche senza dominio**, cioè un JPEG per
 > serata che nessuna pagina referenziava. Con l'archivio pieno sono ottantuno
 > ridimensionamenti e ottantuno file morti in ogni deployment. Generarla solo
-> quando c'è il dominio non toglie niente alla promessa che alla PR 16 non ci
+> quando c'è il dominio non toglie niente alla promessa che alla PR 20 non ci
 > sia niente da ricordarsi: arriva il dominio e arrivano le immagini.
 >
 > **Due sono rimaste aperte, di proposito.** Il `<title>` di una serata non
 > nomina l'associazione, mentre quello della radice sì: è una scelta di testo
 > italiano e la si fa guardandola, non correggendola di nascosto. E `og:type`
 > resta `website` anche sulle rotte delle serate: cambiarlo è una decisione sul
-> layout condiviso, e il posto dove si prende è la PR 16, insieme al resto dei
+> layout condiviso, e il posto dove si prende è la PR 20, insieme al resto dei
 > meta.
 
 ### Test manuali
@@ -1437,7 +1447,7 @@ breve:
   20–25 KB di [vincoli-tecnici.md](vincoli-tecnici.md) — e 109 file in tutto,
   contro i 20.000 che Cloudflare Pages concede per deployment
 
-> **Rimandata alla PR 16**: l'anteprima di un link su WhatsApp e su Facebook.
+> **Rimandata alla PR 20**: l'anteprima di un link su WhatsApp e su Facebook.
 > Senza dominio non c'è niente da incollare in una chat e `og:image` non viene
 > emesso — il layout lo omette apposta, perché un URL relativo lì dentro
 > «sembra giusto nel markup e l'anteprima esce senza figura». Il test è scritto
@@ -1908,7 +1918,7 @@ Fatti sul sito **costruito**, non in `npm run dev`:
 > CSS — quindi la riga desktop era stata guardata forzando le due regole di
 > `display` a quella larghezza: si vedeva che rende, non come respira a 1440. È
 > il caso in cui l'emulazione non sostituisce lo schermo, come il telefono vero
-> della PR 16: la prova è stata chiesta a chi ne aveva uno.
+> della PR 17: la prova è stata chiesta a chi ne aveva uno.
 
 ---
 
@@ -1947,7 +1957,7 @@ breve:
   scritta per le foto. Lo copia la build, e un test confronta i byte pubblicati
   con quelli installati. `@sveltia/cms` passa quindi fra le `dependencies`
 - **L'accesso in questa PR è con token personale**, e l'OAuth entra fra gli
-  obiettivi della PR 16: ha bisogno di un'origine registrata su GitHub e di un
+  obiettivi della PR 20: ha bisogno di un'origine registrata su GitHub e di un
   relay, e l'origine non esiste finché il sito non è pubblicato
 - **Il fuso si dichiara nel CMS** — `input_timezone: Europe/Rome`,
   `output_utc: false`, `format: YYYY-MM-DDTHH:mm:ssZ` — con la sua guardia
@@ -2082,7 +2092,7 @@ locale — e sono la stessa cosa della prova a 1440px della PR 13, chiesta a chi
 ne aveva lo schermo:
 
 - Accesso col token contro il repository vero e un salvataggio su un branch di
-  prova: il commit compare. Che la build parta è della PR 16, dove il sito è
+  prova: il commit compare. Che la build parta è della PR 17, dove il sito è
   collegato
 - **Lettura del file scritto**: campi giusti, `date` con `+02:00`, nessun corpo,
   nome del file uguale al numero
@@ -2193,49 +2203,176 @@ due volte: una in locale e una in CI.
 
 ---
 
-## PR 16 — Pubblicazione
+## PR 16 — Il piano: messa in linea, controllo qualità, dominio
 
-**Branch:** `pubblicazione` · **Dipende da:** 14
+**Branch:** `piano-controllo-qualita` · **Dipende da:** nulla
+
+La vecchia «Pubblicazione» teneva insieme cinque cose con cinque blocchi
+diversi. Collegare Cloudflare Pages non dipende da nessuno. Il dominio dipende
+da un acquisto. I testi veri delle pagine istituzionali bloccano `site`, che è
+la stessa riga che accende i canonici, gli Open Graph assoluti e
+`checkNoPlaceholders`. Legate in un passo solo, tutte e cinque aspettavano la
+più lenta.
+
+Il costo non era di piano. Le prove su telefono rimandate dalla PR 7 e dalla
+PR 8 aspettavano l'acquisto di un dominio, e con loro le proporzioni su schermo
+piccolo, che quel telefono lo pretendono: cioè la correzione dei `clamp()` da px
+a `rem`, che questo stesso documento chiama l'unico punto in cui il sito viola
+davvero una buona pratica, per un pubblico che ingrandisce il testo di sistema.
+Un progetto su Cloudflare Pages, però, risponde a `<progetto>.pages.dev` dal
+giorno che lo si collega: l'URL stabile che quelle prove aspettano esiste senza
+che nessuno compri niente.
+
+Ed entra un passo che non c'era: un **controllo qualità** a mano, prima del
+dominio e non dopo. Le guardie di questo repository leggono il DOM, l'occhio
+legge i pixel, e fra le due cose c'è una categoria intera di difetti che nessuna
+guardia può vedere — `checkBrandSignature` legge la firma *dentro*
+`data-brand`, e un `overflow: hidden` che la taglia a schermo viola la regola 7
+con la suite verde. Fatto dopo il dominio, quel collaudo troverebbe le stesse
+cose su un sito già indicizzato.
+
+### Decisioni prese scrivendo la PR
+
+Per esteso in [decisioni.md](decisioni.md), sotto *La coda del piano*. In breve:
+
+- **La messa in linea si separa dal dominio**, perché non condividono un
+  blocco: la prima non aspetta nessuno, il secondo aspetta il committente
+- **`site` non si imposta su `pages.dev`**: renderebbe canonico un indirizzo
+  provvisorio, e per la stessa riga farebbe fallire la build sui testi che non
+  ci sono ancora. Il sito va in linea *con* i suoi blocchi marcati «Segnaposto»,
+  che è la verità su cosa è pronto
+- **Il controllo qualità è un passo e non una spunta.** Sta fra le proporzioni e
+  il dominio: dopo la taratura, perché altrimenti collauderebbe misure che stanno
+  per cambiare; prima del dominio, perché è lì che i difetti costano meno
+- **Il piano prende un numero**, come la PR 10. La regola dice che ogni PR entra
+  nell'elenco, quella che tocca solo la documentazione compresa
 
 ### Obiettivi
 
-- [ ] Progetto collegato a Cloudflare Pages, build a ogni commit
-- [ ] Rebuild notturno alle 03:00 italiane
-- [ ] `site` impostato in `astro.config.mjs` quando il dominio esiste, con
-      sitemap e URL canonici — e `/admin` **fuori dalla sitemap**, come
-      `/componenti`
-- [ ] Misurato il numero di file per deployment con le foto vere, come deciso
-      in `vincoli-tecnici.md`
-- [ ] **L'accesso al CMS col bottone «Sign in with GitHub»**, rimandato dalla
-      PR 14 perché ha bisogno di un'origine che allora non esisteva: applicazione
-      OAuth su GitHub, relay che tiene il segreto — il Worker
-      `sveltia-cms-auth`, che è di Sveltia — e in `public/admin/config.yml`
-      `auth_methods: [oauth, token]` con il `base_url` accanto. È la riga che
-      rende vero «un redattore senza sapere che esiste git» anche per chi non ha
-      un token
+- [x] La coda è 16 il piano, 17 messa in linea, 18 proporzioni, 19 controllo
+      qualità, 20 il dominio
+- [x] **Ognuno dei cinquantacinque riferimenti a un passo rinumerato punta al
+      passo che intende** — documentazione, sorgente e test compresi. Il
+      passaggio è meccanico, la scelta fra *messa in linea* e *dominio* non lo è:
+      undici «PR 16» significavano il sito collegato e non il dominio comprato
+- [x] La riga 15 della tabella dice *fatta*. La PR 15 è chiusa da `fdc9093` e il
+      piano non se n'era accorto, contro la sua stessa regola 8
+- [x] `architettura.md` dice Node 24 e non «22.12 o superiore», che
+      contraddiceva `.nvmrc` e il `CLAUDE.md`
+- [x] `test/unit/sources.test.ts` dice PR 14 dove diceva PR 16: la shell di
+      Sveltia in `public/` l'ha messa la PR 14. Era sbagliato prima di oggi, e si
+      vede solo contando i riferimenti uno per uno
+- [x] Tre voci nuove in [questioni-aperte.md](questioni-aperte.md): analytics e
+      privacy, proprietà degli account, contenuti minimi per la beta
 
 ### Test automatici
 
-- Con `site` impostato, gli URL canonici e i meta Open Graph sono assoluti
-- La sitemap elenca tutte le pagine delle serate
+- La suite intera, perché la rinumerazione **entra nel codice**: il messaggio di
+  `checkAbsoluteOpenGraph` in `test/guards/document.ts`, l'asserzione che quel
+  messaggio la nomina in `test/unit/document-guards.test.ts`, e i commenti di
+  `Base.astro`, `placeholder.ts`, `componenti.astro` e `[number].astro`
+- `npm run check` e `npm run test:mutate` restano verdi: nessuna guardia cambia
+  comportamento, e il conto delle guardie non si muove
 
 ### Test manuali
 
-- Un commit sul `main` pubblica entro pochi minuti
-- Il rebuild notturno scatta e sposta davvero una serata da *in programma* a
-  *già svolta*
-- Anteprima di un link con il dominio vero
-- **Le prove su telefono rimandate dalla PR 7 e dalla PR 8**, che adesso hanno
-  un URL che apre chiunque: su iPhone lo snap non salta quando la barra di
-  Safari si ritrae e l'apertura cade sulla prima serata futura; su Android lo
-  stesso giro; e lo scorrimento morbido della Timeline arriva a destinazione
-  senza essere interrotto dallo snap
+- Rileggere i riferimenti rinumerati uno per uno, in `git diff`: è l'unico
+  controllo possibile su una sostituzione che una macchina non può disambiguare
+- Verificare che il `README.md` di `docs/` racconti lo stato vero
 
 ---
 
-## PR 17 — Proporzioni su schermo piccolo
+## PR 17 — Messa in linea
 
-**Branch:** `proporzioni-mobile` · **Dipende da:** 8, 13
+**Branch:** `messa-in-linea` · **Dipende da:** 14, 15
+
+Il sito è finito abbastanza da essere aperto da un telefono, e non lo è mai
+stato. Questo passo lo mette in linea su `pages.dev` e non fa nient'altro che
+non si possa fare senza chiedere niente a nessuno.
+
+### Decisioni prese scrivendo la PR
+
+- **`site` resta commentato**, per la ragione scritta alla PR 16.
+- **E allora `pages.dev` non si fa indicizzare.** Un `pages.dev` di produzione è
+  pubblico e scansionabile — a differenza dei deploy preview, che Cloudflare
+  marca da sé — e il giorno del dominio ci sarebbero due siti identici con il
+  motore a sceglierne uno. Finché `site` non c'è, `robots.txt` vieta tutto; alla
+  PR 20 si inverte e prende il rimando alla sitemap. La guardia legge la stessa
+  riga di configurazione e pretende l'una o l'altra cosa: è l'interruttore di
+  `og:url` applicato all'indicizzazione
+- **La 404 entra qui.** Un indirizzo sbagliato esiste dal primo giorno in cui il
+  sito è in linea, non dal giorno del dominio — e su un sito dove il numero *è*
+  l'indirizzo e i numeri si bruciano, è una pagina che qualcuno vedrà davvero.
+  È una pagina come le altre: stesso layout, stesse guardie, nessuna eccezione
+- **Il rebuild notturno lo fa una GitHub Action**, non Cloudflare, che non ha un
+  cron per le build: uno `schedule` che chiama un Deploy Hook. E `schedule` è in
+  UTC, che è la regola 11 vista da un'altra parte — quel che conta non sono le
+  03:00, è che sia **dopo la mezzanotte italiana**, perché è lì che una serata
+  cambia stato. `01:00` UTC lo è in entrambe le stagioni, e la ragione va scritta
+  accanto al cron invece di essere dedotta
+- **Le due foto segnaposto prendono il trattamento della regola 20.** Hanno
+  scritto sopra «immagine segnaposto» e oggi le pubblica la home senza che niente
+  le veda: `checkNoPlaceholders` legge `data-placeholder` nel markup, e una foto
+  non ha un blocco che la marca. Vanno dichiarate in `placeholder.ts`, accanto a
+  `PLACEHOLDER_NUMBER` e a `STALE_VENUES`, con una guardia sul contenuto e sul
+  pubblicato armata da `site` come l'altra: restano legittime finché il sito non
+  ha un indirizzo suo, ed è il giorno dopo che diventano una bugia
+- **Le due impostazioni del repository si applicano qui**, e sono in ritardo di
+  una PR: verificato con l'API, i controlli obbligatori sono `["verify"]` e le
+  bypass allowance non esistono. Quindi oggi una fetta rossa di `test:mutate` non
+  ferma un merge, e il CMS consegnato alla PR 14 non salva
+
+### Obiettivi
+
+- [ ] Progetto collegato a Cloudflare Pages: build a ogni commit su `main`, e
+      **deploy preview su ogni PR** — che è anche l'anteprima che il CMS non ha
+- [ ] Rebuild notturno dopo la mezzanotte italiana, e si vede una serata passare
+      da *in programma* a *già svolta*
+- [ ] `src/pages/404.astro`: il layout, il marchio, e la via di ritorno al
+      programma
+- [ ] `public/robots.txt` — indicizzazione vietata finché non c'è il dominio,
+      `/admin` e `/componenti` fuori — e `public/_headers` con i security header,
+      CSP compresa: `/admin` è JavaScript con permessi di scrittura sul
+      repository, ed è il punto del sito dove una CSP lavora davvero
+- [ ] Le due foto segnaposto sono dichiarate in `placeholder.ts` e hanno la loro
+      guardia
+- [ ] `guards-complete` fra i *required status checks*, e una fetta rossa ferma
+      un merge — provato
+- [ ] Bypass su `main` per l'account del CMS: un salvataggio da `/admin` arriva e
+      fa partire una build — provato
+
+### Test automatici
+
+- La 404 entra in `published-pages.test.ts` senza eccezioni: lingua, charset,
+  viewport, un solo `<h1>`, salta-a con bersaglio focusabile, accenti e forme
+- **Guardia** su `robots.txt`: senza `site` vieta tutto, con `site` non lo fa —
+  letta dalla configurazione e non ricordata, con i due casi negativi
+- **Guardia**: nessuna serata pubblicata porta una foto dell'elenco segnaposto
+  quando `site` è impostato. Il caso negativo oggi scatterebbe su due
+- `checkInternalLinks` copre anche la 404, che è la pagina da cui è più facile
+  scrivere un link a niente
+
+### Test manuali
+
+- Un commit su `main` pubblica entro pochi minuti; una PR apre il suo preview
+- Il rebuild notturno scatta e sposta davvero una serata
+- **Le prove rimandate dalla PR 7 e dalla PR 8**, che adesso hanno un indirizzo:
+  su iPhone lo snap non salta quando la barra di Safari si ritrae e l'apertura
+  cade sulla prima serata futura; su Android lo stesso giro; e il salto da una
+  tacca della Timeline arriva a destinazione senza essere interrotto dallo snap
+- Un salvataggio dal CMS arriva su `main`; una fetta rossa impedisce il merge
+- La 404 si raggiunge davvero, chiedendo un numero che non esiste
+
+---
+
+## PR 18 — Proporzioni su schermo piccolo
+
+**Branch:** `proporzioni-mobile` · **Dipende da:** 8, 13, 17
+
+> **Spostata dalla PR 17 alla PR 18 dalla PR 16**, e non è un cambio di
+> contenuto: è la PR 17 che le porta il telefono. Prima dipendeva dalle prove
+> rimandate in un passo che aspettava l'acquisto di un dominio, cioè aspettava
+> il committente per una taratura che non lo riguarda.
 
 Non è rifinitura rimandata per pigrizia: è **la stessa taratura fatta una volta
 sola invece che tre**. Su un telefono la scena divide l'altezza con due cose che
@@ -2292,3 +2429,264 @@ rimandate in [questioni-aperte.md](questioni-aperte.md).
 - **Con il testo del sistema ingrandito**, che è il controllo per cui esiste il
   primo obiettivo: portarlo al 200% e vedere che il sito cresce invece di
   restare fermo. È un pubblico di cinquanta e sessant'anni
+
+---
+
+## PR 19 — Controllo qualità
+
+**Branch:** `controllo-qualita` · **Dipende da:** 17, 18
+
+Ogni guardia di questo repository risponde a una domanda che qualcuno sapeva già
+di dover porre. Un collaudo a mano è l'unica cosa che trova quello a cui nessuno
+ha pensato — e su questo sito c'è una categoria intera di difetti che le guardie
+non possono vedere per costruzione: **le guardie leggono il DOM, l'occhio legge i
+pixel**. `checkBrandSignature` legge la firma *dentro* `data-brand`, e un
+`overflow: hidden` che taglia «in Periferia» a schermo viola la regola 7 con la
+suite verde. Lo stesso vale per un contrasto calcolato contro un token e vissuto
+sopra una fotografia.
+
+Va dopo la PR 18 e non prima: la 18 è la taratura, questa è il collaudo.
+Invertite, il collaudo troverebbe le cose che la taratura sta già per cambiare.
+
+### La matrice
+
+**Dispositivi.** Un iPhone con **Safari fra 15.4 e 16.3** — è la soglia
+dichiarata del progetto e non l'ha mai aperta nessuno; è la finestra in cui la
+sintassi range delle media query ucciderebbe ogni layout mobile, e
+`checkMediaRangeSyntax` è l'unica cosa che oggi la difende. Un iPhone recente,
+dove `content-visibility` esiste davvero. Un Android Chrome, e **un telefono di
+quattro anni, non un modello di punta**. Desktop: Chrome, Firefox, Safari —
+Firefox perché ha l'unico altro motore e le frecce sullo scroller si comportano
+diversamente per decisione documentata.
+
+**Formati.** Verticale e **orizzontale** — su uno scroller alto un viewport il
+landscape è il caso peggiore. 320 px di larghezza. Tablet. Desktop 1280.
+Ultrawide. E una finestra **bassa**, 500 px di altezza.
+
+**Impostazioni.** Testo di sistema al 200%. Zoom del browser al 200% e al 400%.
+`prefers-reduced-motion`. Script disattivati. Rete 3G lenta e risparmio dati.
+**Alto contrasto di Windows** (`forced-colors`), che su un sito fatto di accenti
+e ritagli è dove fa più danni e oggi non ha una riga che lo consideri. Traduzione
+automatica di Chrome.
+
+### Usabilità
+
+Il giro di un visitatore vero, **cronometrato, fatto da chi non ha lavorato al
+sito**: arriva, capisce cos'è, trova la prossima serata, capisce quando e dove,
+prenota. Poi: lo scorrimento con rotella, trackpad, flick e barra trascinata — lo
+snap non deve combattere il gesto; raggiungere la 78 dall'81 e tornare, sul
+telefono dove la barra scorre; il modale che si chiude in tre modi con il fuoco
+che torna dove era; il **tasto indietro** dopo dieci serate, che deve uscire dal
+sito e non risalire l'archivio, che è la prova all'occhio della regola 16;
+**ricaricare a metà archivio**, dove il ripristino dello scorrimento del browser
+e il salto dello script possono litigare; `/81` con gli script spenti, che si
+apre in cima per decisione e va guardato se è accettabile; **Ctrl+F su una serata
+lontana**, che `content-visibility: auto` non deve nascondere alla ricerca del
+browser; selezione e copia del testo dentro una scena.
+
+E **il giro del redattore**, che è un utente anche lui: creare una serata dal
+CMS, caricare una foto, salvare, vedere la build. Cronometrato, e almeno una
+volta da telefono, perché è così che verrà usato.
+
+### Accessibilità
+
+**Screen reader veri, non emulazioni**: VoiceOver su iOS e NVDA su Windows.
+Intestazioni, landmark, come si annuncia una tacca — c'è `aria-current` e il
+titolo in `visually-hidden`, va *sentito* — il modale (nome accessibile, dove
+atterra il fuoco, il resto inerte, il ritorno) e la tendina `<details>`.
+
+Il giro completo da sola tastiera sui tre browser desktop: salta-a →
+navigazione → scroller (frecce, PagSu/PagGiù, Home/Fine) → tacche → modale, senza
+mai perdere il fuoco né trovarlo su qualcosa di invisibile. Messa a fuoco visibile
+su **tutti e sei** gli accenti di ciclo e su **entrambe** le superfici. Contrasto
+**misurato a schermo**, non calcolato: le guardie garantiscono 3:1 sul segno, che
+è la soglia di un bordo, e una parola ne vuole 4,5. Bersagli tattili delle tacche
+misurati contro i 44 px. Zoom al 200% senza scorrimento orizzontale, reflow a
+320 px.
+
+### Leggibilità
+
+**Accenti e caratteri speciali scritti per intero** in ogni stringa visibile: è
+l'unica regola che il [CLAUDE.md](../CLAUDE.md) dichiara esplicitamente senza
+guardia — *«non lo verifica nessuna guardia: si legge»*. Questo è il momento in
+cui la si legge.
+
+Poi le date italiane a campione in tutte le forme, e **i casi estremi del
+contenuto fabbricati apposta** invece che aspettati: un titolo di novanta
+caratteri, un nome di ciclo lungo, un ruolo lungo, una serata senza foto, una
+senza relatori, una annullata. Lunghezza di riga sotto i 75 caratteri sulle
+pagine istituzionali; vedove, orfane, sillabazione; e **il testo sopra una
+fotografia vera**, dove il contrasto è quello della foto e non quello del token.
+
+### Rispetto del branding
+
+Il marchio **a schermo e non nel DOM**, in ogni posto in cui compare e alle
+larghezze estreme. I sei accenti guardati uno per uno: nessuno prevale, nessuno
+si confonde col fondo, nessuno litiga con la foto della serata. Nessun grassetto
+sintetico su Archivo Black — e **il momento dello scambio**: `font-display: swap`
+significa che il visitatore vede prima Arial e poi Archivo Black, e su un titolo
+grande in rete lenta il salto dura un secondo e si vede. Le forme di ritaglio
+davanti a un ritratto vero, che è la questione lasciata aperta dalla PR 6. La
+favicon su linguetta chiara e scura, nei segnalibri, e **nella schermata Home di
+iOS** — oggi non c'è un `apple-touch-icon`, quindi iOS ci metterebbe una
+miniatura della pagina.
+
+E due meta che mancano e si notano solo guardando: **`theme-color`**, che colora
+la barra del browser, e **`color-scheme`**, senza il quale la barra di
+scorrimento dello scroller — su desktop visibile e lunga ottantuno serate —
+arriva chiara su un sito blu notte. Infine `[data-theme="paper"]`: è dichiarato
+in `colors.css` e non lo imposta nessuno, quindi o è un tema mai collegato o è
+codice morto. Va deciso, perché una palette che non rende è una palette che
+nessuno ha mai guardato.
+
+### Animazioni e responsività dei componenti
+
+Ogni componente in ogni variante su `/componenti`, a tutti i formati: è la pagina
+che esiste per questo. `:active` su touch, dove non si comporta come col mouse —
+è l'unico stato che il design system ha, per decisione. L'**hover appiccicoso**
+di iOS, che resta finché non si tocca altrove. Le transizioni azzerate sotto
+`prefers-reduced-motion`, snap compreso. Il movimento della finestra di tacche e
+il cambio d'accento mentre si scorre: devono cambiare **una volta**, non
+lampeggiare attraverso le serate attraversate — è la guardia col timer replicata
+dalla PR 8, e all'occhio non l'ha mai vista nessuno. Il caricamento pigro
+scorrendo veloce, e lo spazio riservato: un `contain-intrinsic-size` sbagliato
+sposta le posizioni di snap mentre si scorre. Il `<details>` della tendina,
+aperto mentre si scorre.
+
+### Quello che si scopre solo qui
+
+- **La stampa.** Non esiste un `@media print`, e `Ctrl+P` su uno scroller a
+  schermo pieno con `svh` e snap dà ottantuno pagine di cui nessuno sa cosa
+  contengano. Il pubblico di questa associazione ha cinquanta e sessant'anni: il
+  programma della stagione lo stampa. Serve almeno un foglio che renda
+  stampabili la serata a schermo e le due pagine istituzionali
+- **La traduzione automatica di Chrome**, offerta a chi ha il browser in un'altra
+  lingua: riscrive i nodi di testo, e il modale clona nodi
+- **Rete lenta e prima visita**: quanto ci mette la prima serata a essere
+  leggibile su 3G, con caratteri, immagine e i 200 KB di markup che l'archivio
+  pieno avrà
+
+Le anteprime sociali **restano alla PR 20**: senza dominio non c'è niente da
+incollare in una chat.
+
+### Cosa entra in questa PR e cosa no
+
+Entrano i **fix generici** — CSS, markup, attributi, testi, valori: le cose che
+si sistemano dove sono. **Non entra** un difetto che cambia una decisione o rifà
+un componente: quello prende la sua PR, e questa lo registra. E **ogni difetto
+trovato a mano che poteva essere una guardia diventa una guardia**, con il suo
+caso negativo: un collaudo che non lascia dietro nemmeno un test automatico è un
+collaudo da rifare identico la prossima volta.
+
+### Il verbale
+
+`docs/controllo-qualita.md`: la matrice, ogni casella con esito, data e
+dispositivo. Versionato, perché il prossimo giro parta da lì e non dalla memoria
+— e perché *«provato su un telefono»* senza dire quale è esattamente la frase che
+questo repository passa il tempo a smontare.
+
+### Obiettivi
+
+- [ ] La matrice è percorsa per intero e ogni casella ha un esito scritto
+- [ ] Ogni difetto è registrato con dispositivo, impostazione e passi per
+      riprodurlo
+- [ ] I fix generici sono applicati, la suite resta verde
+- [ ] Ogni difetto automatizzabile ha la sua guardia, con il caso negativo
+- [ ] `@media print` esiste ed è stato provato in anteprima di stampa
+- [ ] `apple-touch-icon`, `theme-color` e `color-scheme` ci sono
+- [ ] La sorte di `[data-theme="paper"]` è decisa e scritta in
+      [decisioni.md](decisioni.md)
+- [ ] I difetti che non entrano qui hanno una riga nel piano o in
+      [questioni-aperte.md](questioni-aperte.md)
+- [ ] `docs/controllo-qualita.md` esiste
+
+### Test automatici
+
+- Le guardie nate dai difetti trovati, ciascuna con il suo caso negativo
+- **Guardia**: `apple-touch-icon`, `theme-color` e `color-scheme` su ogni pagina
+  pubblicata. È il patto del layout della PR 5 — ciò che, dimenticato, non fa
+  fallire niente
+- **Guardia**: il CSS pubblicato porta un blocco `@media print`. Il minificatore
+  ha già tolto delle cose, e `dist/` è l'unico posto dove la perdita si vede
+- La suite intera e `npm run test:mutate` restano verdi
+
+### Test manuali
+
+Sono il contenuto di questa PR, non un contorno: tutti i capitoli qui sopra,
+percorsi sulla matrice e scritti nel verbale.
+
+---
+
+## PR 20 — Il dominio
+
+**Branch:** `dominio` · **Dipende da:** 17, 19 — e dal committente
+
+L'ultimo passo, e l'unico che aspetta qualcuno. `site` in `astro.config.mjs` è
+una riga sola, e accende insieme i canonici, gli Open Graph assoluti,
+`checkNoPlaceholders`, la guardia sulle foto segnaposto e l'inversione di
+`robots.txt`: è voluto, ed è il motivo per cui questo passo non può chiudere
+finché i testi veri non ci sono.
+
+### Obiettivi
+
+- [ ] Dominio acquistato e collegato, `site` impostato in `astro.config.mjs`
+- [ ] URL canonici e Open Graph assoluti, con l'immagine predefinita delle
+      anteprime — che è una scelta di contenuto e non di codice, vedi
+      [questioni-aperte.md](questioni-aperte.md)
+- [ ] Sitemap, con `/componenti` escluso. `/admin` è un file copiato da
+      `public/` e non una rotta di Astro, quindi la sitemap non lo vedrebbe
+      comunque: **il posto dove `/admin` si dichiara fuori è `robots.txt`**
+- [ ] `robots.txt` invertito: indicizzazione permessa, con il rimando alla
+      sitemap
+- [ ] I testi veri delle pagine istituzionali, e con essi i blocchi
+      `data-placeholder` che escono
+- [ ] Le due foto segnaposto sostituite da fotografie vere
+- [ ] Misurato il numero di file per deployment con le foto vere, come deciso in
+      [vincoli-tecnici.md](vincoli-tecnici.md)
+- [ ] **L'accesso al CMS col bottone «Sign in with GitHub»**, rimandato dalla
+      PR 14 perché ha bisogno di un'origine che allora non esisteva: applicazione
+      OAuth su GitHub, relay che tiene il segreto — il Worker
+      `sveltia-cms-auth`, che è di Sveltia — e in `public/admin/config.yml`
+      `auth_methods: [oauth, token]` con il `base_url` accanto. È la riga che
+      rende vero «un redattore senza sapere che esiste git» anche per chi non ha
+      un token
+- [ ] La casella di posta, e `ciao@laminieraculturale.it` che smette di essere un
+      segnaposto
+
+### Test automatici
+
+- Con `site` impostato, gli URL canonici e i meta Open Graph sono assoluti
+- La sitemap elenca tutte le pagine delle serate, e non `/componenti`
+- `robots.txt` non vieta più l'indicizzazione — la guardia della PR 17, dall'altro
+  lato del suo interruttore
+- `checkNoPlaceholders` e la guardia sulle foto sono verdi perché non c'è più
+  niente da segnalare, non perché sono spente
+
+### Test manuali
+
+- Anteprima di un link su WhatsApp e su Facebook, con il dominio vero: titolo,
+  descrizione e **la figura della serata**, non la stessa per tutte
+- Il rebuild notturno continua a girare sul dominio nuovo
+- Un salvataggio dal CMS fatto con il bottone, senza token
+
+**La coda del collaudo della PR 19, che senza i contenuti veri non si poteva
+chiudere.** I passi vanno in sequenza e non c'è un secondo giro dopo questo:
+quello che la PR 19 ha guardato su cinque serate d'esempio, due fotografie
+generate e del lorem ipsum, qui si guarda sulle cose vere — ed è l'ultima volta
+che qualcuno lo guarda prima di chiunque altro.
+
+- **Le pagine istituzionali con i testi dentro**: è la prima volta che si vedono
+  nel layout, ed è dove si scopre che una colonna tarata sul lorem ipsum non
+  regge un paragrafo vero
+- **Accenti e caratteri speciali scritti per intero** in ogni testo nuovo: è la
+  regola che il [CLAUDE.md](../CLAUDE.md) dichiara senza guardia — *«si legge»* —
+  e i testi che arrivano dall'associazione non sono ancora passati sotto nessun
+  occhio
+- **I titoli veri alle larghezze vere**: la PR 19 li ha provati su casi estremi
+  fabbricati, qui ci sono quelli che l'associazione usa davvero
+- **Le fotografie vere dentro le forme di ritaglio**, che chiude la questione
+  lasciata aperta dalla PR 6, e il **testo sopra una fotografia vera**, dove il
+  contrasto è quello della foto e non quello del token
+- **Le proporzioni della PR 18 su una scena piena**: un'immagine vera al posto
+  del segnaposto cambia il peso della colonna, ed è la sola cosa della taratura
+  che non si poteva vedere allora

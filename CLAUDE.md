@@ -283,7 +283,7 @@ non una preferenza.
     `checkPlaceholderText` sul pubblicato, `checkPlaceholderSource` sul sorgente,
     e `checkNoPlaceholders`, che **con `site` impostato in `astro.config.mjs`
     rende una violazione un solo blocco marcato**. È l'interruttore di `og:url`:
-    la PR 16 non chiude finché i testi veri non ci sono, ed è voluto.
+    la PR 20 non chiude finché i testi veri non ci sono, ed è voluto.
 
 21. **Il CMS e lo schema sono lo stesso elenco visto da due parti.**
     `public/admin/config.yml` e `src/content.config.ts` descrivono gli stessi
@@ -478,7 +478,7 @@ la ragione per cui è pubblicata è la stessa per cui esiste lo strato `build` �
 per lo stile il sorgente non basta, quindi una rassegna viva solo in `npm run
 dev` lascerebbe le varianti di ogni componente verificate da nessuna parte.
 Prende i dati veri dal dominio: un `data-cycle` inventato lì farebbe scattare la
-guardia della PR 4. **Alla PR 16 va tenuta fuori dalla sitemap.**
+guardia della PR 4. **Alla PR 20 va tenuta fuori dalla sitemap.**
 
 ## Comandi
 

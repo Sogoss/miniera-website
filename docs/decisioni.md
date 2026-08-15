@@ -388,7 +388,7 @@ per come è formattato un file invece che per quello che dice.
 
 **`og:image`, invece, non lo pretende, e non è una svista.** Ha bisogno di
 un'immagine, non di un dominio, e il repository non ne ha una: chiederlo insieme
-a `og:url` avrebbe aperto la PR 16 su una suite rossa che si poteva chiudere
+a `og:url` avrebbe aperto la PR 20 su una suite rossa che si poteva chiudere
 solo inventando un asset che nessuno ha scelto — cioè un test che detta una
 decisione di contenuto. La decisione sta in
 [questioni-aperte.md](questioni-aperte.md); quello che la suite controlla è che
@@ -832,7 +832,7 @@ ciclo viene ritarato nel CMS, indicando un file di test invece del contenuto che
 `CLAUDE.md` dice che per lo stile guardare il sorgente non basta, quindi una
 rassegna viva solo in `npm run dev` lascerebbe le varianti di ogni componente
 verificate da nessuna parte. Fuori dall'indice perché è una pagina di servizio —
-e la sitemap della PR 16 dovrà escluderla. Non `/rassegna`, che è della rassegna
+e la sitemap della PR 20 dovrà escluderla. Non `/rassegna`, che è della rassegna
 stampa della PR 13.
 
 ## Forme di ritaglio, la geometria
@@ -1008,7 +1008,7 @@ colonna della locandina resta vuota, il layout a due colonne è metà lavoro e
 marchio, nessun volto — e dichiarate come segnaposto nel file che le usa. Escono
 quando arrivano le foto vere: [questioni-aperte.md](questioni-aperte.md).
 
-**Le proporzioni su schermo piccolo si tarano una volta sola, alla PR 17.** Su
+**Le proporzioni su schermo piccolo si tarano una volta sola, alla PR 18.** Su
 un telefono la scena divide l'altezza con la Timeline in basso e la navigazione
 in alto, che alla PR 7 non esistono: ogni misura decisa prima va rifatta quando
 arrivano. Quello che alla PR 7 doveva essere giusto è la struttura — niente
@@ -1041,7 +1041,7 @@ parola, e la parola resta al contrasto del testo normale.
 **Le dimensioni scalano per `clamp()` con limiti fissi, non per percentuale
 pura.** Una percentuale vera dipende dal contenitore e per le altezze non ha un
 riferimento; le unità viewport da sole diventano assurde sui ventisette pollici
-e illeggibili sui 320 px. Quello che invece va corretto — ed è la PR 17 — sono i
+e illeggibili sui 320 px. Quello che invece va corretto — ed è la PR 18 — sono i
 **limiti in px** dei `clamp` tipografici: nessuno dei tre termini dipende dalla
 dimensione del carattere di base, quindi chi ingrandisce il testo dal sistema
 non ottiene niente. La scala degli spazi a passi di 4 px resta com'è: scalare
@@ -1302,7 +1302,7 @@ mai messo in cache: è qualcuno che chiede di un altro giorno, e rispondergli
 dalla memoria risponderebbe a un'altra domanda. *(PR 9, in revisione)*
 
 **L'immagine da anteprima si genera solo quando c'è il dominio.** Prima si
-generava comunque, con l'argomento che alla PR 16 non ci fosse niente da
+generava comunque, con l'argomento che alla PR 20 non ci fosse niente da
 ricordarsi — e il costo si vedeva in `dist/`: un JPEG per serata che nessuna
 pagina referenziava, cioè ottantuno ridimensionamenti e ottantuno file morti in
 ogni deployment con l'archivio pieno. La promessa regge lo stesso: arriva il
@@ -1416,7 +1416,7 @@ esiste: fra la voce vecchia e la nuova c'è un caricamento. *(PR 13)*
 **La tendina del telefono è `<details>/<summary>`.** Porta apertura, chiusura,
 fuoco, Invio e l'annuncio *espanso/compresso* senza una riga di script. Quello
 che la tendina del design ha e questa no è la chiusura al clic fuori, che è un
-handler: costa un tocco e risparmia del codice che alla PR 17 andrebbe tarato.
+handler: costa un tocco e risparmia del codice che alla PR 18 andrebbe tarato.
 *(PR 13)*
 
 **L'elenco delle voci è reso due volte, ed è impaginazione e non due sorgenti.**
@@ -1436,7 +1436,7 @@ link, e in un menu è una voce che sembra attiva e non lo è — la stessa mezza
 verità dell'`aria-disabled` su un `<a>` senza indirizzo, tolta alla PR 6. È
 testo, con accanto il suo *in arrivo*. E niente pagina: sarebbe un indirizzo
 condivisibile e indicizzabile per qualcosa che non ha niente da dire, più una
-rotta che la sitemap della PR 16 dovrebbe ricordarsi di escludere. *(PR 13)*
+rotta che la sitemap della PR 20 dovrebbe ricordarsi di escludere. *(PR 13)*
 
 **Ogni link interno pubblicato deve trovare la sua pagina in `dist/`**,
 `checkInternalLinks`: la sorella di `checkEveningRoutes`, e il motivo per cui la
@@ -1486,7 +1486,7 @@ rende la sostituzione un file solo invece di una caccia — il componente
 `data-placeholder` che la guardia legge, e con `site` impostato in
 `astro.config.mjs` un solo blocco marcato in `dist/` è una violazione. È
 l'interruttore di `og:url`, armato dalla configurazione e non dalla memoria di
-qualcuno: **la PR 16 non chiude finché i testi veri non ci sono**, ed è voluto —
+qualcuno: **la PR 20 non chiude finché i testi veri non ci sono**, ed è voluto —
 un dominio vero con un lorem ipsum sopra è l'unica cosa peggiore di non avere il
 dominio. *(PR 13)*
 
@@ -1514,7 +1514,7 @@ e sul telefono è larga quanto lo schermo — una fascia di 54 pixel in cima al
 programma dove il dito non scorre. Provato sul costruito, prima e dopo: nel vuoto
 fra due voci adesso il colpo di rotella raggiunge la scena. *(PR 13)*
 
-**I `clamp()` delle due pagine nuove sono in `rem`.** La PR 17 esiste anche per
+**I `clamp()` delle due pagine nuove sono in `rem`.** La PR 18 esiste anche per
 togliere i px da quelli delle scene, copiati dal design: un `clamp()` che non
 dipende in nessuno dei suoi termini dal corpo di base non dà niente a chi
 ingrandisce il testo dal sistema, e il pubblico di questo sito ha cinquanta e
@@ -1597,7 +1597,7 @@ pubblicazione invece che prima — la CI gira anche sul push a `main`, quindi si
 vede comunque. L'alternativa era far scrivere Sveltia su un branch `contenuti` e
 portarlo su `main` con una PR: nessuna eccezione, ma il redattore salva e non
 pubblica, e qualcuno deve fondere. Si applica nelle impostazioni del repository e
-si verifica alla PR 16. *(deciso alla PR 14, applicato alla PR 16)*
+si verifica alla PR 17. *(deciso alla PR 14, applicato alla PR 17)*
 
 **Il `config.yml` si convalida anche contro lo schema JSON di Sveltia**, che il
 pacchetto pubblica e che quindi è quello della versione fissata dal lockfile.
@@ -1615,7 +1615,7 @@ Zod ha ragione a fermare la build. `editor.preview: false`, perché l'anteprima
 di Sveltia è una resa generica dei campi e questo sito è uno scroller a schermo
 pieno con lo snap e un accento per ciclo: un'anteprima che non gli somiglia è
 una promessa che il sito non mantiene. Quella vera è il deploy preview della
-PR 16. *(PR 14)*
+PR 17. *(PR 14)*
 
 ## La suite veloce
 
@@ -1645,6 +1645,47 @@ cioè il «18 su 18» che questo strumento esiste per non stampare, salito di un
 piano dentro la configurazione della CI. Perciò ogni fetta dichiara le guardie
 che ha accecato e un passo finale somma: una guardia coperta due volte, o
 nessuna, è rossa. *(PR 15)*
+
+## La coda del piano
+
+**La messa in linea si separa dal dominio.** La vecchia PR 16 teneva insieme
+cinque cose con cinque blocchi diversi: collegare Cloudflare Pages non dipende da
+nessuno, il dominio dipende da un acquisto, e i testi veri delle pagine
+istituzionali bloccano `site` — che è la stessa riga che accende canonici, Open
+Graph assoluti e `checkNoPlaceholders`. Legate in un passo solo, tutte e cinque
+aspettavano la più lenta, e con loro le prove su telefono rimandate dalla PR 7 e
+dalla PR 8. Attraverso quelle aspettava anche la taratura delle proporzioni, cioè
+la correzione dei `clamp()` da px a `rem`: l'unica violazione vera di una buona
+pratica che il sito ha oggi, per un pubblico che ingrandisce il testo di sistema.
+Un progetto su Cloudflare Pages risponde a `<progetto>.pages.dev` dal giorno che
+lo si collega, e quello è tutto ciò che quelle prove chiedono. *(PR 16)*
+
+**`site` non si imposta su `pages.dev`.** Renderebbe canonico un indirizzo
+provvisorio, e per la stessa riga farebbe fallire la build sui testi che
+l'associazione non ha ancora scritto. Il sito va in linea *con* i blocchi marcati
+«Segnaposto» addosso, che è la verità su cosa è pronto — e `pages.dev` non si fa
+indicizzare finché il dominio non c'è, perché due siti identici sono un motore di
+ricerca che ne sceglie uno e sceglie quello che sta per sparire. *(PR 16)*
+
+**Il controllo qualità è un passo, non una spunta.** Le guardie di questo
+repository leggono il DOM e l'occhio legge i pixel: fra le due cose c'è una
+categoria di difetti che nessuna guardia può vedere per costruzione — una firma
+tagliata da un `overflow: hidden` soddisfa `checkBrandSignature`, che la legge nel
+markup. Sta fra le proporzioni e il dominio: dopo la taratura, perché altrimenti
+collauderebbe misure che stanno per cambiare; prima del dominio, perché un
+difetto trovato su un sito indicizzato costa di più di uno trovato su
+`pages.dev`. *(PR 16)*
+
+**Il piano prende un numero, e la rinumerazione tocca il codice.** Come la
+PR 10: la regola dice che ogni PR entra nell'elenco, quella che tocca solo la
+documentazione compresa. Il prezzo è cinquantacinque riferimenti da rileggere, e
+non è un lavoro meccanico — undici «PR 16» significavano *il sito collegato* e
+non *il dominio comprato*, e la differenza la sa solo chi legge la frase. Undici
+stanno fuori dalla documentazione: in `Base.astro`, in `placeholder.ts`, nel
+messaggio d'errore di `checkAbsoluteOpenGraph` e nell'asserzione che quel
+messaggio lo nomina come stringa. Contandoli è saltato fuori che uno era già
+sbagliato prima: `sources.test.ts` diceva che la shell di Sveltia in `public/` la
+mette la PR 16, e l'ha messa la PR 14. *(PR 16)*
 
 ## Rimandate
 
