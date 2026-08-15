@@ -2609,7 +2609,10 @@ nessun `.env`, nessun token. Non c'è niente da riscrivere prima di pubblicare, 
   su iPhone lo snap non salta quando la barra di Safari si ritrae e l'apertura
   cade sulla prima serata futura; su Android lo stesso giro; e il salto da una
   tacca della Timeline arriva a destinazione senza essere interrotto dallo snap.
-  **Android: fatto sul preview del branch.**
+  **Android: fatto sul preview del branch. iPhone: non fatto — non ce n'era uno,
+  e la riga si sposta alla PR 18**, che un iPhone lo richiede comunque. Scritto
+  invece che spuntato: Android non risponde alla stessa domanda, perché la
+  ritrazione della barra e `svh` contro `dvh` sono di Safari
 - **Un salvataggio dal CMS con la CSP addosso**, che è la prova che il file
   generato non ha rotto il posto per cui esiste. Se fallisce, i due posti dove
   guardare sono la CSP di `/admin` e il criterio dell'organizzazione sui token a
@@ -2714,6 +2717,13 @@ rimandate in [questioni-aperte.md](questioni-aperte.md).
 - **Con il testo del sistema ingrandito**, che è il controllo per cui esiste il
   primo obiettivo: portarlo al 200% e vedere che il sito cresce invece di
   restare fermo. È un pubblico di cinquanta e sessant'anni
+- **Il giro su iPhone, portato qui dalla PR 17**, dove non è stato fatto perché
+  un iPhone non c'era. Lo snap che non salta quando la barra di Safari si
+  ritrae, l'apertura sulla prima serata futura, e il salto da una tacca della
+  Timeline. Su Android è già provato, e **non risponde alla stessa domanda**:
+  `svh` contro `dvh` e la ritrazione della barra sono comportamenti di Safari,
+  ed è per Safari che la regola 5 esiste. Questo passo un iPhone lo richiede
+  comunque, quindi è il posto dove la prova costa meno
 
 ---
 
@@ -2923,6 +2933,35 @@ finché i testi veri non ci sono.
       comunque: **il posto dove `/admin` si dichiara fuori è `robots.txt`**
 - [ ] `robots.txt` invertito: indicizzazione permessa, con il rimando alla
       sitemap
+- [ ] **La 404 esce dallo spazio dei numeri**, e chiude due cose insieme.
+      *(portata qui dalla PR 17)*
+
+      La prima si misura oggi: `/999` risponde **404**, ma `/404` risponde
+      **200**, perché è la stessa pagina chiesta per nome, cioè una risorsa come
+      le altre. Una pagina che dice «questa pagina non c'è» mentre il protocollo
+      dice che esiste è un *soft 404*, e finché `robots.txt` vieta tutto non si
+      vede: si vede il giorno dell'interruttore, che è questo. Il commento in
+      `src/pages/404.astro` giustifica il «niente `noindex`» col codice di stato,
+      e ha ragione per metà degli indirizzi che arrivano a quel file.
+
+      La seconda arriva fra una sedicina d'anni e va decisa adesso perché è
+      muta: le rotte delle serate sono cifre, quindi **la serata 404 collide con
+      la pagina d'errore**. Alle venti serate l'anno che dicono le date, da 83 a
+      404 sono sedici anni. E non fallisce niente: Astro emette `dist/404.html`
+      per l'una e `dist/404/index.html` per l'altra, che non sono la stessa
+      rotta, quindi a scegliere quale servire su `/404` è l'host, e la serata
+      resta raggiungibile solo con la barra finale. `navigation.ts` la nomina
+      già, in un commento, come «una decisione per chi ci sarà».
+
+      Il rimedio è uno solo per tutt'e due: **un indirizzo a parole**, italiano
+      come `/chi-siamo` e `/contatti`, che non può collidere con un numero e che
+      non ha niente da indicizzare. Il vincolo da verificare prima: `404.html`
+      non è un nome che scegliamo noi — è il file che Pages serve per tutto ciò
+      che non ha — quindi serve una regola `_redirects` che gli dica di usare
+      l'altro con il codice 404. È documentata e non è mai stata provata qui: si
+      prova su un preview, e **se non funziona il ripiego è una guardia** che
+      ferma la build quando una serata prende un numero riservato, che costa poco
+      e rende rumoroso l'unico difetto vero, cioè che non se ne accorga nessuno
 - [ ] I testi veri delle pagine istituzionali, e con essi i blocchi
       `data-placeholder` che escono
 - [ ] Le due foto segnaposto sostituite da fotografie vere
