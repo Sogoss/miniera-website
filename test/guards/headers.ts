@@ -354,3 +354,9 @@ export function checkAdminFetchSources(
 
   return violations;
 }
+
+/** Throwaway: a guard no test covers, to see whether a red shard stops a merge.
+ *  Removed as soon as the answer is in. */
+export function checkFettaRossa(value: string): Violation[] {
+  return value === 'mai' ? [{ rule: 'headers', detail: 'mai' }] : [];
+}
