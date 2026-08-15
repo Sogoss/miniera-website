@@ -47,6 +47,7 @@ import {
   checkAmbientTime,
   checkLocalDateMethods,
   checkMissingTimeZone,
+  checkRebuildSchedule,
 } from '../guards/dates.ts';
 import { findNumberDateConflicts } from '../../src/lib/events.ts';
 import { checkDisplayFontWeightRange } from '../guards/fonts.ts';
@@ -845,5 +846,24 @@ describe('the photographs that stand in for photographs', () => {
     // real ones, and a guard that fires on correct work is one somebody
     // switches off.
     expect([...present].sort()).toEqual([...PLACEHOLDER_PHOTOS].sort());
+  });
+});
+
+/* The one clock read that is not in the code.
+ *
+ * «Already happened» is worked out at build time, so the site goes on saying
+ * the day it was built until something builds it again — and Pages has no
+ * scheduler, so the clock is a cron in a workflow. GitHub runs `schedule` in
+ * UTC and says so nowhere near the file: rule 11, one layer outside anything a
+ * formatter could be asked about. */
+describe('the nightly rebuild', () => {
+  const REBUILD = '.github/workflows/rebuild.yml';
+
+  it('exists, because nothing else moves an evening into the past', () => {
+    expect(exists(REBUILD)).toBe(true);
+  });
+
+  it('lands after Italian midnight in both seasons', () => {
+    expect(checkRebuildSchedule(read(REBUILD), REBUILD).map((v) => v.detail)).toEqual([]);
   });
 });
