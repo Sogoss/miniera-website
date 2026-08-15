@@ -76,6 +76,29 @@ ha ricevuto, e in mezzo c'è `compressHTML`. `/admin` ha la sua riga, più larga
 dichiarata, dopo quella del sito perché per un'intestazione nominata due volte
 Cloudflare lascia valere la regola più specifica. *(PR 17)*
 
+**Ma gli stili sono `'unsafe-inline'`, e la ragione è un difetto che abbiamo
+pubblicato.** La prima versione trattava gli stili come gli script, con gli
+hash. **Un hash in `style-src` copre un elemento `<style>` e non un attributo
+`style`** — quelli sono `style-src-attr` e vogliono `'unsafe-hashes'` — e questo
+design system passa le misure proprio così: `Brand` scrive `--brand-height:
+14px`, `GuestRow` `--guest-size`, `EpisodeBadge` e `SignatureBand` le loro. Con
+gli attributi bloccati ogni proprietà personalizzata ricadeva sul valore
+predefinito del foglio del componente, e il sito è andato in linea con la barra
+alta il doppio: pagina che rende, build verde, tutte le guardie passate, markup
+corretto. L'ha trovato il committente aprendo due deployment affiancati.
+
+La via più stretta sarebbe stata `'unsafe-hashes'` con l'hash di ogni valore —
+il generatore legge già `dist/`, quindi raccoglierli è poca cosa — ed è quella
+sbagliata qui: `'unsafe-hashes'` è capito dai browser **da Safari 15.4**, che è
+esattamente la soglia di questo progetto, e un browser che non lo capisce
+riproduce in silenzio il difetto appena spedito. Uno stile iniettato è una leva
+molto più corta di uno script iniettato, e `script-src` resta esatto. `'unsafe-
+inline'` e gli hash non convivono — la presenza di un hash fa ignorare
+`'unsafe-inline'` — quindi gli hash degli elementi escono con la scelta.
+`checkStyleAttributes` è la guardia che mancava, e chiede la sola domanda che
+conta: **non «c'è un hash» ma «un browser lo applicherebbe»**. *(corretta alla
+PR 17, dopo il primo deployment)*
+
 ## Stile
 
 **Niente Tailwind.** Il design system è già un sistema di token in CSS puro, e

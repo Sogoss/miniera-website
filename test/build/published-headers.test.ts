@@ -6,7 +6,12 @@
  * read in src/ that would answer.
  */
 import { describe, expect, it } from 'vitest';
-import { checkHeaderPolicy, checkInlineHashes } from '../guards/headers.ts';
+import {
+  checkHeaderPolicy,
+  checkInlineHashes,
+  checkStyleAttributes,
+  styleAttributes,
+} from '../guards/headers.ts';
 import { inlineScripts, inlineStyles } from '../../src/lib/headers.ts';
 import { publishedPages } from '../support/dist.ts';
 import { exists, read } from '../support/paths.ts';
@@ -55,6 +60,28 @@ describe('the headers the build writes', () => {
       ...inlineStyles(page.html),
     ]);
     expect(blocks.length).toBeGreaterThan(0);
+  });
+
+  it.each(pages.map((page) => [page.path, page] as const))(
+    '%s publishes no style attribute the policy would drop',
+    (_path, page) => {
+      // The one that was missing. A hash list in `style-src` covers <style>
+      // elements and not `style` attributes, and this design system passes its
+      // sizes as custom properties in exactly that way — so the policy that
+      // shipped dropped every one of them, the components fell back to the
+      // defaults in their stylesheets, and the header went out at twice its
+      // height with this whole file green.
+      expect(checkStyleAttributes(page.html, headers, page.path).map((v) => v.detail))
+        .toEqual([]);
+    },
+  );
+
+  it('is covering style attributes that actually exist', () => {
+    // Anti-vacuity again, and it earns its place here more than anywhere: the
+    // assertion above is satisfied by a site that publishes no `style=` at all,
+    // which is exactly what a reader would assume this site is.
+    const attributes = pages.flatMap((page) => styleAttributes(page.html));
+    expect(attributes.length).toBeGreaterThan(0);
   });
 
   it('changes with the script it covers', () => {

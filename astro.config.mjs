@@ -4,7 +4,7 @@ import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
-import { hashSource, headersFile, inlineScripts, inlineStyles } from './src/lib/headers.ts';
+import { hashSource, headersFile, inlineScripts } from './src/lib/headers.ts';
 
 /** Every file under a directory, deepest first or not — order does not matter.
  *
@@ -49,7 +49,6 @@ function headers() {
       'astro:build:done': ({ dir, logger }) => {
         const root = fileURLToPath(dir);
         const scripts = new Set();
-        const styles = new Set();
 
         const pages = walk(root).filter(
           (path) => path.endsWith('.html') && !path.startsWith(join(root, 'admin')),
@@ -58,18 +57,15 @@ function headers() {
         for (const page of pages) {
           const html = readFileSync(page, 'utf8');
           for (const body of inlineScripts(html)) scripts.add(hashSource(sha256(body)));
-          for (const body of inlineStyles(html)) styles.add(hashSource(sha256(body)));
         }
 
         /* Sorted so that two builds of the same site produce the same file:
            an unstable order would show up as a diff in every deployment and
            make a real change to the policy impossible to see. */
-        const file = headersFile([...scripts].sort(), [...styles].sort());
+        const file = headersFile([...scripts].sort());
         writeFileSync(join(root, '_headers'), file, 'utf8');
 
-        logger.info(
-          `_headers: ${scripts.size} script hash(es) and ${styles.size} style hash(es) over ${pages.length} page(s)`,
-        );
+        logger.info(`_headers: ${scripts.size} script hash(es) over ${pages.length} page(s)`);
       },
     },
   };
