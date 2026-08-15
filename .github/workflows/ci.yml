@@ -98,6 +98,17 @@ jobs:
   #
   # This is the job to require for merging: `guards` alone would pass with three
   # shards silently missing.
+  #
+  # And being the only one required is why it has to carry the shards' own
+  # verdict too, which it did not. A shard writes its report and *then* sets its
+  # exit code — scripts/mutate-guards.mjs, in that order — so a shard that found
+  # a guard nothing holds up still uploads a complete report, this job added up
+  # four of them and went green, and the merge button stayed available with a
+  # warning next to it. Measured on PR 17, deliberately: an exported check that
+  # no test covered gave `guards (3)` red, `guards-complete` green, and the pull
+  # request MERGEABLE. The matrix cannot be required in its place — its contexts
+  # are `guards (1)`…`guards (4)`, so the shard count would have to be written
+  # into the repository settings, where nothing would ever reread it.
   guards-complete:
     runs-on: ubuntu-latest
     needs: guards
@@ -111,5 +122,17 @@ jobs:
         with:
           pattern: mutate-shard-*
           path: shards
+
+      # First, because it is the plainest of the two failures to read: a shard
+      # said out loud that a guard is not being held, and the sum below cannot
+      # see it — a full report is exactly what that shard produces.
+      - name: no shard went red
+        if: needs.guards.result != 'success'
+        run: |
+          echo "::error::una fetta di \`guards\` non è verde (${{ needs.guards.result }}):"\
+            "una guardia accecata non ha fatto fallire niente, oppure una fetta non è"\
+            "arrivata in fondo. Apri i job \`guards (n)\` rossi."
+          exit 1
+
       - name: every check was blinded by exactly one shard
         run: node scripts/mutate-guards.mjs --verify-reports shards/*/shard-*.json
