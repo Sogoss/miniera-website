@@ -2741,15 +2741,23 @@ piccolo*. In breve:
 - [x] **La regola 23 e `checkPixelFontSizes`**, sul sorgente e sul pubblicato,
       con i suoi casi negativi: senza, quella forma rientra dal design la prossima
       volta esattamente come è rientrata questa
-- [ ] L'immagine della serata ha una dimensione che si legge, con Timeline e
+- [x] L'immagine della serata ha una dimensione che si legge, con Timeline e
       navigazione a schermo — la sua forma inclinata è del marchio e non si
-      toglie per far spazio
-- [ ] L'ordine in cui la scena cede su schermo basso è ancora quello giusto ora
-      che gli ingombri sono tutti presenti
-- [ ] Il testo del titolo e della descrizione sono tarati sulle larghezze vere
-      dei telefoni comuni, non su una scala scelta a tavolino
-- [ ] Le tacche della Timeline e la pillola della navigazione non coprono niente
-      di ciò che una scena deve mostrare
+      toglie per far spazio. **Ed è uscita dall'ordine di cessione**, che è una
+      richiesta del committente guardando il sito su un telefono: 265px su un
+      iPhone da 740, 174 su un SE, e non sparisce più sotto nessuna soglia
+- [x] L'ordine in cui la scena cede su schermo basso è ancora quello giusto ora
+      che gli ingombri sono tutti presenti. L'ordine sì, le soglie no: **tre
+      erano tarate su schermi che nessuno ha** e non erano mai scattate su un
+      telefono vero
+- [x] Il testo del titolo e della descrizione sono tarati sulle larghezze vere
+      dei telefoni comuni, non su una scala scelta a tavolino — misurando le
+      cinque serate d'esempio a 375×667 e 390×740, con quella che ha
+      registrazioni e presenze a fare da caso peggiore
+- [x] Le tacche della Timeline e la pillola della navigazione non coprono niente
+      di ciò che una scena deve mostrare: lo spazio in cima viene da `--nav-bar`
+      come quello in fondo viene da `--timeline-bar`, e non più da un numero
+      scelto a mano che su un telefono corto finiva sotto la pillola
 - [ ] **Il pannello del modale sta dentro lo schermo che c'è.** Oggi è
       `max-height: 80vh`, cioè misurato sul viewport grande: su iOS con la barra
       degli indirizzi visibile può essere più alto di quel che si vede, e il
@@ -2769,6 +2777,18 @@ piccolo*. In breve:
 > comprime sotto il proprio contenuto, quindi la riga cresceva oltre l'altezza
 > della scena e il di più veniva disegnato fuori, dove c'è una barra fissa. Ora è
 > `minmax(0, auto)` con `overflow: hidden` sul testo.
+>
+> **E il resto della taratura è venuto da lì.** La fotografia, senza più il
+> `min-height` che la faceva sfondare, si è ridotta a sessanta pixel — «prendi
+> quel che resta» su una serata con due relatori vuol dire niente — e il
+> committente ha chiesto due cose guardando il telefono: che i testi siano più
+> piccoli e che **l'immagine non venga sacrificata mai**. La prima ha portato una
+> scala tipografica propria del telefono; la seconda ha tolto la fotografia
+> dall'ordine di cessione, che è una decisione della PR 7 riscritta. Cercando da
+> dove venissero quelle misure è saltato fuori il difetto più grosso della
+> giornata: **quattro componenti su otto scrivevano la dimensione del testo in
+> px** attraverso una custom property, e la guardia della regola 23 — nata lo
+> stesso giorno — non li vedeva.
 >
 > **E ha detto una seconda cosa, sul provare.** Il confronto fra produzione e
 > preview con il cursore di Android al massimo ha dato due schermate identiche:

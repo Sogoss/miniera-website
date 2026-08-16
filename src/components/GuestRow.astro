@@ -61,8 +61,13 @@ const inlineStyle = [size && `--guest-size: ${size}`, style].filter(Boolean).joi
 </div>
 
 <style>
+  /* `--guest-size` is deliberately *not* declared here. Declared on the row it
+     would beat the value inherited from whatever contains the row, which is how
+     the scene sets it for a phone — a declaration on the element wins over
+     inheritance, and the names came out at the default of 2.125rem, bigger than
+     the title. The default lives in the `var()` that reads it, which loses to
+     an inherited value and to the prop alike. */
   .guest-row {
-    --guest-size: 2.125rem;
     --portrait-size: 56px;
 
     display: flex;
@@ -99,7 +104,7 @@ const inlineStyle = [size && `--guest-size: ${size}`, style].filter(Boolean).joi
   .guest-name {
     font-family: var(--font-display);
     font-weight: var(--weight-black);
-    font-size: var(--guest-size);
+    font-size: var(--guest-size, 2.125rem);
     line-height: 0.98;
     letter-spacing: var(--tracking-display);
     color: var(--text-primary);

@@ -1915,6 +1915,31 @@ condiviso fra scena, navigazione, Timeline e pagine istituzionali: mezze
 convertite darebbero la scena in versione telefono con la Timeline ancora a
 rotaia. Quello che il difetto chiedeva davvero era il ritaglio. *(PR 18)*
 
+**La fotografia esce dall'ordine di cessione.** Cedeva sotto i 620px di altezza,
+dopo la descrizione e prima delle presenze. Non cede più: la fotografia è della
+serata, la capsula inclinata è del marchio, e un programma di fotografie che
+butta la fotografia proprio sul dispositivo da cui lo legge quasi tutto il
+pubblico sta tenendo la metà sbagliata. È una richiesta del committente, guardando
+il sito su un telefono, e cambia una decisione della PR 7. A cedere al suo posto
+è la **dimensione del testo**, che sul telefono ha una scala sua. *(PR 18)*
+
+**Il telefono ha una scala tipografica propria, e non la curva del desktop.** La
+stessa `clamp()` che su uno schermo largo dà un titolo giusto arriva su un
+telefono come un testo troppo grande per la stanza, e a pagarlo era la
+fotografia. Sotto i 900px di larghezza titolo, nomi dei relatori e righe di
+fatto scendono di uno scalino, e sotto i 760 di altezza di un secondo. Tutto in
+`rem`, quindi chi ingrandisce il testo continua a ottenere quello che ha
+chiesto. *(PR 18)*
+
+**E tre soglie erano tarate su schermi che nessuno ha.** La descrizione usciva a
+680, le presenze a 560, la fotografia a 620 — e in Safari la barra non
+restituisce mai la sua altezza, quindi un iPhone da 844 dà alla scena circa 740 e
+*nessuna* di quelle soglie è mai scattata su un telefono vero. Adesso sono 760 e
+680, misurate contro le serate d'esempio a 375×667 e 390×740: la serata con le
+registrazioni e le presenze è quella che decide, perché è la più lunga.
+L'ordine dichiarato non cambia — la descrizione, poi le presenze — cambia dove
+scatta. *(PR 18)*
+
 **La guardia legge `font-size` e la scorciatoia `font`, e nient'altro.** Ogni
 altra lunghezza in px resta legittima, e due sono deliberate: un padding che
 resta fermo mentre il testo cresce è quel che al testo dà lo spazio, e

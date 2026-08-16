@@ -678,7 +678,44 @@ const BOOKING_LABEL = 'Prenota il posto';
     }
   }
 
-  @media (max-width: 900px) and (max-height: 560px) {
+  /* A phone held in Safari, which is the same 760 the description leaves at and
+     for the same reason: the bar never gives its height back, so 760 is where
+     «a phone» begins. With the picture no longer on the list of what gives way,
+     what gives way is the size of the type.
+
+     Measured, not guessed. At 375×667 the text asked for 22px more than the
+     scene had and the note was clipped in half; at 390×740 the evening with the
+     recordings and the attendance lost 12. One step down on every size and
+     tighter gaps give back about forty. */
+  @media (max-width: 900px) and (max-height: 760px) {
+    .scene-title {
+      font-size: 1.25rem;
+    }
+
+    .scene-guests {
+      --guest-size: 1rem;
+    }
+
+    .scene-fact {
+      font-size: var(--text-xs);
+    }
+
+    .scene-text {
+      gap: var(--space-2);
+    }
+
+    .scene-meta {
+      gap: var(--space-1);
+      padding-top: var(--space-2);
+    }
+  }
+
+  /* Was 560, and 560 was another threshold no phone ever reached. On an SE at
+     375×667 the evening that has both recordings and an attendance was still
+     16px over — with the type already a step down and the picture no longer
+     giving way, this is what is left on the list, and it is the least of what
+     a past evening says: the date, the place and the recordings all outrank it. */
+  @media (max-width: 900px) and (max-height: 680px) {
     .scene-attendance {
       display: none;
     }
