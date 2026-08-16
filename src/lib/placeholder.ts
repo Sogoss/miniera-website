@@ -71,7 +71,18 @@ export const PLACEHOLDER_IMAGES = {
  * switches off, and it would take the two real ones with it. Declaring is a
  * human act here, as it is for `PLACEHOLDER_NUMBER`.
  */
-export const PLACEHOLDER_PHOTOS = ['sala-esempio.png', 'serata-esempio.png'] as const;
+export const PLACEHOLDER_PHOTOS = [
+  'sala-esempio.png',
+  'serata-esempio.png',
+  /* I quattro ritratti sono tinte unite 800×800, chieste così: servono a far
+     vedere il ritaglio a otto lobi su una faccia che non c'è ancora, e sono
+     segnaposto per la stessa ragione delle due sopra — una tinta piena in un
+     ritratto rende perfettamente e non dice di sé che non è una persona. */
+  'ritratto-amina-belhaj.png',
+  'ritratto-chiara-fenoglio.png',
+  'ritratto-marco-zatterin.png',
+  'ritratto-piergiorgio-rosso.png',
+] as const;
 
 export type PlaceholderPerson = { name: string; role: string };
 export type PlaceholderValue = { title: string; body: string };

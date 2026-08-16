@@ -28,7 +28,7 @@ import GuestRow from './GuestRow.astro';
 import Label from './Label.astro';
 import { type EventState, stateOf } from '../lib/events.ts';
 import type { Scene } from '../lib/programme.ts';
-import { fullAddress } from '../lib/venues.ts';
+import { venueLines } from '../lib/venues.ts';
 
 interface Props {
   scene: Scene;
@@ -115,7 +115,16 @@ const BOOKING_LABEL = 'Prenota il posto';
           <path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"></path>
           <circle cx="12" cy="10" r="2.6"></circle>
         </svg>
-        <span>{fullAddress(scene.venue)}</span>
+        {/* Two lines, the name of the place above and the street under it: on a
+            phone the single line wrapped wherever it ran out, which put
+            «Piazza Massaua 17/b,» and «Torino» on either side of a break that
+            means nothing. Both halves come from `venueLines`, which is the same
+            composition `fullAddress` is written out of — rule 19 asks that the
+            spelling live in one place, not that it be one line. */}
+        <span class="scene-venue">
+          <span class="scene-venue-name">{venueLines(scene.venue).name}</span>
+          <span class="scene-venue-where">{venueLines(scene.venue).where}</span>
+        </span>
       </p>
       {
         scene.attendance !== undefined && (
@@ -386,6 +395,21 @@ const BOOKING_LABEL = 'Prenota il posto';
 
   .scene-when {
     font-weight: var(--weight-semibold);
+  }
+
+  /* The name on top, the street under it. `align-items: center` on the row puts
+     the pin beside the middle of the two lines, which is where it belongs. */
+  .scene-venue {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .scene-venue-name {
+    font-weight: var(--weight-semibold);
+  }
+
+  .scene-venue-where {
+    color: var(--text-secondary);
   }
 
   /* An evening that was called off, struck through on the two facts the
