@@ -2526,9 +2526,11 @@ nessun `.env`, nessun token. Non c'è niente da riscrivere prima di pubblicare, 
       Periferia** per esteso, e il perché sta in [decisioni.md](decisioni.md):
       lo slug abbrevia, e la regola 7 si perde in un posto che nessuna guardia
       guarda
-- [ ] Progetto collegato a Cloudflare Pages: build a ogni commit su `main`, e
-      **deploy preview su ogni PR** — che è anche l'anteprima che il CMS non ha
-- [ ] Rebuild notturno dopo la mezzanotte italiana, e si vede una serata passare
+- [x] Progetto collegato a Cloudflare Pages: build a ogni commit su `main`, e
+      **deploy preview su ogni PR** — che è anche l'anteprima che il CMS non ha.
+      *Le tre caselle che seguivano il merge sono state chiuse alla PR 18, che è
+      la prima PR utile: vedi lì*
+- [x] Rebuild notturno dopo la mezzanotte italiana, e si vede una serata passare
       da *in programma* a *già svolta*. **Si prova dopo il merge, e va detto
       perché non è pigrizia**: GitHub registra `schedule` e `workflow_dispatch`
       solo dal branch predefinito, quindi finché `rebuild.yml` vive sul branch
@@ -2550,7 +2552,7 @@ nessun `.env`, nessun token. Non c'è niente da riscrivere prima di pubblicare, 
 - [x] `guards-complete` fra i *required status checks*, e una fetta rossa ferma
       un merge — provato. **Alla prima misura non lo fermava**, e la correzione
       sta in `ci.yml`: vedi i test manuali qui sotto
-- [ ] Un salvataggio da `/admin` arriva su `main` e fa partire una build —
+- [x] Un salvataggio da `/admin` arriva su `main` e fa partire una build —
       provato. **Dopo il merge**, come il rebuild e per una ragione simile: è la
       produzione a essere il posto dove un redattore scrive, e un salvataggio
       fatto da un preview proverebbe la stessa cosa da un indirizzo che non
@@ -2692,8 +2694,15 @@ alla prima occasione utile invece che a una casella che nessuno riapre.
       invece che all'01:00: gli `schedule` di GitHub sono best-effort e la coda
       slitta, il che può solo spostare in avanti — quel che deve essere vero è
       «dopo la mezzanotte italiana»
-- [ ] **Un salvataggio da `/admin`** che arriva su `main` e fa partire una
-      build. È l'unico dei tre non ancora fatto, e sta fra i test manuali
+- [x] **Un salvataggio da `/admin`** che arriva su `main` e fa partire una
+      build — fatto il 16 agosto 2026, modificando il titolo della serata 83:
+      commit `bb1e338` su `main` senza passare da una pull request, `verify`
+      verde *dopo*, e il deployment di Cloudflare riuscito allo stesso secondo
+      del commit. Le due metà si guardano separatamente per la ragione scritta
+      alla PR 17: il run di GitHub non riporta l'esito della build di Pages.
+      **E ha detto una cosa che nessuno aveva previsto**: Sveltia riscrive il
+      frontmatter intero, ordine dei campi e stile YAML compresi — è in
+      [contenuti.md](contenuti.md)
 
 ### Decisioni prese scrivendo la PR
 
@@ -2783,7 +2792,8 @@ piccolo*. In breve:
   descrive, ed è visibile solo lì
 - **Un salvataggio da `/admin`**, ereditato dalla PR 17: arriva su `main`, fa
   partire una build, e la scheda Actions dice com'è andata — perché con il bypass
-  del ruleset quel commit non passa dai test prima di entrare
+  del ruleset quel commit non passa dai test prima di entrare. **Fatto**, e con
+  esso l'ultimo obiettivo aperto della PR 17
 
 ---
 
