@@ -2797,7 +2797,16 @@ piccolo*. In breve:
   esca dallo schermo, in verticale e in orizzontale
 - **Con il testo del sistema ingrandito**, che è il controllo per cui esiste il
   primo obiettivo: portarlo al 200% e vedere che il sito cresce invece di
-  restare fermo. È un pubblico di cinquanta e sessant'anni
+  restare fermo. È un pubblico di cinquanta e sessant'anni. **Fatto**, con la
+  dimensione del carattere del browser portata a 24: sul preview il titolo passa
+  a due righe e la descrizione cresce, in produzione restano dov'erano.
+  **E il come conta quanto l'esito**: la prova risponde solo se a cambiare è la
+  *dimensione base del carattere*. Lo zoom di pagina e il cursore
+  «ridimensionamento testo» di Android moltiplicano tutte le misure del testo, px
+  compresi, quindi danno due schermate identiche — provato, e sono servite due
+  prove sbagliate per capire quale fosse quella giusta. Il sito non dichiara
+  nessuna dimensione su `html` né su `:root`, ed è ciò che fa arrivare la scelta
+  del lettore fino ai `rem`
 - **Il giro su iPhone, portato qui dalla PR 17**, dove non è stato fatto perché
   un iPhone non c'era. Lo snap che non salta quando la barra di Safari si
   ritrae, l'apertura sulla prima serata futura, e il salto da una tacca della
