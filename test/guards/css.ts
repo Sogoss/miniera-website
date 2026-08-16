@@ -619,17 +619,49 @@ export function checkPixelFontSizes(
 ): Violation[] {
   const violations: Violation[] = [];
   const clean = stripComments(css);
+  const all = declarations(clean);
 
-  for (const { property, value, index } of declarations(clean)) {
+  /* Every custom property whose value carries a px length, so that a size
+     reached through one is read as the px it is.
+     This was the hole the rule shipped with, and four of the eight components
+     had it: `font-size: var(--guest-size)` with `--guest-size: 34px` is text in
+     px, and the first version of this guard called it rem-clean. The property
+     even said so out loud — «in px, like the export» — which is the shape a
+     guard is supposed to catch rather than the shape it is fooled by.
+     Scope is not modelled, exactly as in checkUndefinedCustomProperties: a
+     declaration anywhere in the text counts. The alternative is resolving the
+     cascade, and what is being hunted here is a name that is px everywhere it
+     is declared. */
+  const pixelProperties = new Map<string, string>();
+  for (const { property, value } of all) {
+    if (!property.startsWith('--')) continue;
+    if (!/\b\d*\.?\d+px\b/.test(value)) continue;
+    pixelProperties.set(property, value.trim());
+  }
+
+  for (const { property, value, index } of all) {
     const name = property.toLowerCase();
     if (name !== 'font-size' && name !== 'font') continue;
 
-    const found = value.match(/\b\d*\.?\d+px\b/g);
-    if (!found) continue;
+    const direct = value.match(/\b\d*\.?\d+px\b/g) ?? [];
+
+    const through: string[] = [];
+    for (const [read] of value.matchAll(/var\(\s*(--[a-z0-9-]+)/gi)) {
+      const token = /var\(\s*(--[a-z0-9-]+)/i.exec(read)?.[1];
+      const declared = token && pixelProperties.get(token);
+      if (declared) through.push(`${token}: ${declared}`);
+    }
+
+    if (direct.length === 0 && through.length === 0) continue;
+
+    const how =
+      through.length > 0
+        ? `through ${through.join(', ')}`
+        : `(${direct.join(', ')})`;
 
     violations.push({
       rule: 'rule 23',
-      detail: `\`${name}: ${value.trim()}\` on line ${lineNumber(clean, index)} of ${path} sizes text in px (${found.join(', ')}): a reader who enlarges the system text gets nothing, and inside a \`clamp()\` that is invisible — the value still scales with the window. Write the limits in \`rem\`, or with one of the \`--text-*\` tokens`,
+      detail: `\`${name}: ${value.trim()}\` on line ${lineNumber(clean, index)} of ${path} sizes text in px ${how}: a reader who enlarges the system text gets nothing, and inside a \`clamp()\` that is invisible — the value still scales with the window. Write the limits in \`rem\`, or with one of the \`--text-*\` tokens`,
     });
   }
 

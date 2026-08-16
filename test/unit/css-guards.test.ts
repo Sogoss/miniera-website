@@ -363,6 +363,38 @@ describe('checkPixelFontSizes', () => {
     expect(checkPixelFontSizes('.i { width: 18px; height: 18px; }')).toEqual([]);
   });
 
+  it('follows a size reached through a custom property', () => {
+    // The hole the rule shipped with, and four of the eight components had it:
+    // the px is in the property, not in the font-size, and the first version of
+    // this guard called it clean.
+    const violations = checkPixelFontSizes(
+      '.guest-row { --guest-size: 34px; }\n.guest-name { font-size: var(--guest-size); }',
+      'GuestRow.astro',
+    );
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain('--guest-size');
+    expect(violations[0]!.detail).toContain('34px');
+  });
+
+  it('accepts the same shape once the property is in rem', () => {
+    expect(
+      checkPixelFontSizes(
+        '.guest-row { --guest-size: 2.125rem; }\n.guest-name { font-size: var(--guest-size); }',
+      ),
+    ).toEqual([]);
+  });
+
+  it('does not report a custom property in px that sizes something else', () => {
+    // `--timeline-tick-height` and `--portrait-size` are px on purpose, and
+    // nothing reads them as type. A guard that fired here would be the one
+    // somebody switches off.
+    expect(
+      checkPixelFontSizes(
+        ':root { --portrait-size: 56px; }\n.p { width: var(--portrait-size); height: var(--portrait-size); }',
+      ),
+    ).toEqual([]);
+  });
+
   it('is not fooled by a property whose name merely starts with font-size', () => {
     expect(checkPixelFontSizes('.a { font-size-adjust: 0.52; letter-spacing: 1px; }')).toEqual([]);
   });

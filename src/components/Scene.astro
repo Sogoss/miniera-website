@@ -84,7 +84,7 @@ const BOOKING_LABEL = 'Prenota il posto';
       scene.speakers.length > 0 && (
         <div class="scene-guests">
           {scene.speakers.map((speaker) => (
-            <GuestRow name={speaker.name} role={speaker.role} size={20}>
+            <GuestRow name={speaker.name} role={speaker.role}>
               {speaker.photo && (
                 <Image
                   slot="portrait"
@@ -349,7 +349,13 @@ const BOOKING_LABEL = 'Prenota il posto';
     text-wrap: pretty;
   }
 
+  /* The size of a guest's name is set here and not passed as a prop, which is
+     the difference that makes the phone tunable at all: a custom property is
+     inherited, so the media query below can lower it, while an inline style
+     from a prop cannot be overridden by any rule. */
   .scene-guests {
+    --guest-size: 1.25rem;
+
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -553,7 +559,7 @@ const BOOKING_LABEL = 'Prenota il posto';
          which is why it painted over the title on the first iPhone it met.
          Without a photograph the text simply takes the first row, which is
          `1fr`: nothing is reserved for a picture that is not there. */
-      grid-template-rows: minmax(22%, 1fr) minmax(0, auto);
+      grid-template-rows: minmax(30%, 1fr) minmax(0, auto);
       align-content: stretch;
       gap: clamp(12px, 2.5vh, 28px);
 
@@ -568,6 +574,26 @@ const BOOKING_LABEL = 'Prenota il posto';
 
     .scene-text {
       overflow: hidden;
+    }
+
+    /* A phone gets a scale of its own, and this is the correction the first
+       real device asked for: the same fluid curve that reads well on a desktop
+       arrives here as type too big for the room, and what pays for it is the
+       photograph — which on this site is not decoration to be sacrificed.
+       Every one of these is a `rem`, rule 23, so a reader who enlarges the
+       system text still gets it. */
+    .scene-title {
+      font-size: clamp(1.375rem, 5.6vw, 1.75rem);
+    }
+
+    .scene-guests {
+      --guest-size: 1.0625rem;
+
+      gap: var(--space-2);
+    }
+
+    .scene-fact {
+      font-size: var(--text-sm);
     }
 
     .scene-photo {
@@ -605,7 +631,14 @@ const BOOKING_LABEL = 'Prenota il posto';
    * its own, with all of it. What a scene must keep is what makes it useful at
    * a glance and actionable — the title, the date, the place, the buttons and
    * the note. So the description goes first (it is the longest, and the one
-   * thing repeated in full elsewhere), then the picture, then the attendance.
+   * thing repeated in full elsewhere), then the attendance.
+   *
+   * **The photograph is not on the list, and that is a decision of PR 18.** It
+   * used to give way under 620px, and it does not any more: the picture is the
+   * evening's, the tilted capsule is the brand's, and a programme of photographs
+   * that drops the photograph on the device most people read it on is keeping
+   * the wrong half. What gives way instead is the size of the type, which on a
+   * phone has a scale of its own — see the media query above.
    *
    * Clipped, never scrollable: a scrollable scene inside a scrollable scroller
    * is the thing the arrow keys cannot tell apart.
@@ -641,12 +674,6 @@ const BOOKING_LABEL = 'Prenota il posto';
      written above: the description gives way before the picture. */
   @media (max-width: 900px) and (max-height: 760px) {
     .scene-description {
-      display: none;
-    }
-  }
-
-  @media (max-width: 900px) and (max-height: 620px) {
-    .scene-photo {
       display: none;
     }
   }

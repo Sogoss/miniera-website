@@ -110,25 +110,25 @@ const guest = scene.speakers[0];
       <h2>Brand</h2>
       <div class="row row-baseline">
         <Brand />
-        <Brand height={26} />
-        <Brand height={13} />
+        <Brand height="1.625rem" />
+        <Brand height="0.8125rem" />
       </div>
       <div class="row on-invert">
-        <Brand tone="blue" height={26} />
+        <Brand tone="blue" height="1.625rem" />
       </div>
     </section>
 
     <section class="gallery-section">
       <h2>SignatureBand</h2>
       <SignatureBand />
-      <SignatureBand size={20} />
+      <SignatureBand size="1.25rem" />
     </section>
 
     <section class="gallery-section">
       <h2>EpisodeBadge</h2>
       <div class="row row-baseline">
         <EpisodeBadge>#{scene.number}</EpisodeBadge>
-        <EpisodeBadge size={26}>#{scene.number}</EpisodeBadge>
+        <EpisodeBadge size="1.625rem">#{scene.number}</EpisodeBadge>
       </div>
     </section>
 
@@ -137,7 +137,7 @@ const guest = scene.speakers[0];
       <div class="column">
         {
           guest && (
-            <GuestRow name={guest.name} role={guest.role} size={20}>
+            <GuestRow name={guest.name} role={guest.role} size="1.25rem">
               <span class="sample-portrait" slot="portrait" />
             </GuestRow>
           )
@@ -148,7 +148,12 @@ const guest = scene.speakers[0];
             chiamante e quello del componente devono convivere in un attributo
             solo, perché scritti due volte il browser tiene il primo e butta
             l'altro. */}
-        <GuestRow name="Con uno stile dal chiamante" style="max-width: 22rem" />
+        {/* Tutt'e due le prop, ed è il caso che lo strato build guarda: da
+            quando la misura ha un valore predefinito nel foglio invece che
+            nella firma, un `style` da solo non ha più niente con cui comporsi,
+            e la composizione smetterebbe di essere osservata senza che nulla
+            diventi rosso. */}
+        <GuestRow name="Con uno stile dal chiamante" size="1.25rem" style="max-width: 22rem" />
       </div>
       <p class="note">
         Il ritratto è un riquadro di prova: nessun relatore d'esempio ha una
