@@ -61,9 +61,9 @@
      both sides of the control, the touch target, and the hairline on both
      sides. The target is in px on purpose and stays there, rule 23: a finger is
      the same size on every screen at every text setting. */
-  --nav-tap-target: 44px;
+  --tap-target: 44px;
   --nav-bar: calc(
-    var(--space-3) + var(--space-1) * 2 + var(--nav-tap-target) +
+    var(--space-3) + var(--space-1) * 2 + var(--tap-target) +
       var(--border-width-hairline) * 2
   );
 

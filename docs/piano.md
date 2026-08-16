@@ -2858,6 +2858,16 @@ suite verde. Lo stesso vale per un contrasto calcolato contro un token e vissuto
 sopra una fotografia.
 
 Va dopo la PR 18 e non prima: la 18 è la taratura, questa è il collaudo.
+
+> **Un lavoro le arriva dalla PR 18, con un numero.** `--text-muted` è 0,44 di
+> crema sul blu e misura **3,3:1**, sotto il 4,5 di un testo. La PR 18 ha spostato
+> a `--text-secondary` i due usi che stavano dentro una scena — la nota e la
+> parola *già svolta* — e ha lasciato gli altri: le etichette di `pages.css`, la
+> cifra di una statistica, la voce disattivata della navigazione, la freccia di
+> una riga. Non sono lo stesso caso — un controllo inattivo è escluso dalla
+> soglia, una freccia è un'icona e ne ha una più bassa — e vanno guardati uno per
+> uno, con la pagina davanti. È esattamente il lavoro di questo passo: un
+> contrasto calcolato contro un token e vissuto sopra una fotografia.
 Invertite, il collaudo troverebbe le cose che la taratura sta già per cambiare.
 
 ### La matrice

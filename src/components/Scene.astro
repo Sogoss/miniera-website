@@ -308,8 +308,12 @@ const BOOKING_LABEL = 'Prenota il posto';
     color: var(--text-secondary);
   }
 
+  /* Secondary and not muted, like the note below and for the same measurement:
+     this is the word that says «già svolta» or «annullata», which on a
+     cancelled evening is half of what the reader needs — the other half being
+     the line through the date, which a screen reader does not announce. */
   .scene-state {
-    color: var(--text-muted);
+    color: var(--text-secondary);
   }
 
   /* Fluid down to a phone and up to a wide desktop, bounded by both the width
@@ -420,10 +424,16 @@ const BOOKING_LABEL = 'Prenota il posto';
     gap: var(--space-2);
   }
 
+  /* `--text-secondary` and not `--text-muted`, which is what it was: muted is
+     0.44 of the cream over the blue, and that measures 3.3:1 — under the 4.5
+     a piece of text needs, on the line that says whether a reader can walk in
+     («Ingresso libero, posti limitati») or what happened to the evening
+     («Serata annullata»). Not a colour to be dimmed for tone: 0.68 measures
+     5.6:1 and is what every other secondary line on the site already uses. */
   .scene-note {
     margin: 0;
     font: var(--type-small);
-    color: var(--text-muted);
+    color: var(--text-secondary);
   }
 
   /* These are the rows the modal shows, and the same markup is what a reader
@@ -688,18 +698,16 @@ const BOOKING_LABEL = 'Prenota il posto';
      recordings and the attendance lost 12. One step down on every size and
      tighter gaps give back about forty. */
   @media (max-width: 900px) and (max-height: 760px) {
-    .scene-title {
-      font-size: 1.25rem;
-    }
-
     .scene-guests {
       --guest-size: 1rem;
     }
 
-    .scene-fact {
-      font-size: var(--text-xs);
-    }
-
+    /* The title and the facts are **not** on this list, and the first pass had
+       them here. What was bought by dropping the date and the place to 13px is
+       exactly the wrong thing to sell: they are the two things a reader is on
+       this page for — when, and where. The room comes from the gaps and from
+       the picture giving back the difference between its share and its floor,
+       which is what a floor is for. */
     .scene-text {
       gap: var(--space-2);
     }
@@ -707,6 +715,39 @@ const BOOKING_LABEL = 'Prenota il posto';
     .scene-meta {
       gap: var(--space-1);
       padding-top: var(--space-2);
+    }
+
+    /* The row of a recording is a control with a desktop's padding, and on a
+       past evening it is the piece that does not fit: it is the only scene with
+       both the recordings and everything else. Smaller box, same target — the
+       row is 40 tall, over the 24 a pointer target needs, and it is not the
+       primary action of the scene. */
+    .scene-materials a {
+      padding: var(--space-2) var(--space-3);
+      font-size: var(--text-sm);
+    }
+
+    .material-play {
+      width: 22px;
+      height: 22px;
+    }
+  }
+
+  /* Under 700 the floor of the picture comes down four points. It is not the
+     picture giving way — it never disappears and it is never smaller than a
+     quarter of the scene — it is the difference between a floor tuned for a
+     phone and one tuned for the shortest phone anybody still carries. */
+  @media (max-width: 900px) and (max-height: 700px) {
+    .scene {
+      grid-template-rows: minmax(26%, 1fr) minmax(0, auto);
+    }
+
+    /* And the last five pixels come from the spaces, not from the sizes: a past
+       evening carries one line more than a future one, and it is the only scene
+       that runs out here. */
+    .scene-guests,
+    .scene-actions {
+      gap: var(--space-1);
     }
   }
 

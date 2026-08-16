@@ -1940,6 +1940,33 @@ registrazioni e le presenze è quella che decide, perché è la più lunga.
 L'ordine dichiarato non cambia — la descrizione, poi le presenze — cambia dove
 scatta. *(PR 18)*
 
+**La scala del telefono ha dei pavimenti, e sono di accessibilità.** La prima
+taratura aveva comprato spazio per la fotografia abbassando *tutto*, e fra le
+cose abbassate c'erano la data e il luogo, scesi a 13px: cioè le due cose per cui
+un lettore è su quella pagina. Non stanno più su nessuna lista: la stanza si
+trova negli spazi e nella fotografia, che restituisce la differenza fra la sua
+quota e il suo pavimento — che è a cosa serve un pavimento. Sotto i 900px
+scendono di uno scalino solo i nomi dei relatori, e sotto i 700 solo gli spazi.
+*(PR 18)*
+
+**La nota e lo stato passano da `--text-muted` a `--text-secondary`.** Muted è
+0,44 di crema sul blu e misura **3,3:1**, sotto il 4,5 che un testo richiede; è
+il colore di «Ingresso libero, posti limitati», di «Serata annullata» e della
+parola *già svolta*. Non è un tono da attenuare: è la riga che dice se si entra
+e cos'è successo alla serata. Secondary misura 5,6:1 ed è quello che ogni altra
+riga secondaria del sito usa già. **Il token resta com'è**, e gli altri suoi usi
+— le etichette di `pages.css`, la voce disattivata della navigazione, la freccia
+di una riga — si guardano alla PR 19, che è il passo del controllo qualità: quello
+sopra una fotografia non si calcola contro un token. *(PR 18)*
+
+**Il bottone prende il bersaglio da 44 dal token che già c'era.** Padding e riga
+sommavano 43 sulla misura media: un pixel sotto quello che un dito riceve
+ovunque altro sul sito, ed è il genere di differenza che resta lì perché nessuno
+la misura. Il token si chiama ora `--tap-target` e non `--nav-tap-target`, perché
+da qui lo leggono in due. Il bottone piccolo tiene la sua altezza, 36: 44 su un
+controllo di tre parole sarebbe una pillola di padding, e 36 è comunque ben sopra
+i 24 di un bersaglio per puntatore. *(PR 18)*
+
 **La guardia legge `font-size` e la scorciatoia `font`, e nient'altro.** Ogni
 altra lunghezza in px resta legittima, e due sono deliberate: un padding che
 resta fermo mentre il testo cresce è quel che al testo dà lo spazio, e
