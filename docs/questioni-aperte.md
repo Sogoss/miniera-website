@@ -88,13 +88,16 @@ che è una pagina giusta con addosso l'aria di un sito abbandonato.
 Serve dal committente insieme ai testi delle pagine istituzionali, che sono la
 voce qui sopra e la stessa telefonata.
 
-## Da fare alla PR 17
+## Da fare alla PR 18
 
 ### La prova su un telefono vero
 
 *(Alla PR 16 questa voce è passata dalla vecchia «Pubblicazione» alla PR 17,
 con il resto della coda: la prova aspetta un URL stabile, e `pages.dev` ne dà
-uno senza che si compri niente.)*
+uno senza che si compri niente. **Alla PR 17 è stata fatta su Android e non su
+iPhone**, che non c'era, quindi è passata alla PR 18 — che un iPhone lo richiede
+comunque, essendo la taratura delle proporzioni. Android non risponde alla stessa
+domanda: `svh` contro `dvh` e la ritrazione della barra sono di Safari.)*
 
 Rimandata dalla PR 7, e non perché non conti: è la prova che regge la decisione
 `svh` invece di `dvh`, cioè che lo snap non salti quando la barra degli

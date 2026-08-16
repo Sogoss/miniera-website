@@ -330,6 +330,25 @@ non una preferenza.
     `mailto:` e `GMT` perché è un CMS, e una guardia che scatta su un lavoro
     giusto è la metà che qualcuno spegne.
 
+23. **La misura del testo si scrive in `rem`, mai in px** — e `clamp()` è dove
+    la regola si perde. `font-size: clamp(28px, min(4.6vw, 7.2vh), 72px)` è la
+    forma che il design scrive e che è rientrata nelle scene: scala con la
+    finestra, quindi *sembra* fare il lavoro, e nessuno dei suoi tre termini
+    dipende dalla dimensione del carattere di base — chi ingrandisce il testo dal
+    browser o dal sistema non ottiene niente, e la pagina resta esattamente dov'è.
+    Su un pubblico di cinquanta e sessant'anni è la differenza che conta più di
+    tutte le altre. **Il minimo in `rem` risponde sul telefono**, dove i termini
+    di viewport sono i più piccoli dei tre; **una quota in `rem` dentro il
+    termine preferito** risponde sul desktop, dove non lo sono, ed è anche ciò
+    che rende la crescita continua invece di uno scalino nel punto in cui il
+    minimo prende il sopravvento. I token `--text-*` sono in `rem` da sempre e
+    sono i limiti da preferire quando la misura è una di quelle. `checkPixelFontSizes`
+    legge **solo** `font-size` e la scorciatoia `font`, sul sorgente e sul
+    pubblicato: ogni altra lunghezza in px è legittima e due sono deliberate — un
+    padding che resta fermo mentre il testo cresce è quello che al testo dà lo
+    spazio, e `--timeline-tick-height` è un bersaglio per un dito, che è grande
+    uguale su ogni schermo a ogni impostazione.
+
 ## Lingua
 
 Due lingue, separate da un confine netto: **il codice è in inglese, quello che
@@ -493,7 +512,7 @@ npm run preview      # anteprima della build
 npm test             # guardie e test, con una build dentro
 npm run test:mutate  # acceca ogni guardia a turno e pretende che la suite se
                      # ne accorga — due minuti, la gira la CI a fette. È la
-                     # suite intera una volta per guardia, e le guardie sono 73:
+                     # suite intera una volta per guardia, e le guardie sono 74:
                      # ciò che è cambiato è che le corse vanno in parallelo,
                      # non che ne giri una parte
 npm run check        # astro check, typecheck

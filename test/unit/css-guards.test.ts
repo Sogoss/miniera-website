@@ -10,6 +10,7 @@ import {
   checkDuplicateDeclarations,
   checkMediaRangeSyntax,
   checkNoColorMixOrOklch,
+  checkPixelFontSizes,
   checkRawColourValues,
   checkRgbTriples,
   checkSceneHeightFallback,
@@ -315,6 +316,59 @@ describe('checkMediaRangeSyntax', () => {
 
   it('ignores a query left in a comment', () => {
     expect(checkMediaRangeSyntax('/* @media (width<=900px){} */ .a { top: 0; }')).toEqual([]);
+  });
+});
+
+describe('checkPixelFontSizes', () => {
+  it('accepts type sized in rem and in the tokens', () => {
+    expect(checkPixelFontSizes('.t { font-size: 1.75rem; }')).toEqual([]);
+    expect(checkPixelFontSizes('.d { font-size: var(--text-lg); }')).toEqual([]);
+    expect(
+      checkPixelFontSizes('.t { font-size: clamp(1.75rem, min(0.5rem + 3.9vw, 0.5rem + 6.1vh), 4.5rem); }'),
+    ).toEqual([]);
+    expect(
+      checkPixelFontSizes('.d { font-size: clamp(var(--text-sm), 0.5rem + 1vh, var(--text-lg)); }'),
+    ).toEqual([]);
+  });
+
+  it('reports a size in px', () => {
+    const violations = checkPixelFontSizes('.t { font-size: 18px; }', 'Scene.astro');
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.rule).toBe('rule 23');
+    expect(violations[0]!.detail).toContain('18px');
+    expect(violations[0]!.detail).toContain('Scene.astro');
+  });
+
+  it('reports the limits of a clamp, which is where it hides', () => {
+    // The shape PR 18 took out of the scenes, copied over from the design: it
+    // scales with the window, so it looks like it is doing the work, and not
+    // one of its three terms answers a reader who enlarged the system text.
+    const violations = checkPixelFontSizes('.t { font-size: clamp(28px, min(4.6vw, 7.2vh), 72px); }');
+    expect(violations).toHaveLength(1);
+    expect(violations[0]!.detail).toContain('28px');
+    expect(violations[0]!.detail).toContain('72px');
+  });
+
+  it('reads the shorthand as well', () => {
+    expect(checkPixelFontSizes('.b { font: 700 18px/1.2 var(--font-sans); }')).toHaveLength(1);
+    expect(checkPixelFontSizes('.b { font: var(--type-body); }')).toEqual([]);
+  });
+
+  it('leaves every other length in px alone', () => {
+    // Deliberate, both of them: a padding that stays put while the text grows
+    // is what gives the text the room, and a touch target is the same size on
+    // every screen at every text setting.
+    expect(checkPixelFontSizes('.p { padding: clamp(24px, 3vw, 44px); }')).toEqual([]);
+    expect(checkPixelFontSizes(':root { --timeline-tick-height: 36px; }')).toEqual([]);
+    expect(checkPixelFontSizes('.i { width: 18px; height: 18px; }')).toEqual([]);
+  });
+
+  it('is not fooled by a property whose name merely starts with font-size', () => {
+    expect(checkPixelFontSizes('.a { font-size-adjust: 0.52; letter-spacing: 1px; }')).toEqual([]);
+  });
+
+  it('ignores a size left in a comment', () => {
+    expect(checkPixelFontSizes('/* font-size: 28px; */ .t { font-size: 1.75rem; }')).toEqual([]);
   });
 });
 

@@ -87,7 +87,7 @@ sostituisce un telefono vero.
 | 15 | La suite più veloce | `test-veloci` | fatta |
 | 16 | Il piano: messa in linea, controllo qualità, dominio | `piano-controllo-qualita` | fatta |
 | 17 | Messa in linea | `messa-in-linea` | fatta |
-| 18 | Proporzioni su schermo piccolo | `proporzioni-mobile` | da fare |
+| 18 | Proporzioni su schermo piccolo | `proporzioni-mobile` | fatta |
 | 19 | Controllo qualità | `controllo-qualita` | da fare |
 | 20 | Il dominio | `dominio` | da fare |
 
@@ -2676,9 +2676,52 @@ pieno di tutto ciò che ci andrà.
 Va fatta **su un telefono vero**, non in emulazione, insieme alle prove
 rimandate in [questioni-aperte.md](questioni-aperte.md).
 
+### Quello che questa PR eredita dalla PR 17
+
+Tre obiettivi della PR 17 erano dichiarati «si provano dopo il merge» e non hanno
+più una PR in cui essere spuntati: il posto è questo, ed è la regola 8 applicata
+alla prima occasione utile invece che a una casella che nessuno riapre.
+
+- [x] **Cloudflare Pages**, build su `main` e deploy preview su ogni PR — è il
+      preview su cui girano le prove di questo passo
+- [x] **Il rebuild notturno**: il run `schedule` del 16 agosto 2026 e il
+      deployment corrispondente su Cloudflare. Servono tutt'e due, ed è la
+      ragione per cui la riga dice due cose: `Cloudflare answered 200` vuol dire
+      *richiesta accettata*, non *deploy pubblicato*, quindi una build fallita
+      lascerebbe il run di GitHub verde. E il cron è partito alle 02:21 UTC
+      invece che all'01:00: gli `schedule` di GitHub sono best-effort e la coda
+      slitta, il che può solo spostare in avanti — quel che deve essere vero è
+      «dopo la mezzanotte italiana»
+- [ ] **Un salvataggio da `/admin`** che arriva su `main` e fa partire una
+      build. È l'unico dei tre non ancora fatto, e sta fra i test manuali
+
+### Decisioni prese scrivendo la PR
+
+Per esteso in [decisioni.md](decisioni.md), sotto *Le proporzioni su schermo
+piccolo*. In breve:
+
+- **La misura del testo in `rem` diventa la regola 23**, con la sua guardia: la
+  forma sbagliata è rientrata dal design una volta e non c'era niente a fermarla
+- **Anche il termine preferito porta una quota in `rem`**, non solo i limiti:
+  convertire i soli limiti basta sul telefono, dove il minimo vince sempre, e non
+  sul desktop, dove a vincere è il termine di viewport — e rende continua una
+  crescita che altrimenti è uno scalino
+- **I limiti della descrizione sono `--text-sm` e `--text-lg`**, che sono
+  esattamente i 15 e 21 px che c'erano: stessa misura oggi, e seguono la scala se
+  qualcuno la ritara. Il titolo resta in `rem` letterali, perché 28 e 72 non
+  stanno sulla scala e avvicinarli avrebbe cambiato il disegno per far tornare un
+  nome
+- **Il modale riusa `--scene-height` e non un token nuovo**: un
+  `--viewport-height` con il suo `@supports` avrebbe lasciato il token che la
+  regola 5 nomina senza il suo ripiego in prima persona, cioè avrebbe spostato
+  `checkSceneHeightFallback` su un altro nome
+- **La guardia legge solo `font-size` e la scorciatoia `font`**: ogni altra
+  lunghezza in px è legittima, e due sono deliberate — il padding che dà spazio
+  al testo mentre cresce, e il bersaglio per un dito
+
 ### Obiettivi
 
-- [ ] **I `clamp()` tipografici hanno i limiti in `rem`, non in px.** È l'unico
+- [x] **I `clamp()` tipografici hanno i limiti in `rem`, non in px.** È l'unico
       punto in cui oggi il sito viola davvero una buona pratica: `font-size:
       clamp(28px, min(4.6vw, 7.2vh), 72px)` non dipende in nessuno dei suoi tre
       termini dalla dimensione del carattere di base, quindi chi ingrandisce il
@@ -2686,6 +2729,9 @@ rimandate in [questioni-aperte.md](questioni-aperte.md).
       sono già in `rem`; i px sono rientrati nelle scene, copiati dal design. Per
       un pubblico di cinquanta e sessant'anni è la differenza che conta più di
       tutte le altre
+- [x] **La regola 23 e `checkPixelFontSizes`**, sul sorgente e sul pubblicato,
+      con i suoi casi negativi: senza, quella forma rientra dal design la prossima
+      volta esattamente come è rientrata questa
 - [ ] L'immagine della serata ha una dimensione che si legge, con Timeline e
       navigazione a schermo — la sua forma inclinata è del marchio e non si
       toglie per far spazio
@@ -2702,13 +2748,21 @@ rimandate in [questioni-aperte.md](questioni-aperte.md).
       visible` — il fondo di un testo lungo finisce fuori senza una barra che ci
       porti. È la stessa questione `svh` contro `vh` delle scene, rimandata qui
       perché cambiare quel numero cambia le proporzioni del modale, e le
-      proporzioni si guardano su un telefono vero
+      proporzioni si guardano su un telefono vero. *Scritto — `calc(var(--scene-height) * 0.8)`
+      arriva in `dist/` — e da verificare su iOS, che è dove il difetto si vede*
 
 ### Test automatici
 
 - Le guardie esistenti continuano a passare: una scena non diventa scorrevole e
   la pagina resta un solo contenitore scorrevole
 - Nessuna media query in sintassi range nel CSS pubblicato
+- **Guardia**: nessun `font-size` in px, nel sorgente e nel pubblicato. I due
+  strati non sono l'uno la copia dell'altro — fra loro c'è un minificatore che
+  riscrive i valori, `calc(0.5rem + 3.9vw)` compreso — e i casi negativi sono
+  cinque, compresi i due che devono **tacere**: il padding in px e il bersaglio
+  per un dito, che sono px deliberati
+- Il conto delle guardie sale da 73 a 74, e l'unica riga da cambiare è la frase
+  del `CLAUDE.md` che lo dichiara: un test la legge, ed è così che se n'è accorto
 
 ### Test manuali
 
@@ -2724,6 +2778,12 @@ rimandate in [questioni-aperte.md](questioni-aperte.md).
   `svh` contro `dvh` e la ritrazione della barra sono comportamenti di Safari,
   ed è per Safari che la regola 5 esiste. Questo passo un iPhone lo richiede
   comunque, quindi è il posto dove la prova costa meno
+- **Il modale con un testo lungo, su iOS con la barra degli indirizzi visibile**:
+  il fondo si vede e il pannello scorre. È il difetto che il sesto obiettivo
+  descrive, ed è visibile solo lì
+- **Un salvataggio da `/admin`**, ereditato dalla PR 17: arriva su `main`, fa
+  partire una build, e la scheda Actions dice com'è andata — perché con il bypass
+  del ruleset quel commit non passa dai test prima di entrare
 
 ---
 

@@ -314,10 +314,19 @@ const BOOKING_LABEL = 'Prenota il posto';
 
   /* Fluid down to a phone and up to a wide desktop, bounded by both the width
      and the height: a title that scales on width alone eats the screen when the
-     window is short and wide. */
+     window is short and wide.
+
+     Every term is in `rem` or carries one, which is rule 23 and the reason this
+     line changed in PR 18. Written the way the design has it — `clamp(28px,
+     min(4.6vw, 7.2vh), 72px)` — not one of the three depends on the base font
+     size, so a reader who enlarges the system text gets nothing at all. The
+     floor is what answers on a phone, where the viewport terms are the smallest
+     of the three; the `rem` inside the preferred term is what answers on a
+     desktop, where they are not, and it is also what keeps the growth
+     continuous instead of a step at the point where the floor takes over. */
   .scene-title {
     margin: 0;
-    font-size: clamp(28px, min(4.6vw, 7.2vh), 72px);
+    font-size: clamp(1.75rem, min(0.5rem + 3.9vw, 0.5rem + 6.1vh), 4.5rem);
     line-height: 0.98;
     text-wrap: pretty;
   }
@@ -332,7 +341,10 @@ const BOOKING_LABEL = 'Prenota il posto';
     margin: 0;
     max-width: var(--max-content);
     font: var(--type-body);
-    font-size: clamp(15px, 1.8vh, 21px);
+    /* The limits are the two type tokens this sits between, rather than the 15
+       and 21 the design writes: same size at the default, and they follow the
+       scale if it is ever retuned. */
+    font-size: clamp(var(--text-sm), 0.5rem + 1vh, var(--text-lg));
     color: var(--text-secondary);
     text-wrap: pretty;
   }

@@ -1855,6 +1855,51 @@ messaggio lo nomina come stringa. Contandoli è saltato fuori che uno era già
 sbagliato prima: `sources.test.ts` diceva che la shell di Sveltia in `public/` la
 mette la PR 16, e l'ha messa la PR 14. *(PR 16)*
 
+## Le proporzioni su schermo piccolo
+
+**La misura del testo si scrive in `rem`, ed è una regola e non una correzione.**
+`font-size: clamp(28px, min(4.6vw, 7.2vh), 72px)` è la forma che il design
+scrive, ed è rientrata nelle scene mentre i token `--text-*` erano in `rem` da
+sempre. Scala con la finestra, quindi sembra fare il lavoro; nessuno dei suoi tre
+termini dipende dalla dimensione del carattere di base, quindi chi ingrandisce il
+testo dal browser o dal sistema non ottiene niente e la pagina resta dov'è. Su un
+pubblico di cinquanta e sessant'anni è la differenza che conta più di tutte le
+altre, e non fallisce da nessuna parte: è la regola 23, con
+`checkPixelFontSizes`. *(PR 18)*
+
+**E il termine preferito porta anche lui una quota in `rem`.** Convertire i soli
+limiti sarebbe bastato sul telefono — lì il minimo è il più grande dei tre
+termini e vince sempre — e non sul desktop, dove a vincere è il termine di
+viewport: un titolo a 1440×900 sarebbe rimasto fermo a 64px con il testo di
+sistema al doppio. In più `calc(0.5rem + 3.9vw)` rende la crescita continua,
+invece di uno scalino nel punto in cui il minimo prende il sopravvento. *(PR 18)*
+
+**I limiti della descrizione sono due token, non due numeri.** Stava fra 15 e
+21 px, che sono esattamente `--text-sm` e `--text-lg`: scritti come token danno
+la stessa misura oggi e seguono la scala il giorno che qualcuno la ritara. Il
+titolo no — 28 e 72 non sono sulla scala, e avvicinarli al token più prossimo
+avrebbe cambiato il disegno per far tornare un nome. *(PR 18)*
+
+**Il modale misura sullo small viewport riusando `--scene-height`, senza un token
+nuovo.** Il pannello era `max-height: 80vh`, cioè misurato sullo schermo che
+Safari ha con la barra ritratta: con la barra visibile il fondo di un testo lungo
+cade fuori, e non lo intercetta niente perché `.modal` è `overflow: visible` e
+deve restarlo — il bottone di chiusura sta fuori dal suo angolo. La via elegante
+sarebbe stata un `--viewport-height` con il suo `@supports`, e
+`--scene-height` derivato: costa che `checkSceneHeightFallback`, che è puntata
+per nome sul token, si troverebbe davanti un `--scene-height: var(…)` invece del
+`100vh` che pretende — o la si sposta sul nome nuovo, e allora il token che la
+regola 5 nomina non porta più il suo ripiego in prima persona. Una scena è alta
+quanto il viewport per costruzione, quindi il token giusto c'è già: il commento
+dice perché un modale lo legge. *(PR 18)*
+
+**La guardia legge `font-size` e la scorciatoia `font`, e nient'altro.** Ogni
+altra lunghezza in px resta legittima, e due sono deliberate: un padding che
+resta fermo mentre il testo cresce è quel che al testo dà lo spazio, e
+`--timeline-tick-height` è un bersaglio per un dito, grande uguale su ogni
+schermo a ogni impostazione. Una guardia che le segnalasse sarebbe una guardia
+che scatta sul lavoro giusto, e quelle si spengono. *(PR 18)*
+
 ## Rimandate
 
 **Il dominio.** Se ne riparla a sito finito. Il design presuppone
