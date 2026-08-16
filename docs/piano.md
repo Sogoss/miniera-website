@@ -2083,7 +2083,7 @@ Fatti qui, sul sito **costruito** (`npm run preview`):
 - Le quattro collection compaiono con i nomi e le descrizioni italiane, e la
   serata ha tutti e quattordici i campi con le loro etichette e i loro aiuti:
   gli obbligatori portano l'asterisco, i facoltativi no — occhiello, foto,
-  presenze, interventi, annullata, nota
+  interventi, annullata, nota
 - **Sotto il campo data si legge `(+02:00) Rome`**: è Sveltia che dice di aver
   letto `input_timezone`, cioè la riga da cui dipende tutto il resto
 - Il ciclo è una scelta fra i cicli esistenti e si legge «3 — Terra di nessuno»,
@@ -2754,6 +2754,11 @@ piccolo*. In breve:
       dei telefoni comuni, non su una scala scelta a tavolino — misurando le
       cinque serate d'esempio a 375×667 e 390×740, con quella che ha
       registrazioni e presenze a fare da caso peggiore
+- [x] **Fuori dal piano, chiesto guardando il telefono**: ruoli a due o tre
+      parole, ritratti dei relatori (tinte unite, segnaposto), una fotografia
+      per serata al posto delle due locandine generate — che avevano del testo
+      stampato sopra e dentro la capsula finiva accanto al titolo — la sede su
+      due righe, e **le presenze tolte dal sito e dal CMS**
 - [x] Le tacche della Timeline e la pillola della navigazione non coprono niente
       di ciò che una scena deve mostrare: lo spazio in cima viene da `--nav-bar`
       come quello in fondo viene da `--timeline-bar`, e non più da un numero

@@ -103,8 +103,6 @@ const eventi = defineCollection({
       // file stays in the repository for ever, even once you replace it.
       photo: image().optional(),
 
-      // Past events only.
-      attendance: z.number().int().nonnegative().optional(),
 
       // Recordings and related material. Usually three at most, but there is
       // no ceiling: the field is generic on purpose, it will not necessarily

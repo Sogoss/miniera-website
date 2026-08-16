@@ -24,7 +24,7 @@ volta che il CMS gira.
 
 Adesso che il modello dati è definito, la domanda si può porre in modo
 preciso: per ogni serata servono numero, titolo, data e ora, ciclo, formato,
-descrizione, sede, relatori con ruolo, foto tema, presenze, eventuali link
+descrizione, sede, relatori con ruolo, foto tema, eventuali link
 alle registrazioni.
 
 Da chiarire anche: **le serate storiche hanno un link video ciascuna?** Nei

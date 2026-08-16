@@ -1778,8 +1778,10 @@ CMS, e l'unica cosa che parla per lui è il suo schema, che dichiara
 sviluppo, `ajv`. *(PR 14)*
 
 **I facoltativi vuoti non si scrivono, e non c'è anteprima.**
-`omit_empty_optional_fields: true`, perché `attendance: ''` non è un numero e
-Zod ha ragione a fermare la build. `editor.preview: false`, perché l'anteprima
+`omit_empty_optional_fields: true`, perché una stringa vuota in un campo
+numerico non è un numero e Zod ha ragione a fermare la build — il campo su cui è
+stato deciso, le presenze, non c'è più dalla PR 18, ma la ragione vale per il
+prossimo facoltativo che arriva. `editor.preview: false`, perché l'anteprima
 di Sveltia è una resa generica dei campi e questo sito è uno scroller a schermo
 pieno con lo snap e un accento per ciclo: un'anteprima che non gli somiglia è
 una promessa che il sito non mantiene. Quella vera è il deploy preview della
@@ -1856,6 +1858,16 @@ sbagliato prima: `sources.test.ts` diceva che la shell di Sveltia in `public/` l
 mette la PR 16, e l'ha messa la PR 14. *(PR 16)*
 
 ## Le proporzioni su schermo piccolo
+
+**Le presenze escono dal sito e dal CMS.** «140 persone in sala» era un campo
+facoltativo dello schema, una riga nella scena e un campo del form. Non c'è più
+da nessuna delle tre parti, ed è una decisione del committente: un numero di
+presenze è una cosa che si conta male, invecchia e non aiuta nessuno a decidere
+se venire. Con lui esce anche la soglia che lo nascondeva sul telefono — la
+seconda cosa che cedeva su uno schermo corto — quindi adesso cede la descrizione
+e poi la dimensione del testo, e basta. Schema Zod e `config.yml` insieme, che è
+la regola 21: un campo tolto da uno solo dei due è un campo che il redattore
+compila e la build butta via senza dire niente. *(PR 18)*
 
 **La misura del testo si scrive in `rem`, ed è una regola e non una correzione.**
 `font-size: clamp(28px, min(4.6vw, 7.2vh), 72px)` è la forma che il design

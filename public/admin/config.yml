@@ -212,13 +212,6 @@ collections:
         hint: >-
           La locandina se la serata è futura, uno scatto in sala se è passata.
           Viene ridimensionata qui, prima del salvataggio.
-      - name: attendance
-        label: Presenze
-        widget: number
-        required: false
-        value_type: int
-        min: 0
-        hint: Solo per le serate già svolte.
       - name: materials
         label: Interventi e materiali
         label_singular: Intervento

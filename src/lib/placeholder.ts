@@ -72,11 +72,21 @@ export const PLACEHOLDER_IMAGES = {
  * human act here, as it is for `PLACEHOLDER_NUMBER`.
  */
 export const PLACEHOLDER_PHOTOS = [
-  'sala-esempio.png',
-  'serata-esempio.png',
+  /* Una per serata, fotografie stock scaricate da picsum.photos — l'archivio di
+     Unsplash — e ridotte a 1600px. Hanno sostituito due locandine generate che
+     avevano del testo stampato sopra: dentro la capsula inclinata quel testo
+     finiva accanto al titolo della serata, e due scritte diverse a mezzo
+     centimetro l'una dall'altra si leggono come una sola.
+     Restano segnaposto, e non perché siano brutte: non sono di questa
+     associazione e non ritraggono queste serate. */
+  'serata-78.webp',
+  'serata-80.webp',
+  'serata-81.webp',
+  'serata-82.webp',
+  'serata-83.webp',
   /* I quattro ritratti sono tinte unite 800×800, chieste così: servono a far
      vedere il ritaglio a otto lobi su una faccia che non c'è ancora, e sono
-     segnaposto per la stessa ragione delle due sopra — una tinta piena in un
+     segnaposto per la stessa ragione delle fotografie — una tinta piena in un
      ritratto rende perfettamente e non dice di sé che non è una persona. */
   'ritratto-amina-belhaj.png',
   'ritratto-chiara-fenoglio.png',
