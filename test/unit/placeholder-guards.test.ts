@@ -198,7 +198,14 @@ describe('checkDeclaredPhotos', () => {
   });
 
   it('reports each one separately', () => {
-    expect(checkDeclaredPhotos(PLACEHOLDER_PHOTOS, [])).toHaveLength(2);
+    // The count comes from the list, not from a number written here: PR 18 added
+    // four portraits and this said 2, which is a test failing on correct work —
+    // and the first thing anybody does with one of those is edit the number,
+    // which is how a check stops checking.
+    expect(checkDeclaredPhotos(PLACEHOLDER_PHOTOS, [])).toHaveLength(
+      PLACEHOLDER_PHOTOS.length,
+    );
+    expect(PLACEHOLDER_PHOTOS.length).toBeGreaterThan(1);
   });
 
   it('says nothing when nothing is declared', () => {
