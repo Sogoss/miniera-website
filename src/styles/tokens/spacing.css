@@ -47,6 +47,26 @@
      right edge of the screen, which is where this started. */
   --timeline-width: clamp(148px, 11vw, 176px);
 
+  /* The pill at the top, the same way the Timeline's bar is the one at the
+     bottom — and for the same reason: a scene keeps its text out from under
+     both, so both measures live in one place instead of being read off a
+     screen once. PR 18 found the half that was missing: the foot of a scene was
+     `calc(var(--timeline-bar) + …)` and the head was `clamp(64px, 9vh, 96px)`,
+     a number chosen by hand. On a tall phone it left ten pixels, which the
+     pill's shadow fell into; on a short one — an iPhone SE, where 9vh is 60 and
+     the floor of 64 wins — the pill ended two pixels *below* where the text
+     began.
+
+     A sum, like the bar: the step it stands off the top edge, the padding on
+     both sides of the control, the touch target, and the hairline on both
+     sides. The target is in px on purpose and stays there, rule 23: a finger is
+     the same size on every screen at every text setting. */
+  --nav-tap-target: 44px;
+  --nav-bar: calc(
+    var(--space-3) + var(--space-1) * 2 + var(--nav-tap-target) +
+      var(--border-width-hairline) * 2
+  );
+
   /* The bar is a sum and not a measurement: the tick, the padding on both
      sides of it, the hairline on both sides of that, and the step the bar
      stands off the bottom edge. Written out because a number read off the

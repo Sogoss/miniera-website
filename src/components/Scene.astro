@@ -551,9 +551,11 @@ const BOOKING_LABEL = 'Prenota il posto';
       gap: clamp(12px, 2.5vh, 28px);
 
       /* The rail is a bar across the bottom here, so what it took from the
-         right side above it takes from underneath. Its height is a token for
-         the same reason. */
-      padding: clamp(64px, 9vh, 96px) var(--gutter-page)
+         right side above it takes from underneath — and the pill takes its own
+         from the top. Both measures are tokens, and the head of this rule used
+         to be `clamp(64px, 9vh, 96px)`: a number chosen by hand, which on a
+         short phone ended up under the pill. */
+      padding: calc(var(--nav-bar) + var(--space-3)) var(--gutter-page)
         calc(var(--timeline-bar) + var(--space-2));
     }
 
