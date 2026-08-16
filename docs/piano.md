@@ -2760,6 +2760,24 @@ piccolo*. In breve:
       proporzioni si guardano su un telefono vero. *Scritto — `calc(var(--scene-height) * 0.8)`
       arriva in `dist/` — e da verificare su iOS, che è dove il difetto si vede*
 
+> **Trovato provando.** Il primo giro su un telefono, con il ridimensionamento
+> del testo alzato, ha mostrato il nome di un relatore che finisce **sotto la
+> barra della Timeline**. Non era un difetto di questa PR — è identico in
+> produzione — ed è di una specie che nessuna delle regole di cessione può
+> raggiungere: quelle sono appese all'altezza dello schermo, e chi ingrandisce il
+> testo non l'ha cambiata. La riga di testo della griglia era `auto`, che non si
+> comprime sotto il proprio contenuto, quindi la riga cresceva oltre l'altezza
+> della scena e il di più veniva disegnato fuori, dove c'è una barra fissa. Ora è
+> `minmax(0, auto)` con `overflow: hidden` sul testo.
+>
+> **E ha detto una seconda cosa, sul provare.** Il confronto fra produzione e
+> preview con il cursore di Android al massimo ha dato due schermate identiche:
+> quel cursore moltiplica **tutte** le dimensioni del testo, px compresi, quindi
+> non distingue il codice nuovo dal vecchio. La prova che risponde è la
+> dimensione del carattere del browser, da desktop — e la stessa ragione è quella
+> per cui convertire le soglie in `em` non avrebbe risolto niente: vedi
+> [decisioni.md](decisioni.md).
+
 ### Test automatici
 
 - Le guardie esistenti continuano a passare: una scena non diventa scorrevole e

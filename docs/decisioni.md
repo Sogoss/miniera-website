@@ -1893,6 +1893,28 @@ regola 5 nomina non porta più il suo ripiego in prima persona. Una scena è alt
 quanto il viewport per costruzione, quindi il token giusto c'è già: il commento
 dice perché un modale lo legge. *(PR 18)*
 
+**La scena ritaglia il testo dentro la sua riga, invece di sfondare.** Trovato su
+un telefono con il ridimensionamento del testo alzato, e non era un difetto di
+questa PR: la riga di testo della griglia era `auto`, che non si può comprimere
+sotto il proprio contenuto, quindi un testo più grande della scena faceva
+crescere la riga oltre l'altezza della scena e il di più veniva disegnato fuori —
+sotto la barra della Timeline, che è fissa in fondo allo schermo. Adesso è
+`minmax(0, auto)` con `overflow: hidden` sul testo: ritagliato dentro la sua
+riga, sopra il padding che riserva l'altezza della barra. Ritagliato e non
+scorrevole, che è la regola su cui lo scroller è costruito. *(PR 18)*
+
+**E le soglie di cessione restano in px.** Sono appese all'altezza dello schermo,
+quindi non si accorgono di un testo ingrandito: la via ovvia è convertirle in
+`em`, e non risolverebbe il caso in cui il difetto è stato trovato. Il cursore
+«ridimensionamento testo» di Chrome e Firefox per Android moltiplica le
+dimensioni del testo **senza toccare la dimensione base**, che è l'unica cosa che
+una media query in `em` legge — e su desktop, dove la conversione funzionerebbe,
+il difetto non si presenta perché lo schermo è alto. Costava tredici media query
+in cinque file, da convertire tutte insieme perché il confine dei 900px è
+condiviso fra scena, navigazione, Timeline e pagine istituzionali: mezze
+convertite darebbero la scena in versione telefono con la Timeline ancora a
+rotaia. Quello che il difetto chiedeva davvero era il ritaglio. *(PR 18)*
+
 **La guardia legge `font-size` e la scorciatoia `font`, e nient'altro.** Ogni
 altra lunghezza in px resta legittima, e due sono deliberate: un padding che
 resta fermo mentre il testo cresce è quel che al testo dà lo spazio, e
