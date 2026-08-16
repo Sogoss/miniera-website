@@ -545,8 +545,15 @@ const BOOKING_LABEL = 'Prenota il posto';
          What makes the difference visible is the `overflow: hidden` on the text
          itself: clipped inside its own row, above the padding that reserves the
          bar's height, instead of running underneath it. Clipped and not
-         scrollable, which is the rule the whole scroller is built on. */
-      grid-template-rows: minmax(0, 1fr) minmax(0, auto);
+         scrollable, which is the rule the whole scroller is built on.
+
+         And the picture's floor is on the **track**, not on the picture. A
+         track is always sized inside the container, so 22% is a floor that
+         cannot spill; the `min-height: 26vh` this replaces was on the element,
+         which is why it painted over the title on the first iPhone it met.
+         Without a photograph the text simply takes the first row, which is
+         `1fr`: nothing is reserved for a picture that is not there. */
+      grid-template-rows: minmax(22%, 1fr) minmax(0, auto);
       align-content: stretch;
       gap: clamp(12px, 2.5vh, 28px);
 
@@ -617,13 +624,22 @@ const BOOKING_LABEL = 'Prenota il posto';
     }
   }
 
-  @media (max-width: 900px) and (max-height: 780px) {
+  @media (max-width: 900px) and (max-height: 820px) {
     .scene-description {
       -webkit-line-clamp: 2;
     }
   }
 
-  @media (max-width: 900px) and (max-height: 680px) {
+  /* Was 680, and 680 was measured against a screen nobody has. A phone in
+     Safari keeps its address bar for the whole visit — it retracts on the
+     scroll of the *document*, and here what scrolls is the programme, a box
+     inside it — so an iPhone whose screen is 844 tall gives the scene about
+     740, and every threshold below that never fires. At 740 the description
+     stayed, the text took the room, and the photograph was left the sixty
+     pixels of the screenshot that started this.
+     760 is «a phone held in Safari», and what it decides is the order already
+     written above: the description gives way before the picture. */
+  @media (max-width: 900px) and (max-height: 760px) {
     .scene-description {
       display: none;
     }
