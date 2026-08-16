@@ -533,7 +533,20 @@ const BOOKING_LABEL = 'Prenota il posto';
   @media (max-width: 900px) {
     .scene {
       grid-template-columns: minmax(0, 1fr);
-      grid-template-rows: minmax(0, 1fr) auto;
+      /* `minmax(0, auto)` and not `auto` for the text row, which is the half
+         that was missing. `auto` cannot be squeezed below what it holds, so a
+         text bigger than the scene grows the row past the scene's own height
+         and the overflow is simply painted outside — under the Timeline's bar,
+         which is fixed over the bottom of the screen. It was found on a phone
+         with the text scaling turned up, and it is not a case the clamping
+         rules below can reach: they hang on the *height of the screen*, and a
+         reader who enlarges the type has not changed it.
+
+         What makes the difference visible is the `overflow: hidden` on the text
+         itself: clipped inside its own row, above the padding that reserves the
+         bar's height, instead of running underneath it. Clipped and not
+         scrollable, which is the rule the whole scroller is built on. */
+      grid-template-rows: minmax(0, 1fr) minmax(0, auto);
       align-content: stretch;
       gap: clamp(12px, 2.5vh, 28px);
 
@@ -542,6 +555,10 @@ const BOOKING_LABEL = 'Prenota il posto';
          the same reason. */
       padding: clamp(64px, 9vh, 96px) var(--gutter-page)
         calc(var(--timeline-bar) + var(--space-2));
+    }
+
+    .scene-text {
+      overflow: hidden;
     }
 
     .scene-photo {
