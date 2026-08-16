@@ -571,15 +571,20 @@ const BOOKING_LABEL = 'Prenota il posto';
        instead.
 
        The height is what the geometry allows: a rectangle turned 45° takes up
-       (w + h) / √2 in *both* directions, so in a band 342 wide the frame can be
-       at most about 200 tall before its corners run past the edges — and there
-       is nothing clipping them. 78% of a band that is itself at least a quarter
-       of the screen keeps it inside and keeps it big enough to read as a
-       picture. */
-    .scene-photo {
-      min-height: 26vh;
-    }
+       (w + h) / √2 in *both* directions, so at 78% of its band the capsule's
+       corners land just inside it — and there is nothing clipping them.
 
+       What it must *not* have is a floor. `min-height: 26vh` was here to keep
+       the picture big enough to read, and it contradicted the row it sits in:
+       `1fr` says «take what is left», a min-height says «take at least this»,
+       and a min-height wins. On an iPhone, where Safari's bar never gives the
+       height back, the row was shorter than the floor and the picture spilled
+       onto the row below — the capsule painted over the title and over the
+       kicker. Found on the first real device, and invisible in emulation
+       because there the window is as tall as you make it. So the picture takes
+       what is left, and when what is left is too little the thresholds further
+       down remove it outright, which is the honest version of the same
+       decision. */
     .scene-photo-frame {
       height: 78%;
     }
