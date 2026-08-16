@@ -368,6 +368,7 @@ const BOOKING_LABEL = 'Prenota il posto';
      from a prop cannot be overridden by any rule. */
   .scene-guests {
     --guest-size: 1.25rem;
+    --portrait-size: 3rem;
 
     display: flex;
     flex-direction: column;
@@ -724,6 +725,7 @@ const BOOKING_LABEL = 'Prenota il posto';
   @media (max-width: 900px) and (max-height: 760px) {
     .scene-guests {
       --guest-size: 1rem;
+      --portrait-size: 2.75rem;
     }
 
     /* The title and the facts are **not** on this list, and the first pass had
@@ -772,6 +774,13 @@ const BOOKING_LABEL = 'Prenota il posto';
     .scene-guests,
     .scene-actions {
       gap: var(--space-1);
+    }
+
+    /* And the portrait with them: the row is as tall as the picture in it, so
+       on the shortest screen this is worth more than any of the type steps —
+       two guests, sixteen pixels each. */
+    .scene-guests {
+      --portrait-size: 2.25rem;
     }
   }
 

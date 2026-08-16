@@ -61,14 +61,13 @@ const inlineStyle = [size && `--guest-size: ${size}`, style].filter(Boolean).joi
 </div>
 
 <style>
-  /* `--guest-size` is deliberately *not* declared here. Declared on the row it
+  /* Neither `--guest-size` nor `--portrait-size` is declared here. Declared on the row it
      would beat the value inherited from whatever contains the row, which is how
      the scene sets it for a phone — a declaration on the element wins over
      inheritance, and the names came out at the default of 2.125rem, bigger than
      the title. The default lives in the `var()` that reads it, which loses to
      an inherited value and to the prop alike. */
   .guest-row {
-    --portrait-size: 56px;
 
     display: flex;
     align-items: center;
@@ -80,8 +79,8 @@ const inlineStyle = [size && `--guest-size: ${size}`, style].filter(Boolean).joi
      around before the clip ever hid it. */
   .guest-portrait {
     flex: none;
-    width: var(--portrait-size);
-    height: var(--portrait-size);
+    width: var(--portrait-size, 3.5rem);
+    height: var(--portrait-size, 3.5rem);
     overflow: hidden;
     clip-path: url(#clip-clover-8);
   }
