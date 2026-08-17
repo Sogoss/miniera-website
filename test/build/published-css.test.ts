@@ -8,6 +8,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import {
   checkMediaRangeSyntax,
   checkNoColorMixOrOklch,
+  checkPixelFontSizes,
   checkRgbTriples,
   checkSceneHeightFallback,
   checkUndefinedCustomProperties,
@@ -43,6 +44,14 @@ describe('the CSS that actually ships', () => {
 
   it('still carries the vh fallback and the @supports that raises it', () => {
     expect(checkSceneHeightFallback(css)).toEqual([]);
+  });
+
+  it('sizes every piece of type in rem', () => {
+    // Rule 23. The source layer next door reads the same guard, and this one is
+    // not a duplicate of it: what a reader who enlarged the system text gets is
+    // decided by the file the browser receives, and between the two sits a
+    // minifier that rewrites values — `calc(0.5rem + 3.9vw)` among them.
+    expect(checkPixelFontSizes(css, 'dist/')).toEqual([]);
   });
 
   it('contains neither color-mix() nor oklch()', () => {

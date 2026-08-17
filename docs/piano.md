@@ -87,7 +87,7 @@ sostituisce un telefono vero.
 | 15 | La suite più veloce | `test-veloci` | fatta |
 | 16 | Il piano: messa in linea, controllo qualità, dominio | `piano-controllo-qualita` | fatta |
 | 17 | Messa in linea | `messa-in-linea` | fatta |
-| 18 | Proporzioni su schermo piccolo | `proporzioni-mobile` | da fare |
+| 18 | Proporzioni su schermo piccolo | `proporzioni-mobile` | fatta |
 | 19 | Controllo qualità | `controllo-qualita` | da fare |
 | 20 | Il dominio | `dominio` | da fare |
 
@@ -2083,7 +2083,7 @@ Fatti qui, sul sito **costruito** (`npm run preview`):
 - Le quattro collection compaiono con i nomi e le descrizioni italiane, e la
   serata ha tutti e quattordici i campi con le loro etichette e i loro aiuti:
   gli obbligatori portano l'asterisco, i facoltativi no — occhiello, foto,
-  presenze, interventi, annullata, nota
+  interventi, annullata, nota
 - **Sotto il campo data si legge `(+02:00) Rome`**: è Sveltia che dice di aver
   letto `input_timezone`, cioè la riga da cui dipende tutto il resto
 - Il ciclo è una scelta fra i cicli esistenti e si legge «3 — Terra di nessuno»,
@@ -2526,9 +2526,11 @@ nessun `.env`, nessun token. Non c'è niente da riscrivere prima di pubblicare, 
       Periferia** per esteso, e il perché sta in [decisioni.md](decisioni.md):
       lo slug abbrevia, e la regola 7 si perde in un posto che nessuna guardia
       guarda
-- [ ] Progetto collegato a Cloudflare Pages: build a ogni commit su `main`, e
-      **deploy preview su ogni PR** — che è anche l'anteprima che il CMS non ha
-- [ ] Rebuild notturno dopo la mezzanotte italiana, e si vede una serata passare
+- [x] Progetto collegato a Cloudflare Pages: build a ogni commit su `main`, e
+      **deploy preview su ogni PR** — che è anche l'anteprima che il CMS non ha.
+      *Le tre caselle che seguivano il merge sono state chiuse alla PR 18, che è
+      la prima PR utile: vedi lì*
+- [x] Rebuild notturno dopo la mezzanotte italiana, e si vede una serata passare
       da *in programma* a *già svolta*. **Si prova dopo il merge, e va detto
       perché non è pigrizia**: GitHub registra `schedule` e `workflow_dispatch`
       solo dal branch predefinito, quindi finché `rebuild.yml` vive sul branch
@@ -2550,7 +2552,7 @@ nessun `.env`, nessun token. Non c'è niente da riscrivere prima di pubblicare, 
 - [x] `guards-complete` fra i *required status checks*, e una fetta rossa ferma
       un merge — provato. **Alla prima misura non lo fermava**, e la correzione
       sta in `ci.yml`: vedi i test manuali qui sotto
-- [ ] Un salvataggio da `/admin` arriva su `main` e fa partire una build —
+- [x] Un salvataggio da `/admin` arriva su `main` e fa partire una build —
       provato. **Dopo il merge**, come il rebuild e per una ragione simile: è la
       produzione a essere il posto dove un redattore scrive, e un salvataggio
       fatto da un preview proverebbe la stessa cosa da un indirizzo che non
@@ -2676,9 +2678,59 @@ pieno di tutto ciò che ci andrà.
 Va fatta **su un telefono vero**, non in emulazione, insieme alle prove
 rimandate in [questioni-aperte.md](questioni-aperte.md).
 
+### Quello che questa PR eredita dalla PR 17
+
+Tre obiettivi della PR 17 erano dichiarati «si provano dopo il merge» e non hanno
+più una PR in cui essere spuntati: il posto è questo, ed è la regola 8 applicata
+alla prima occasione utile invece che a una casella che nessuno riapre.
+
+- [x] **Cloudflare Pages**, build su `main` e deploy preview su ogni PR — è il
+      preview su cui girano le prove di questo passo
+- [x] **Il rebuild notturno**: il run `schedule` del 16 agosto 2026 e il
+      deployment corrispondente su Cloudflare. Servono tutt'e due, ed è la
+      ragione per cui la riga dice due cose: `Cloudflare answered 200` vuol dire
+      *richiesta accettata*, non *deploy pubblicato*, quindi una build fallita
+      lascerebbe il run di GitHub verde. E il cron è partito alle 02:21 UTC
+      invece che all'01:00: gli `schedule` di GitHub sono best-effort e la coda
+      slitta, il che può solo spostare in avanti — quel che deve essere vero è
+      «dopo la mezzanotte italiana»
+- [x] **Un salvataggio da `/admin`** che arriva su `main` e fa partire una
+      build — fatto il 16 agosto 2026, modificando il titolo della serata 83:
+      commit `bb1e338` su `main` senza passare da una pull request, `verify`
+      verde *dopo*, e il deployment di Cloudflare riuscito allo stesso secondo
+      del commit. Le due metà si guardano separatamente per la ragione scritta
+      alla PR 17: il run di GitHub non riporta l'esito della build di Pages.
+      **E ha detto una cosa che nessuno aveva previsto**: Sveltia riscrive il
+      frontmatter intero, ordine dei campi e stile YAML compresi — è in
+      [contenuti.md](contenuti.md)
+
+### Decisioni prese scrivendo la PR
+
+Per esteso in [decisioni.md](decisioni.md), sotto *Le proporzioni su schermo
+piccolo*. In breve:
+
+- **La misura del testo in `rem` diventa la regola 23**, con la sua guardia: la
+  forma sbagliata è rientrata dal design una volta e non c'era niente a fermarla
+- **Anche il termine preferito porta una quota in `rem`**, non solo i limiti:
+  convertire i soli limiti basta sul telefono, dove il minimo vince sempre, e non
+  sul desktop, dove a vincere è il termine di viewport — e rende continua una
+  crescita che altrimenti è uno scalino
+- **I limiti della descrizione sono `--text-sm` e `--text-lg`**, che sono
+  esattamente i 15 e 21 px che c'erano: stessa misura oggi, e seguono la scala se
+  qualcuno la ritara. Il titolo resta in `rem` letterali, perché 28 e 72 non
+  stanno sulla scala e avvicinarli avrebbe cambiato il disegno per far tornare un
+  nome
+- **Il modale riusa `--scene-height` e non un token nuovo**: un
+  `--viewport-height` con il suo `@supports` avrebbe lasciato il token che la
+  regola 5 nomina senza il suo ripiego in prima persona, cioè avrebbe spostato
+  `checkSceneHeightFallback` su un altro nome
+- **La guardia legge solo `font-size` e la scorciatoia `font`**: ogni altra
+  lunghezza in px è legittima, e due sono deliberate — il padding che dà spazio
+  al testo mentre cresce, e il bersaglio per un dito
+
 ### Obiettivi
 
-- [ ] **I `clamp()` tipografici hanno i limiti in `rem`, non in px.** È l'unico
+- [x] **I `clamp()` tipografici hanno i limiti in `rem`, non in px.** È l'unico
       punto in cui oggi il sito viola davvero una buona pratica: `font-size:
       clamp(28px, min(4.6vw, 7.2vh), 72px)` non dipende in nessuno dei suoi tre
       termini dalla dimensione del carattere di base, quindi chi ingrandisce il
@@ -2686,44 +2738,145 @@ rimandate in [questioni-aperte.md](questioni-aperte.md).
       sono già in `rem`; i px sono rientrati nelle scene, copiati dal design. Per
       un pubblico di cinquanta e sessant'anni è la differenza che conta più di
       tutte le altre
-- [ ] L'immagine della serata ha una dimensione che si legge, con Timeline e
+- [x] **La regola 23 e `checkPixelFontSizes`**, sul sorgente e sul pubblicato,
+      con i suoi casi negativi: senza, quella forma rientra dal design la prossima
+      volta esattamente come è rientrata questa
+- [x] L'immagine della serata ha una dimensione che si legge, con Timeline e
       navigazione a schermo — la sua forma inclinata è del marchio e non si
-      toglie per far spazio
-- [ ] L'ordine in cui la scena cede su schermo basso è ancora quello giusto ora
-      che gli ingombri sono tutti presenti
-- [ ] Il testo del titolo e della descrizione sono tarati sulle larghezze vere
-      dei telefoni comuni, non su una scala scelta a tavolino
-- [ ] Le tacche della Timeline e la pillola della navigazione non coprono niente
-      di ciò che una scena deve mostrare
-- [ ] **Il pannello del modale sta dentro lo schermo che c'è.** Oggi è
+      toglie per far spazio. **Ed è uscita dall'ordine di cessione**, che è una
+      richiesta del committente guardando il sito su un telefono: 265px su un
+      iPhone da 740, 174 su un SE, e non sparisce più sotto nessuna soglia
+- [x] L'ordine in cui la scena cede su schermo basso è ancora quello giusto ora
+      che gli ingombri sono tutti presenti. L'ordine sì, le soglie no: **tre
+      erano tarate su schermi che nessuno ha** e non erano mai scattate su un
+      telefono vero
+- [x] Il testo del titolo e della descrizione sono tarati sulle larghezze vere
+      dei telefoni comuni, non su una scala scelta a tavolino — misurando le
+      cinque serate d'esempio a 375×667 e 390×740, con quella che ha
+      registrazioni e presenze a fare da caso peggiore
+- [x] **Fuori dal piano, chiesto guardando il telefono**: ruoli a due o tre
+      parole, ritratti dei relatori (tinte unite, segnaposto), una fotografia
+      per serata al posto delle due locandine generate — che avevano del testo
+      stampato sopra e dentro la capsula finiva accanto al titolo — la sede su
+      due righe, e **le presenze tolte dal sito e dal CMS**
+- [x] Le tacche della Timeline e la pillola della navigazione non coprono niente
+      di ciò che una scena deve mostrare: lo spazio in cima viene da `--nav-bar`
+      come quello in fondo viene da `--timeline-bar`, e non più da un numero
+      scelto a mano che su un telefono corto finiva sotto la pillola
+- [x] **Il pannello del modale sta dentro lo schermo che c'è.** Oggi è
       `max-height: 80vh`, cioè misurato sul viewport grande: su iOS con la barra
       degli indirizzi visibile può essere più alto di quel che si vede, e il
       `max-height` del `<dialog>` non lo taglia perché `.modal` è `overflow:
       visible` — il fondo di un testo lungo finisce fuori senza una barra che ci
       porti. È la stessa questione `svh` contro `vh` delle scene, rimandata qui
       perché cambiare quel numero cambia le proporzioni del modale, e le
-      proporzioni si guardano su un telefono vero
+      proporzioni si guardano su un telefono vero. **Fatto e verificato su iOS**:
+      il pannello sta dentro lo schermo con la barra visibile, e la prova ha
+      trovato un secondo difetto — la sua tipografia era rimasta quella del
+      desktop mentre la scena dietro era scesa. Ora è la stessa scala
+
+> **Trovato provando.** Il primo giro su un telefono, con il ridimensionamento
+> del testo alzato, ha mostrato il nome di un relatore che finisce **sotto la
+> barra della Timeline**. Non era un difetto di questa PR — è identico in
+> produzione — ed è di una specie che nessuna delle regole di cessione può
+> raggiungere: quelle sono appese all'altezza dello schermo, e chi ingrandisce il
+> testo non l'ha cambiata. La riga di testo della griglia era `auto`, che non si
+> comprime sotto il proprio contenuto, quindi la riga cresceva oltre l'altezza
+> della scena e il di più veniva disegnato fuori, dove c'è una barra fissa. Ora è
+> `minmax(0, auto)` con `overflow: hidden` sul testo.
+>
+> **E il resto della taratura è venuto da lì.** La fotografia, senza più il
+> `min-height` che la faceva sfondare, si è ridotta a sessanta pixel — «prendi
+> quel che resta» su una serata con due relatori vuol dire niente — e il
+> committente ha chiesto due cose guardando il telefono: che i testi siano più
+> piccoli e che **l'immagine non venga sacrificata mai**. La prima ha portato una
+> scala tipografica propria del telefono; la seconda ha tolto la fotografia
+> dall'ordine di cessione, che è una decisione della PR 7 riscritta. Cercando da
+> dove venissero quelle misure è saltato fuori il difetto più grosso della
+> giornata: **quattro componenti su otto scrivevano la dimensione del testo in
+> px** attraverso una custom property, e la guardia della regola 23 — nata lo
+> stesso giorno — non li vedeva.
+>
+> **E una lezione di processo, che vale da qui in poi.** A metà lavoro la CI ha
+> smesso di partire sui push del branch: nessun rosso, nessun errore, semplicemente
+> nessun run — e i due controlli obbligatori restano in attesa per sempre, che è il
+> bottone di merge grigio senza una ragione scritta da nessuna parte. La causa è
+> che **la pull request era in conflitto con `main`**: GitHub esegue i workflow
+> `pull_request` sul merge di prova fra il branch e la base, e se quel merge non
+> esiste non c'è niente su cui girare. Il conflitto l'aveva creato il CMS, che
+> dalla PR 17 scrive **direttamente su `main`** con il bypass del ruleset: due
+> salvataggi sulla stessa serata che questo branch stava toccando. Non è un caso
+> isolato — è la conseguenza normale di avere una redazione che pubblica senza
+> pull request — quindi **un branch va tenuto in pari con `main`**, e la spia da
+> guardare quando i controlli non partono è `mergeable`, non i log delle Actions.
+>
+> **E ha detto una seconda cosa, sul provare.** Il confronto fra produzione e
+> preview con il cursore di Android al massimo ha dato due schermate identiche:
+> quel cursore moltiplica **tutte** le dimensioni del testo, px compresi, quindi
+> non distingue il codice nuovo dal vecchio. La prova che risponde è la
+> dimensione del carattere del browser, da desktop — e la stessa ragione è quella
+> per cui convertire le soglie in `em` non avrebbe risolto niente: vedi
+> [decisioni.md](decisioni.md).
 
 ### Test automatici
 
 - Le guardie esistenti continuano a passare: una scena non diventa scorrevole e
   la pagina resta un solo contenitore scorrevole
 - Nessuna media query in sintassi range nel CSS pubblicato
+- **Guardia**: nessun `font-size` in px, nel sorgente e nel pubblicato. I due
+  strati non sono l'uno la copia dell'altro — fra loro c'è un minificatore che
+  riscrive i valori, `calc(0.5rem + 3.9vw)` compreso — e i casi negativi sono
+  cinque, compresi i due che devono **tacere**: il padding in px e il bersaglio
+  per un dito, che sono px deliberati
+- Il conto delle guardie sale da 73 a 74, e l'unica riga da cambiare è la frase
+  del `CLAUDE.md` che lo dichiara: un test la legge, ed è così che se n'è accorto
 
 ### Test manuali
 
 - Su un telefono vero, con tutte le serate: la scena si legge senza che niente
-  esca dallo schermo, in verticale e in orizzontale
+  esca dallo schermo. **In verticale: fatto**, ed è quello che ha portato la
+  taratura di questo passo. **In orizzontale: no, e si rimanda alla PR 19** —
+  sotto i 400px di altezza utile tutte le soglie tarate qui si accavallano, e
+  quello che serve è una composizione diversa, non una misura ritoccata
 - **Con il testo del sistema ingrandito**, che è il controllo per cui esiste il
   primo obiettivo: portarlo al 200% e vedere che il sito cresce invece di
-  restare fermo. È un pubblico di cinquanta e sessant'anni
+  restare fermo. È un pubblico di cinquanta e sessant'anni. **Fatto**, con la
+  dimensione del carattere del browser portata a 24: sul preview il titolo passa
+  a due righe e la descrizione cresce, in produzione restano dov'erano.
+  **E il come conta quanto l'esito**: la prova risponde solo se a cambiare è la
+  *dimensione base del carattere*. Lo zoom di pagina e il cursore
+  «ridimensionamento testo» di Android moltiplicano tutte le misure del testo, px
+  compresi, quindi danno due schermate identiche — provato, e sono servite due
+  prove sbagliate per capire quale fosse quella giusta. Il sito non dichiara
+  nessuna dimensione su `html` né su `:root`, ed è ciò che fa arrivare la scelta
+  del lettore fino ai `rem`
 - **Il giro su iPhone, portato qui dalla PR 17**, dove non è stato fatto perché
   un iPhone non c'era. Lo snap che non salta quando la barra di Safari si
   ritrae, l'apertura sulla prima serata futura, e il salto da una tacca della
   Timeline. Su Android è già provato, e **non risponde alla stessa domanda**:
   `svh` contro `dvh` e la ritrazione della barra sono comportamenti di Safari,
   ed è per Safari che la regola 5 esiste. Questo passo un iPhone lo richiede
-  comunque, quindi è il posto dove la prova costa meno
+  comunque, quindi è il posto dove la prova costa meno.
+  **Fatto, e ha risposto in modo diverso da come era stata scritta**: lo snap non
+  salta perché *la barra non si ritrae affatto* — si ritrae sullo scorrimento del
+  documento, e qui a scorrere è il programma, che è un contenitore dentro di esso.
+  L'apertura cade sulla prima serata futura. Il salto da una tacca arriva a
+  destinazione, e ha trovato **un difetto che si rimanda alla PR 19**: il primo
+  tocco del tasto indietro non muove niente. Un click su un'ancora aggiunge una
+  voce di cronologia — la mette il browser, non lo script — e `replaceState` la
+  riscrive dopo: il primo indietro cambia l'indirizzo e lascia la pagina dov'è,
+  il secondo esce. La regola 16 promette che il tasto indietro esca dal sito, e
+  quella promessa copre lo scorrimento e non i salti
+- **Il modale con un testo lungo, su iOS con la barra degli indirizzi visibile**:
+  il fondo si vede e il pannello scorre. È il difetto che il sesto obiettivo
+  descrive, ed è visibile solo lì. **Fatto: si apre e sta dentro lo schermo**, e
+  la prova ne ha trovato un secondo — il pannello aveva ancora la scala del
+  desktop, un titolo di 33px sopra un testo di 17, mentre la scena da cui si apre
+  era scesa a 22 e 15. Corretto qui, con le misure della scena
+- **Un salvataggio da `/admin`**, ereditato dalla PR 17: arriva su `main`, fa
+  partire una build, e la scheda Actions dice com'è andata — perché con il bypass
+  del ruleset quel commit non passa dai test prima di entrare. **Fatto**, e con
+  esso l'ultimo obiettivo aperto della PR 17
 
 ---
 
@@ -2741,6 +2894,37 @@ suite verde. Lo stesso vale per un contrasto calcolato contro un token e vissuto
 sopra una fotografia.
 
 Va dopo la PR 18 e non prima: la 18 è la taratura, questa è il collaudo.
+
+> **Tre lavori le arrivano dalla PR 18, con la diagnosi già fatta.**
+>
+> **Il primo tocco del tasto indietro non muove niente.** Una tacca della
+> Timeline è un `<a href="#serata-78">`, e un click su un'ancora aggiunge una
+> voce di cronologia: la mette il browser. L'osservatore poi la riscrive in
+> `/78` con `replaceState`, quindi il primo indietro cambia l'indirizzo e lascia
+> la pagina dov'era, il secondo esce dal sito. La regola 16 promette che il tasto
+> indietro esca, e la promessa copre lo scorrimento e non i salti. Il rimedio è
+> intercettare il **click semplice** — lasciando passare il click centrale e
+> quello con il tasto di comando, che è metà della ragione per cui una tacca è
+> un'ancora — fare `scrollIntoView()` senza argomenti, regola 15, e riscrivere
+> l'indirizzo. Non è stato fatto alla PR 18 perché è comportamento e non
+> proporzioni, e vuole un test suo.
+>
+> **Il sito in orizzontale su un telefono.** Mai guardato, e in landscape
+> l'altezza utile scende sotto i 400px: tutte le soglie tarate alla PR 18 si
+> accavallano lì sotto, e quello che serve è una composizione diversa — la
+> fotografia accanto al testo invece che sopra, probabilmente — non una misura
+> ritoccata. Fuori dalla PR 18 per decisione del committente, guardando lo
+> schermo.
+>
+> **E il contrasto, con un numero.** `--text-muted` è 0,44 di
+> crema sul blu e misura **3,3:1**, sotto il 4,5 di un testo. La PR 18 ha spostato
+> a `--text-secondary` i due usi che stavano dentro una scena — la nota e la
+> parola *già svolta* — e ha lasciato gli altri: le etichette di `pages.css`, la
+> cifra di una statistica, la voce disattivata della navigazione, la freccia di
+> una riga. Non sono lo stesso caso — un controllo inattivo è escluso dalla
+> soglia, una freccia è un'icona e ne ha una più bassa — e vanno guardati uno per
+> uno, con la pagina davanti. È esattamente il lavoro di questo passo: un
+> contrasto calcolato contro un token e vissuto sopra una fotografia.
 Invertite, il collaudo troverebbe le cose che la taratura sta già per cambiare.
 
 ### La matrice

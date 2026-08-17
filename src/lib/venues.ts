@@ -52,6 +52,24 @@ export type VenueLike = {
  * reaches here another way.
  */
 export function fullAddress(venue: VenueLike): string {
+  const { name, where } = venueLines(venue);
+  return `${name}, ${where}`;
+}
+
+/**
+ * The same address in its two halves: what the place is called, and where it
+ * is. A scene sets them on two lines — the name above, the street and the city
+ * under it — because on a phone the one line wrapped wherever it happened to
+ * run out, which put «Piazza Massaua 17/b,» and «Torino» on either side of a
+ * break that means nothing.
+ *
+ * Two halves of one composition and not a second one: `fullAddress` is written
+ * out of this, so the refusal below covers both and the day a venue grows a
+ * field there is one place to add it. Rule 19 is that the spelling lives in a
+ * single place, not that there is a single spelling: what it forbids is two
+ * *unrelated* answers to «what is the address of this place».
+ */
+export function venueLines(venue: VenueLike): { name: string; where: string } {
   const parts = [venue.name, venue.address, venue.city].map((part) => part?.trim() ?? '');
 
   const missing = ['name', 'address', 'city'].filter((_, at) => parts[at] === '');
@@ -61,5 +79,5 @@ export function fullAddress(venue: VenueLike): string {
     );
   }
 
-  return parts.join(', ');
+  return { name: parts[0]!, where: `${parts[1]}, ${parts[2]}` };
 }

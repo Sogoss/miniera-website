@@ -129,7 +129,7 @@ describe('checkNoPlaceholders', () => {
 
 /* What Astro publishes: the stem, a hash, and an extension that is not the
    one on the disk. A guard hunting `serata-esempio.png` finds nothing here. */
-const PUBLISHED = `<img src="/_astro/serata-esempio.BrSdkrOv_1lOivg.webp" alt="" />`;
+const PUBLISHED = `<img src="/_astro/serata-81.BrSdkrOv_1lOivg.webp" alt="" />`;
 
 describe('checkPlaceholderPhotos', () => {
   it('says nothing while the site has no address of its own', () => {
@@ -147,32 +147,32 @@ describe('checkPlaceholderPhotos', () => {
       'dist/index.html',
     );
     expect(violations).toHaveLength(1);
-    expect(violations[0]!.detail).toContain('serata-esempio.png');
+    expect(violations[0]!.detail).toContain('serata-81.webp');
   });
 
   it('finds it through the hash the build puts in the name', () => {
     // The assertion that this guard can fire at all: the name it is given and
     // the name on the page are never the same string.
-    expect(PUBLISHED).not.toContain('serata-esempio.png');
+    expect(PUBLISHED).not.toContain('serata-81.webp');
     expect(checkPlaceholderPhotos(PUBLISHED, PLACEHOLDER_PHOTOS, { withDomain: true }))
       .toHaveLength(1);
   });
 
   it('counts every size in a srcset separately', () => {
-    const srcset = `<img srcset="/_astro/sala-esempio.A_1.webp 400w, /_astro/sala-esempio.A_2.webp 800w">`;
+    const srcset = `<img srcset="/_astro/serata-78.A_1.webp 400w, /_astro/serata-78.A_2.webp 800w">`;
     expect(checkPlaceholderPhotos(srcset, PLACEHOLDER_PHOTOS, { withDomain: true }))
       .toHaveLength(2);
   });
 
   it('does not mistake a longer name that starts the same way', () => {
-    // `serata-esempio-2024.webp` is a different photograph, and one nobody
+    // `serata-81-in-sala.webp` is a different photograph, and one nobody
     // declared: the dot after the stem is what separates them.
-    const other = `<img src="/_astro/serata-esempio-2024.Bx1_a.webp">`;
+    const other = `<img src="/_astro/serata-81-in-sala.Bx1_a.webp">`;
     expect(checkPlaceholderPhotos(other, PLACEHOLDER_PHOTOS, { withDomain: true })).toEqual([]);
   });
 
   it('says nothing about a page carrying a real photograph', () => {
-    const real = `<img src="/_astro/serata-81-ritratto.Cx9.webp">`;
+    const real = `<img src="/_astro/serata-97.Cx9.webp">`;
     expect(checkPlaceholderPhotos(real, PLACEHOLDER_PHOTOS, { withDomain: true })).toEqual([]);
   });
 });
@@ -198,7 +198,14 @@ describe('checkDeclaredPhotos', () => {
   });
 
   it('reports each one separately', () => {
-    expect(checkDeclaredPhotos(PLACEHOLDER_PHOTOS, [])).toHaveLength(2);
+    // The count comes from the list, not from a number written here: PR 18 added
+    // four portraits and this said 2, which is a test failing on correct work —
+    // and the first thing anybody does with one of those is edit the number,
+    // which is how a check stops checking.
+    expect(checkDeclaredPhotos(PLACEHOLDER_PHOTOS, [])).toHaveLength(
+      PLACEHOLDER_PHOTOS.length,
+    );
+    expect(PLACEHOLDER_PHOTOS.length).toBeGreaterThan(1);
   });
 
   it('says nothing when nothing is declared', () => {

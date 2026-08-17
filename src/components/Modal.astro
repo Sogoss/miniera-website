@@ -128,7 +128,15 @@
      the page is inert, so there is no question which box a gesture is driving.
      Written as `.modal-panel` alone it would be reported, and rightly. */
   dialog.modal .modal-panel {
-    max-height: 80vh;
+    /* Measured on the small viewport, like every height on this site: with
+       `80vh` the panel is sized against the screen Safari has when its address
+       bar is retracted, so with the bar showing the bottom of a long text falls
+       outside — and nothing catches it, because `.modal` is `overflow: visible`
+       and must stay that way for the close button that sits outside its corner.
+       The token is the one rule 5 prescribes; a scene is as tall as the
+       viewport, which is why its name is the one that carries the `@supports`
+       fallback for browsers below Safari 15.4. */
+    max-height: calc(var(--scene-height) * 0.8);
     padding: clamp(24px, 3vw, 44px);
     overflow-y: auto;
   }
@@ -203,6 +211,27 @@
     text-decoration-color: var(--accent);
     text-decoration-thickness: 2px;
     text-underline-offset: 4px;
+  }
+
+  /* The same scale the scene uses on a phone, and it is a correction: the
+     panel kept the desktop sizes — a 33px title over 17px text — while the
+     scene behind it had come down to 22 and 15. Opened from that scene it read
+     as a different site, and it is worse than it looks on the shorter screens,
+     where the panel is the only thing showing.
+
+     The rows of recordings are not here: they are cloned out of the scene and
+     bring its scoped styles with them, which is what makes the two agree
+     without saying so twice. */
+  @media (max-width: 900px) {
+    .modal-title {
+      margin-bottom: var(--space-3);
+      font-size: 1.375rem;
+    }
+
+    .modal-body :global(p),
+    .modal-body :global(p a) {
+      font-size: var(--text-sm);
+    }
   }
 
   .modal-body :global(p a:hover),

@@ -1778,8 +1778,10 @@ CMS, e l'unica cosa che parla per lui è il suo schema, che dichiara
 sviluppo, `ajv`. *(PR 14)*
 
 **I facoltativi vuoti non si scrivono, e non c'è anteprima.**
-`omit_empty_optional_fields: true`, perché `attendance: ''` non è un numero e
-Zod ha ragione a fermare la build. `editor.preview: false`, perché l'anteprima
+`omit_empty_optional_fields: true`, perché una stringa vuota in un campo
+numerico non è un numero e Zod ha ragione a fermare la build — il campo su cui è
+stato deciso, le presenze, non c'è più dalla PR 18, ma la ragione vale per il
+prossimo facoltativo che arriva. `editor.preview: false`, perché l'anteprima
 di Sveltia è una resa generica dei campi e questo sito è uno scroller a schermo
 pieno con lo snap e un accento per ciclo: un'anteprima che non gli somiglia è
 una promessa che il sito non mantiene. Quella vera è il deploy preview della
@@ -1854,6 +1856,135 @@ messaggio d'errore di `checkAbsoluteOpenGraph` e nell'asserzione che quel
 messaggio lo nomina come stringa. Contandoli è saltato fuori che uno era già
 sbagliato prima: `sources.test.ts` diceva che la shell di Sveltia in `public/` la
 mette la PR 16, e l'ha messa la PR 14. *(PR 16)*
+
+## Le proporzioni su schermo piccolo
+
+**Le presenze escono dal sito e dal CMS.** «140 persone in sala» era un campo
+facoltativo dello schema, una riga nella scena e un campo del form. Non c'è più
+da nessuna delle tre parti, ed è una decisione del committente: un numero di
+presenze è una cosa che si conta male, invecchia e non aiuta nessuno a decidere
+se venire. Con lui esce anche la soglia che lo nascondeva sul telefono — la
+seconda cosa che cedeva su uno schermo corto — quindi adesso cede la descrizione
+e poi la dimensione del testo, e basta. Schema Zod e `config.yml` insieme, che è
+la regola 21: un campo tolto da uno solo dei due è un campo che il redattore
+compila e la build butta via senza dire niente. *(PR 18)*
+
+**La misura del testo si scrive in `rem`, ed è una regola e non una correzione.**
+`font-size: clamp(28px, min(4.6vw, 7.2vh), 72px)` è la forma che il design
+scrive, ed è rientrata nelle scene mentre i token `--text-*` erano in `rem` da
+sempre. Scala con la finestra, quindi sembra fare il lavoro; nessuno dei suoi tre
+termini dipende dalla dimensione del carattere di base, quindi chi ingrandisce il
+testo dal browser o dal sistema non ottiene niente e la pagina resta dov'è. Su un
+pubblico di cinquanta e sessant'anni è la differenza che conta più di tutte le
+altre, e non fallisce da nessuna parte: è la regola 23, con
+`checkPixelFontSizes`. *(PR 18)*
+
+**E il termine preferito porta anche lui una quota in `rem`.** Convertire i soli
+limiti sarebbe bastato sul telefono — lì il minimo è il più grande dei tre
+termini e vince sempre — e non sul desktop, dove a vincere è il termine di
+viewport: un titolo a 1440×900 sarebbe rimasto fermo a 64px con il testo di
+sistema al doppio. In più `calc(0.5rem + 3.9vw)` rende la crescita continua,
+invece di uno scalino nel punto in cui il minimo prende il sopravvento. *(PR 18)*
+
+**I limiti della descrizione sono due token, non due numeri.** Stava fra 15 e
+21 px, che sono esattamente `--text-sm` e `--text-lg`: scritti come token danno
+la stessa misura oggi e seguono la scala il giorno che qualcuno la ritara. Il
+titolo no — 28 e 72 non sono sulla scala, e avvicinarli al token più prossimo
+avrebbe cambiato il disegno per far tornare un nome. *(PR 18)*
+
+**Il modale misura sullo small viewport riusando `--scene-height`, senza un token
+nuovo.** Il pannello era `max-height: 80vh`, cioè misurato sullo schermo che
+Safari ha con la barra ritratta: con la barra visibile il fondo di un testo lungo
+cade fuori, e non lo intercetta niente perché `.modal` è `overflow: visible` e
+deve restarlo — il bottone di chiusura sta fuori dal suo angolo. La via elegante
+sarebbe stata un `--viewport-height` con il suo `@supports`, e
+`--scene-height` derivato: costa che `checkSceneHeightFallback`, che è puntata
+per nome sul token, si troverebbe davanti un `--scene-height: var(…)` invece del
+`100vh` che pretende — o la si sposta sul nome nuovo, e allora il token che la
+regola 5 nomina non porta più il suo ripiego in prima persona. Una scena è alta
+quanto il viewport per costruzione, quindi il token giusto c'è già: il commento
+dice perché un modale lo legge. *(PR 18)*
+
+**La scena ritaglia il testo dentro la sua riga, invece di sfondare.** Trovato su
+un telefono con il ridimensionamento del testo alzato, e non era un difetto di
+questa PR: la riga di testo della griglia era `auto`, che non si può comprimere
+sotto il proprio contenuto, quindi un testo più grande della scena faceva
+crescere la riga oltre l'altezza della scena e il di più veniva disegnato fuori —
+sotto la barra della Timeline, che è fissa in fondo allo schermo. Adesso è
+`minmax(0, auto)` con `overflow: hidden` sul testo: ritagliato dentro la sua
+riga, sopra il padding che riserva l'altezza della barra. Ritagliato e non
+scorrevole, che è la regola su cui lo scroller è costruito. *(PR 18)*
+
+**E le soglie di cessione restano in px.** Sono appese all'altezza dello schermo,
+quindi non si accorgono di un testo ingrandito: la via ovvia è convertirle in
+`em`, e non risolverebbe il caso in cui il difetto è stato trovato. Il cursore
+«ridimensionamento testo» di Chrome e Firefox per Android moltiplica le
+dimensioni del testo **senza toccare la dimensione base**, che è l'unica cosa che
+una media query in `em` legge — e su desktop, dove la conversione funzionerebbe,
+il difetto non si presenta perché lo schermo è alto. Costava tredici media query
+in cinque file, da convertire tutte insieme perché il confine dei 900px è
+condiviso fra scena, navigazione, Timeline e pagine istituzionali: mezze
+convertite darebbero la scena in versione telefono con la Timeline ancora a
+rotaia. Quello che il difetto chiedeva davvero era il ritaglio. *(PR 18)*
+
+**La fotografia esce dall'ordine di cessione.** Cedeva sotto i 620px di altezza,
+dopo la descrizione e prima delle presenze. Non cede più: la fotografia è della
+serata, la capsula inclinata è del marchio, e un programma di fotografie che
+butta la fotografia proprio sul dispositivo da cui lo legge quasi tutto il
+pubblico sta tenendo la metà sbagliata. È una richiesta del committente, guardando
+il sito su un telefono, e cambia una decisione della PR 7. A cedere al suo posto
+è la **dimensione del testo**, che sul telefono ha una scala sua. *(PR 18)*
+
+**Il telefono ha una scala tipografica propria, e non la curva del desktop.** La
+stessa `clamp()` che su uno schermo largo dà un titolo giusto arriva su un
+telefono come un testo troppo grande per la stanza, e a pagarlo era la
+fotografia. Sotto i 900px di larghezza titolo, nomi dei relatori e righe di
+fatto scendono di uno scalino, e sotto i 760 di altezza di un secondo. Tutto in
+`rem`, quindi chi ingrandisce il testo continua a ottenere quello che ha
+chiesto. *(PR 18)*
+
+**E tre soglie erano tarate su schermi che nessuno ha.** La descrizione usciva a
+680, le presenze a 560, la fotografia a 620 — e in Safari la barra non
+restituisce mai la sua altezza, quindi un iPhone da 844 dà alla scena circa 740 e
+*nessuna* di quelle soglie è mai scattata su un telefono vero. Adesso sono 760 e
+680, misurate contro le serate d'esempio a 375×667 e 390×740: la serata con le
+registrazioni e le presenze è quella che decide, perché è la più lunga.
+L'ordine dichiarato non cambia — la descrizione, poi le presenze — cambia dove
+scatta. *(PR 18)*
+
+**La scala del telefono ha dei pavimenti, e sono di accessibilità.** La prima
+taratura aveva comprato spazio per la fotografia abbassando *tutto*, e fra le
+cose abbassate c'erano la data e il luogo, scesi a 13px: cioè le due cose per cui
+un lettore è su quella pagina. Non stanno più su nessuna lista: la stanza si
+trova negli spazi e nella fotografia, che restituisce la differenza fra la sua
+quota e il suo pavimento — che è a cosa serve un pavimento. Sotto i 900px
+scendono di uno scalino solo i nomi dei relatori, e sotto i 700 solo gli spazi.
+*(PR 18)*
+
+**La nota e lo stato passano da `--text-muted` a `--text-secondary`.** Muted è
+0,44 di crema sul blu e misura **3,3:1**, sotto il 4,5 che un testo richiede; è
+il colore di «Ingresso libero, posti limitati», di «Serata annullata» e della
+parola *già svolta*. Non è un tono da attenuare: è la riga che dice se si entra
+e cos'è successo alla serata. Secondary misura 5,6:1 ed è quello che ogni altra
+riga secondaria del sito usa già. **Il token resta com'è**, e gli altri suoi usi
+— le etichette di `pages.css`, la voce disattivata della navigazione, la freccia
+di una riga — si guardano alla PR 19, che è il passo del controllo qualità: quello
+sopra una fotografia non si calcola contro un token. *(PR 18)*
+
+**Il bottone prende il bersaglio da 44 dal token che già c'era.** Padding e riga
+sommavano 43 sulla misura media: un pixel sotto quello che un dito riceve
+ovunque altro sul sito, ed è il genere di differenza che resta lì perché nessuno
+la misura. Il token si chiama ora `--tap-target` e non `--nav-tap-target`, perché
+da qui lo leggono in due. Il bottone piccolo tiene la sua altezza, 36: 44 su un
+controllo di tre parole sarebbe una pillola di padding, e 36 è comunque ben sopra
+i 24 di un bersaglio per puntatore. *(PR 18)*
+
+**La guardia legge `font-size` e la scorciatoia `font`, e nient'altro.** Ogni
+altra lunghezza in px resta legittima, e due sono deliberate: un padding che
+resta fermo mentre il testo cresce è quel che al testo dà lo spazio, e
+`--timeline-tick-height` è un bersaglio per un dito, grande uguale su ogni
+schermo a ogni impostazione. Una guardia che le segnalasse sarebbe una guardia
+che scatta sul lavoro giusto, e quelle si spengono. *(PR 18)*
 
 ## Rimandate
 

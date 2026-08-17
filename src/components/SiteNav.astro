@@ -64,7 +64,7 @@ const currentLabel =
       whoever restyles this, and the checks would go on passing over nothing. */}
   <nav class="site-nav" data-navigation aria-label="Le pagine del sito">
     <a class="site-nav-home" href="/">
-      <Brand height={14} />
+      <Brand height="0.875rem" />
     </a>
 
     <ul class="site-nav-voices" data-nav="row">
@@ -256,9 +256,12 @@ const currentLabel =
     flex: none;
   }
 
+  /* The touch target comes from the tokens because a scene measures the space
+     it leaves at the top from the same number: read off a screen once, the two
+     drift and the pill lands on the kicker. */
   .site-nav-summary {
     display: flex;
-    min-height: 44px;
+    min-height: var(--tap-target);
     align-items: center;
     gap: var(--space-2);
     padding: 0 var(--space-3);
@@ -309,7 +312,7 @@ const currentLabel =
   }
 
   .site-nav-panel .site-nav-voice {
-    min-height: 44px;
+    min-height: var(--tap-target);
     align-items: center;
     justify-content: flex-start;
     border-radius: 14px;

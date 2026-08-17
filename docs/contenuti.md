@@ -43,6 +43,23 @@ Nei file di design la data era testo libero e senza anno. Non va replicato:
 tutto tipizzato, il redattore inserisce una data vera e il sito genera le
 stringhe.
 
+## Un salvataggio dal CMS riscrive il file intero
+
+**Osservato alla PR 18**, alla prima modifica fatta davvero da `/admin` e non da
+un editor: Sveltia non tocca il solo campo cambiato. Riscrive il frontmatter
+come lo serializza lei — l'ordine dei campi diventa quello del `config.yml`, e
+una descrizione scritta come blocco YAML (`>-`, su più righe) torna come stringa
+quotata su una riga sola.
+
+Non rompe niente e non c'è niente da correggere: le chiavi sono le stesse, lo
+schema Zod legge lo stesso contenuto, e il `git diff` di un salvataggio è
+leggibile. Va saputo per due motivi. Il primo è che **il diff di una modifica di
+una parola può toccare metà file**, e chi lo rilegge deve sapere che non è
+successo altro. Il secondo è che l'ordine dei campi di un file scritto a mano
+non sopravvive al primo salvataggio di un redattore, quindi non vale la pena
+curarlo: a decidere la forma dei file in `src/content/` è il `config.yml`, che è
+la stessa cosa che la regola 21 dice dei nomi.
+
 ## Regole editoriali
 
 ### Il numero è l'URL, e non si tocca mai più

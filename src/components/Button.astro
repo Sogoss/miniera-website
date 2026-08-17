@@ -89,6 +89,11 @@ const Tag = isLink ? 'a' : 'button';
     --button-text: var(--text-sm);
 
     display: inline-flex;
+    /* The touch target, from the same token the navigation reads. The padding
+       and the line box add up to 43 on the middle size, which is a pixel under
+       what a finger is given everywhere else on this site — and «a pixel under»
+       is the kind of thing that stays that way because nobody measures it. */
+    min-height: var(--tap-target);
     align-items: center;
     justify-content: center;
     gap: var(--space-2);
@@ -107,10 +112,15 @@ const Tag = isLink ? 'a' : 'button';
       background var(--dur-fast) var(--ease-out);
   }
 
+  /* The small one keeps its own height: 44 on a control this size would be a
+     pill of padding around three words. 36 is still well clear of the 24 a
+     pointer target has to have. */
   .button[data-size='sm'] {
     --button-pad-y: var(--space-2);
     --button-pad-x: 14px;
     --button-text: var(--text-xs);
+
+    min-height: 2.25rem;
   }
 
   .button[data-size='lg'] {

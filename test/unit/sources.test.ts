@@ -9,6 +9,7 @@ import { describe, expect, it } from 'vitest';
 import {
   checkDuplicateDeclarations,
   checkNoColorMixOrOklch,
+  checkPixelFontSizes,
   checkRawColourValues,
   checkRgbTriples,
   checkSceneHeightFallback,
@@ -158,6 +159,10 @@ describe('src/styles', () => {
     expect(checkItalianCustomProperties(read(path), path)).toEqual([]);
   });
 
+  it.each(styleFiles)('%s sizes its type in rem', (path) => {
+    expect(checkPixelFontSizes(read(path), path)).toEqual([]);
+  });
+
   it('has every shipped stylesheet, not only the tokens, to check', () => {
     expect(shippedCss.length).toBeGreaterThanOrEqual(styleFiles.length);
     for (const path of styleFiles) expect(shippedCss).toContain(path);
@@ -229,6 +234,13 @@ describe('src/**/*.astro component styles', () => {
     // The component that emits them has an empty <style>: what it writes is
     // built at run time and belongs to no source file, which is the point.
     expect(checkHandWrittenCycleRules(componentCss(read(path)), path)).toEqual([]);
+  });
+
+  it.each(astroFiles)('%s sizes its type in rem', (path) => {
+    // Rule 23, and this is the layer where it was broken: the px limits came
+    // over from the design into the scenes, not into the tokens, which have
+    // been in rem since they were written.
+    expect(checkPixelFontSizes(componentCss(read(path)), path)).toEqual([]);
   });
 
   it.each(astroFiles)('%s takes its colours from the tokens', (path) => {

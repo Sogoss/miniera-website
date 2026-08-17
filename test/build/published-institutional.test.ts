@@ -29,7 +29,7 @@ import {
   whatsappDigits,
 } from '../../src/lib/contact.ts';
 import { placeholderTexts } from '../../src/lib/placeholder.ts';
-import { FORMER_ADDRESSES, fullAddress } from '../../src/lib/venues.ts';
+import { FORMER_ADDRESSES, fullAddress, venueLines } from '../../src/lib/venues.ts';
 import astroConfig from '../../astro.config.mjs';
 
 const pages = publishedPages();
@@ -42,14 +42,18 @@ const publishedFiles = readPublishedFiles();
 
 const withDomain = Boolean((astroConfig as { site?: string }).site);
 
-/** Every address the collection holds, spelled the one way. */
-const addresses = collectionEntries('sedi').map((entry) =>
-  fullAddress({
-    name: String(entry.data.name),
-    address: String(entry.data.address),
-    city: String(entry.data.city),
-  }),
-);
+/** Every venue the collection holds, as the three fields the composition takes. */
+const venues = collectionEntries('sedi').map((entry) => ({
+  name: String(entry.data.name),
+  address: String(entry.data.address),
+  city: String(entry.data.city),
+}));
+
+/** Every address, spelled the one way. */
+const addresses = venues.map((venue) => fullAddress(venue));
+
+/** And the same addresses in their two halves, which is how a scene sets them. */
+const lines = venues.map((venue) => venueLines(venue));
 
 describe('the institutional pages', () => {
   it('are both in dist/', () => {
@@ -73,9 +77,17 @@ describe('the institutional pages', () => {
   });
 
   it('says the same thing on the programme, which is where the evenings are', () => {
+    // Both halves, and not the one line: a scene sets the name of the place
+    // above the street from PR 18 on, so the composed string is no longer
+    // contiguous in the markup. What this asks has not changed — the words are
+    // the collection's and are spelled by `venueLines`, which is what
+    // `fullAddress` is itself written out of.
     const home = pages.find((page) => page.path === 'dist/index.html');
     const html = decodeEntities(home?.html ?? '');
-    expect(addresses.some((address) => html.includes(address))).toBe(true);
+    expect(
+      lines.some(({ name, where }) => html.includes(name) && html.includes(where)),
+      'no venue from src/content/sedi/ on the programme',
+    ).toBe(true);
   });
 
   it.each(publishedFiles.map((file) => [file.path, file] as const))(

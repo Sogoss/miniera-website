@@ -97,10 +97,20 @@ Fatto:
   ogni guardia a turno per vedere se la suite se ne accorge — è passato da 6m30s
   a 1m58s, e l'accecamento avviene in memoria invece che riscrivendo i file, così
   una corsa interrotta non lascia niente da rimettere a posto
+- **Il sito è in linea**, su `pages.dev`: un commit su `main` pubblica, ogni PR
+  ha il suo preview, e un rebuild notturno dopo la mezzanotte italiana fa passare
+  una serata da *in programma* a *già svolta*. Con la 404, un `robots.txt` che
+  vieta l'indicizzazione finché il dominio non c'è, e i security header con una
+  CSP i cui hash si calcolano da `dist/` invece di essere scritti a mano. Il
+  repository è pubblico, in un'organizzazione, e `main` sta su due ruleset —
+  quello che dà il bypass al CMS non dà il force push
+- **La misura del testo si scrive in `rem`**: i `clamp()` delle scene avevano i
+  limiti in px, copiati dal design, e chi ingrandisce il testo dal sistema non
+  otteneva niente. È la regola 23, con la sua guardia sui due strati, e il
+  pannello del modale ha smesso di misurarsi sul viewport grande
 
 Da fare: l'elenco completo dei passi, in ordine e uno per PR, sta in
-[piano.md](piano.md). In sintesi — la messa in linea su `pages.dev`, le
-proporzioni su schermo piccolo, un controllo qualità a mano su dispositivi e
+[piano.md](piano.md). In sintesi — un controllo qualità a mano su dispositivi e
 impostazioni veri, e per ultimo il dominio, che è il solo passo che aspetta il
 committente. La migrazione delle 81 serate storiche resta fuori dalla beta, vedi
 [questioni-aperte.md](questioni-aperte.md).

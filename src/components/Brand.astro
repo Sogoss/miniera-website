@@ -29,15 +29,17 @@ export type BrandTone = 'cream' | 'blue';
    the per-element idiom this project already documents for the scroller —
    `<Brand style={`--accent: ${colour}`} />` — so it has to compose. */
 interface Props extends Omit<HTMLAttributes<'span'>, 'style'> {
-  /** In px, like the export. Everything else scales from it. */
-  height?: number;
+  /** The height of the wordmark as a CSS length — rule 23, so in `rem`, because
+   *  it is also the type size. Everything else scales from it. Left unset it
+   *  comes from the stylesheet below. */
+  height?: string;
   tone?: BrandTone;
   style?: string;
 }
 
-const { height = 48, tone = 'cream', class: className, style, ...rest } = Astro.props;
+const { height, tone = 'cream', class: className, style, ...rest } = Astro.props;
 
-const inlineStyle = [`--brand-height: ${height}px`, style].filter(Boolean).join('; ');
+const inlineStyle = [height && `--brand-height: ${height}`, style].filter(Boolean).join('; ');
 ---
 
 <span
@@ -56,7 +58,7 @@ const inlineStyle = [`--brand-height: ${height}px`, style].filter(Boolean).join(
 
 <style>
   .brand {
-    --brand-height: 48px;
+    --brand-height: 3rem;
 
     display: inline-flex;
     align-items: stretch;

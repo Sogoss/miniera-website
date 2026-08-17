@@ -589,6 +589,85 @@ export function checkRawColourValues(css: string, path = 'the component'): Viola
   return violations;
 }
 
+/* --- Rule 23: type sizes are written in rem ----------------------------- */
+
+/**
+ * A text size written in px — on its own or as a limit of a `clamp()`.
+ *
+ * A `font-size` in px does not answer the reader who enlarges the text from the
+ * browser or from the system: the page stays exactly where it was. It is the
+ * one accessibility failure that costs nothing to a reader who never asks for
+ * it and everything to a reader who does — and this site is read by people in
+ * their fifties and sixties, which is why the rule exists rather than the
+ * general principle.
+ *
+ * `clamp()` is where it hides. `clamp(28px, 4.6vw, 72px)` looks fluid, and it
+ * is — against the width of the window, which is a different question: not one
+ * of its three terms grows when the base size does, so the scaling a reader
+ * asked for lands on nothing. That is the exact shape PR 18 took out of the
+ * scenes, copied over from the design, and this is what keeps it out.
+ *
+ * Only `font-size` and the `font` shorthand are read. Every other length in px
+ * is legitimate and several are deliberate: a padding that stays put while the
+ * text grows is giving the text the room, and `--timeline-tick-height: 36px` is
+ * a target for a finger, which is the same size on every screen at every text
+ * setting.
+ */
+export function checkPixelFontSizes(
+  css: string,
+  path = 'the stylesheet',
+): Violation[] {
+  const violations: Violation[] = [];
+  const clean = stripComments(css);
+  const all = declarations(clean);
+
+  /* Every custom property whose value carries a px length, so that a size
+     reached through one is read as the px it is.
+     This was the hole the rule shipped with, and four of the eight components
+     had it: `font-size: var(--guest-size)` with `--guest-size: 34px` is text in
+     px, and the first version of this guard called it rem-clean. The property
+     even said so out loud — «in px, like the export» — which is the shape a
+     guard is supposed to catch rather than the shape it is fooled by.
+     Scope is not modelled, exactly as in checkUndefinedCustomProperties: a
+     declaration anywhere in the text counts. The alternative is resolving the
+     cascade, and what is being hunted here is a name that is px everywhere it
+     is declared. */
+  const pixelProperties = new Map<string, string>();
+  for (const { property, value } of all) {
+    if (!property.startsWith('--')) continue;
+    if (!/\b\d*\.?\d+px\b/.test(value)) continue;
+    pixelProperties.set(property, value.trim());
+  }
+
+  for (const { property, value, index } of all) {
+    const name = property.toLowerCase();
+    if (name !== 'font-size' && name !== 'font') continue;
+
+    const direct = value.match(/\b\d*\.?\d+px\b/g) ?? [];
+
+    const through: string[] = [];
+    for (const [read] of value.matchAll(/var\(\s*(--[a-z0-9-]+)/gi)) {
+      const token = /var\(\s*(--[a-z0-9-]+)/i.exec(read)?.[1];
+      const declared = token && pixelProperties.get(token);
+      if (declared) through.push(`${token}: ${declared}`);
+    }
+
+    if (direct.length === 0 && through.length === 0) continue;
+
+    const how =
+      through.length > 0
+        ? `through ${through.join(', ')}`
+        : `(${direct.join(', ')})`;
+
+    violations.push({
+      rule: 'rule 23',
+      detail: `\`${name}: ${value.trim()}\` on line ${lineNumber(clean, index)} of ${path} sizes text in px ${how}: a reader who enlarges the system text gets nothing, and inside a \`clamp()\` that is invisible — the value still scales with the window. Write the limits in \`rem\`, or with one of the \`--text-*\` tokens`,
+    });
+  }
+
+  return violations;
+}
+
 /* --- Rule 4, at the source: no double declarations ---------------------- */
 
 /**

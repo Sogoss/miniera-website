@@ -28,7 +28,7 @@ import GuestRow from './GuestRow.astro';
 import Label from './Label.astro';
 import { type EventState, stateOf } from '../lib/events.ts';
 import type { Scene } from '../lib/programme.ts';
-import { fullAddress } from '../lib/venues.ts';
+import { venueLines } from '../lib/venues.ts';
 
 interface Props {
   scene: Scene;
@@ -84,7 +84,7 @@ const BOOKING_LABEL = 'Prenota il posto';
       scene.speakers.length > 0 && (
         <div class="scene-guests">
           {scene.speakers.map((speaker) => (
-            <GuestRow name={speaker.name} role={speaker.role} size={20}>
+            <GuestRow name={speaker.name} role={speaker.role}>
               {speaker.photo && (
                 <Image
                   slot="portrait"
@@ -115,20 +115,17 @@ const BOOKING_LABEL = 'Prenota il posto';
           <path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"></path>
           <circle cx="12" cy="10" r="2.6"></circle>
         </svg>
-        <span>{fullAddress(scene.venue)}</span>
+        {/* Two lines, the name of the place above and the street under it: on a
+            phone the single line wrapped wherever it ran out, which put
+            «Piazza Massaua 17/b,» and «Torino» on either side of a break that
+            means nothing. Both halves come from `venueLines`, which is the same
+            composition `fullAddress` is written out of — rule 19 asks that the
+            spelling live in one place, not that it be one line. */}
+        <span class="scene-venue">
+          <span class="scene-venue-name">{venueLines(scene.venue).name}</span>
+          <span class="scene-venue-where">{venueLines(scene.venue).where}</span>
+        </span>
       </p>
-      {
-        scene.attendance !== undefined && (
-          <p class="scene-fact scene-attendance">
-            <svg class="scene-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
-              <circle cx="9" cy="8" r="3.2" />
-              <path d="M3 20c0-3.3 2.7-5.4 6-5.4s6 2.1 6 5.4" />
-              <path d="M16 5.4a3.2 3.2 0 0 1 0 6M17.5 14.9c2.1.7 3.5 2.4 3.5 5.1" />
-            </svg>
-            <span>{scene.attendance} persone in sala</span>
-          </p>
-        )
-      }
     </div>
 
     {/* One button, whatever the evening has to offer.
@@ -308,16 +305,29 @@ const BOOKING_LABEL = 'Prenota il posto';
     color: var(--text-secondary);
   }
 
+  /* Secondary and not muted, like the note below and for the same measurement:
+     this is the word that says «già svolta» or «annullata», which on a
+     cancelled evening is half of what the reader needs — the other half being
+     the line through the date, which a screen reader does not announce. */
   .scene-state {
-    color: var(--text-muted);
+    color: var(--text-secondary);
   }
 
   /* Fluid down to a phone and up to a wide desktop, bounded by both the width
      and the height: a title that scales on width alone eats the screen when the
-     window is short and wide. */
+     window is short and wide.
+
+     Every term is in `rem` or carries one, which is rule 23 and the reason this
+     line changed in PR 18. Written the way the design has it — `clamp(28px,
+     min(4.6vw, 7.2vh), 72px)` — not one of the three depends on the base font
+     size, so a reader who enlarges the system text gets nothing at all. The
+     floor is what answers on a phone, where the viewport terms are the smallest
+     of the three; the `rem` inside the preferred term is what answers on a
+     desktop, where they are not, and it is also what keeps the growth
+     continuous instead of a step at the point where the floor takes over. */
   .scene-title {
     margin: 0;
-    font-size: clamp(28px, min(4.6vw, 7.2vh), 72px);
+    font-size: clamp(1.75rem, min(0.5rem + 3.9vw, 0.5rem + 6.1vh), 4.5rem);
     line-height: 0.98;
     text-wrap: pretty;
   }
@@ -332,12 +342,22 @@ const BOOKING_LABEL = 'Prenota il posto';
     margin: 0;
     max-width: var(--max-content);
     font: var(--type-body);
-    font-size: clamp(15px, 1.8vh, 21px);
+    /* The limits are the two type tokens this sits between, rather than the 15
+       and 21 the design writes: same size at the default, and they follow the
+       scale if it is ever retuned. */
+    font-size: clamp(var(--text-sm), 0.5rem + 1vh, var(--text-lg));
     color: var(--text-secondary);
     text-wrap: pretty;
   }
 
+  /* The size of a guest's name is set here and not passed as a prop, which is
+     the difference that makes the phone tunable at all: a custom property is
+     inherited, so the media query below can lower it, while an inline style
+     from a prop cannot be overridden by any rule. */
   .scene-guests {
+    --guest-size: 1.25rem;
+    --portrait-size: 3rem;
+
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -364,6 +384,21 @@ const BOOKING_LABEL = 'Prenota il posto';
 
   .scene-when {
     font-weight: var(--weight-semibold);
+  }
+
+  /* The name on top, the street under it. `align-items: center` on the row puts
+     the pin beside the middle of the two lines, which is where it belongs. */
+  .scene-venue {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .scene-venue-name {
+    font-weight: var(--weight-semibold);
+  }
+
+  .scene-venue-where {
+    color: var(--text-secondary);
   }
 
   /* An evening that was called off, struck through on the two facts the
@@ -402,10 +437,16 @@ const BOOKING_LABEL = 'Prenota il posto';
     gap: var(--space-2);
   }
 
+  /* `--text-secondary` and not `--text-muted`, which is what it was: muted is
+     0.44 of the cream over the blue, and that measures 3.3:1 — under the 4.5
+     a piece of text needs, on the line that says whether a reader can walk in
+     («Ingresso libero, posti limitati») or what happened to the evening
+     («Serata annullata»). Not a colour to be dimmed for tone: 0.68 measures
+     5.6:1 and is what every other secondary line on the site already uses. */
   .scene-note {
     margin: 0;
     font: var(--type-small);
-    color: var(--text-muted);
+    color: var(--text-secondary);
   }
 
   /* These are the rows the modal shows, and the same markup is what a reader
@@ -521,15 +562,61 @@ const BOOKING_LABEL = 'Prenota il posto';
   @media (max-width: 900px) {
     .scene {
       grid-template-columns: minmax(0, 1fr);
-      grid-template-rows: minmax(0, 1fr) auto;
+      /* `minmax(0, auto)` and not `auto` for the text row, which is the half
+         that was missing. `auto` cannot be squeezed below what it holds, so a
+         text bigger than the scene grows the row past the scene's own height
+         and the overflow is simply painted outside — under the Timeline's bar,
+         which is fixed over the bottom of the screen. It was found on a phone
+         with the text scaling turned up, and it is not a case the clamping
+         rules below can reach: they hang on the *height of the screen*, and a
+         reader who enlarges the type has not changed it.
+
+         What makes the difference visible is the `overflow: hidden` on the text
+         itself: clipped inside its own row, above the padding that reserves the
+         bar's height, instead of running underneath it. Clipped and not
+         scrollable, which is the rule the whole scroller is built on.
+
+         And the picture's floor is on the **track**, not on the picture. A
+         track is always sized inside the container, so 22% is a floor that
+         cannot spill; the `min-height: 26vh` this replaces was on the element,
+         which is why it painted over the title on the first iPhone it met.
+         Without a photograph the text simply takes the first row, which is
+         `1fr`: nothing is reserved for a picture that is not there. */
+      grid-template-rows: minmax(30%, 1fr) minmax(0, auto);
       align-content: stretch;
       gap: clamp(12px, 2.5vh, 28px);
 
       /* The rail is a bar across the bottom here, so what it took from the
-         right side above it takes from underneath. Its height is a token for
-         the same reason. */
-      padding: clamp(64px, 9vh, 96px) var(--gutter-page)
+         right side above it takes from underneath — and the pill takes its own
+         from the top. Both measures are tokens, and the head of this rule used
+         to be `clamp(64px, 9vh, 96px)`: a number chosen by hand, which on a
+         short phone ended up under the pill. */
+      padding: calc(var(--nav-bar) + var(--space-3)) var(--gutter-page)
         calc(var(--timeline-bar) + var(--space-2));
+    }
+
+    .scene-text {
+      overflow: hidden;
+    }
+
+    /* A phone gets a scale of its own, and this is the correction the first
+       real device asked for: the same fluid curve that reads well on a desktop
+       arrives here as type too big for the room, and what pays for it is the
+       photograph — which on this site is not decoration to be sacrificed.
+       Every one of these is a `rem`, rule 23, so a reader who enlarges the
+       system text still gets it. */
+    .scene-title {
+      font-size: clamp(1.375rem, 5.6vw, 1.75rem);
+    }
+
+    .scene-guests {
+      --guest-size: 1.0625rem;
+
+      gap: var(--space-2);
+    }
+
+    .scene-fact {
+      font-size: var(--text-sm);
     }
 
     .scene-photo {
@@ -542,15 +629,20 @@ const BOOKING_LABEL = 'Prenota il posto';
        instead.
 
        The height is what the geometry allows: a rectangle turned 45° takes up
-       (w + h) / √2 in *both* directions, so in a band 342 wide the frame can be
-       at most about 200 tall before its corners run past the edges — and there
-       is nothing clipping them. 78% of a band that is itself at least a quarter
-       of the screen keeps it inside and keeps it big enough to read as a
-       picture. */
-    .scene-photo {
-      min-height: 26vh;
-    }
+       (w + h) / √2 in *both* directions, so at 78% of its band the capsule's
+       corners land just inside it — and there is nothing clipping them.
 
+       What it must *not* have is a floor. `min-height: 26vh` was here to keep
+       the picture big enough to read, and it contradicted the row it sits in:
+       `1fr` says «take what is left», a min-height says «take at least this»,
+       and a min-height wins. On an iPhone, where Safari's bar never gives the
+       height back, the row was shorter than the floor and the picture spilled
+       onto the row below — the capsule painted over the title and over the
+       kicker. Found on the first real device, and invisible in emulation
+       because there the window is as tall as you make it. So the picture takes
+       what is left, and when what is left is too little the thresholds further
+       down remove it outright, which is the honest version of the same
+       decision. */
     .scene-photo-frame {
       height: 78%;
     }
@@ -562,7 +654,16 @@ const BOOKING_LABEL = 'Prenota il posto';
    * its own, with all of it. What a scene must keep is what makes it useful at
    * a glance and actionable — the title, the date, the place, the buttons and
    * the note. So the description goes first (it is the longest, and the one
-   * thing repeated in full elsewhere), then the picture, then the attendance.
+   * thing repeated in full elsewhere). Nothing else: the attendance was the
+   * other name on that list and the association has decided not to publish it
+   * at all, so there is one thing that gives way and then the type.
+   *
+   * **The photograph is not on the list, and that is a decision of PR 18.** It
+   * used to give way under 620px, and it does not any more: the picture is the
+   * evening's, the tilted capsule is the brand's, and a programme of photographs
+   * that drops the photograph on the device most people read it on is keeping
+   * the wrong half. What gives way instead is the size of the type, which on a
+   * phone has a scale of its own — see the media query above.
    *
    * Clipped, never scrollable: a scrollable scene inside a scrollable scroller
    * is the thing the arrow keys cannot tell apart.
@@ -581,27 +682,95 @@ const BOOKING_LABEL = 'Prenota il posto';
     }
   }
 
-  @media (max-width: 900px) and (max-height: 780px) {
+  @media (max-width: 900px) and (max-height: 820px) {
     .scene-description {
       -webkit-line-clamp: 2;
     }
   }
 
-  @media (max-width: 900px) and (max-height: 680px) {
+  /* Was 680, and 680 was measured against a screen nobody has. A phone in
+     Safari keeps its address bar for the whole visit — it retracts on the
+     scroll of the *document*, and here what scrolls is the programme, a box
+     inside it — so an iPhone whose screen is 844 tall gives the scene about
+     740, and every threshold below that never fires. At 740 the description
+     stayed, the text took the room, and the photograph was left the sixty
+     pixels of the screenshot that started this.
+     760 is «a phone held in Safari», and what it decides is the order already
+     written above: the description gives way before the picture. */
+  @media (max-width: 900px) and (max-height: 760px) {
     .scene-description {
       display: none;
     }
   }
 
-  @media (max-width: 900px) and (max-height: 620px) {
-    .scene-photo {
-      display: none;
+  /* A phone held in Safari, which is the same 760 the description leaves at and
+     for the same reason: the bar never gives its height back, so 760 is where
+     «a phone» begins. With the picture no longer on the list of what gives way,
+     what gives way is the size of the type.
+
+     Measured, not guessed. At 375×667 the text asked for 22px more than the
+     scene had and the note was clipped in half; at 390×740 the evening with the
+     recordings lost 12. One step down on every size and
+     tighter gaps give back about forty. */
+  @media (max-width: 900px) and (max-height: 760px) {
+    .scene-guests {
+      --guest-size: 1rem;
+      --portrait-size: 2.75rem;
+    }
+
+    /* The title and the facts are **not** on this list, and the first pass had
+       them here. What was bought by dropping the date and the place to 13px is
+       exactly the wrong thing to sell: they are the two things a reader is on
+       this page for — when, and where. The room comes from the gaps and from
+       the picture giving back the difference between its share and its floor,
+       which is what a floor is for. */
+    .scene-text {
+      gap: var(--space-2);
+    }
+
+    .scene-meta {
+      gap: var(--space-1);
+      padding-top: var(--space-2);
+    }
+
+    /* The row of a recording is a control with a desktop's padding, and on a
+       past evening it is the piece that does not fit: it is the only scene with
+       both the recordings and everything else. Smaller box, same target — the
+       row is 40 tall, over the 24 a pointer target needs, and it is not the
+       primary action of the scene. */
+    .scene-materials a {
+      padding: var(--space-2) var(--space-3);
+      font-size: var(--text-sm);
+    }
+
+    .material-play {
+      width: 22px;
+      height: 22px;
     }
   }
 
-  @media (max-width: 900px) and (max-height: 560px) {
-    .scene-attendance {
-      display: none;
+  /* Under 700 the floor of the picture comes down four points. It is not the
+     picture giving way — it never disappears and it is never smaller than a
+     quarter of the scene — it is the difference between a floor tuned for a
+     phone and one tuned for the shortest phone anybody still carries. */
+  @media (max-width: 900px) and (max-height: 700px) {
+    .scene {
+      grid-template-rows: minmax(26%, 1fr) minmax(0, auto);
+    }
+
+    /* And the last five pixels come from the spaces, not from the sizes: a past
+       evening carries one line more than a future one, and it is the only scene
+       that runs out here. */
+    .scene-guests,
+    .scene-actions {
+      gap: var(--space-1);
+    }
+
+    /* And the portrait with them: the row is as tall as the picture in it, so
+       on the shortest screen this is worth more than any of the type steps —
+       two guests, sixteen pixels each. */
+    .scene-guests {
+      --portrait-size: 2.25rem;
     }
   }
 
@@ -617,10 +786,6 @@ const BOOKING_LABEL = 'Prenota il posto';
   @media (min-width: 901px) and (max-height: 640px) {
     .scene-description {
       -webkit-line-clamp: 2;
-    }
-
-    .scene-attendance {
-      display: none;
     }
   }
 </style>

@@ -53,7 +53,6 @@ export type Scene = {
    *  what «bookable» means is decided by `stateOf`, once, and a second branch
    *  here would be a second place deciding it. */
   bookingUrl: string;
-  attendance: number | undefined;
   materials: EventData['materials'];
   photo: EventData['photo'];
   cycle: CollectionEntry<'cicli'>['data'];
@@ -229,7 +228,6 @@ async function toScene(event: EventData, now: Date): Promise<Scene> {
     cancelled: event.cancelled,
     note: noteOf(event, past),
     bookingUrl: bookingLink(event.number, event.title),
-    attendance: event.attendance,
     materials: event.materials,
     photo: event.photo,
     cycle: cycle.data,

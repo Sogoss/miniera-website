@@ -1,6 +1,6 @@
 # Questioni aperte
 
-Aggiornato al 15 agosto 2026. Chiudendo una voce, spostala in
+Aggiornato al 17 agosto 2026. Chiudendo una voce, spostala in
 [decisioni.md](decisioni.md) con il motivo.
 
 ## Blocca la stima
@@ -24,7 +24,7 @@ volta che il CMS gira.
 
 Adesso che il modello dati è definito, la domanda si può porre in modo
 preciso: per ogni serata servono numero, titolo, data e ora, ciclo, formato,
-descrizione, sede, relatori con ruolo, foto tema, presenze, eventuali link
+descrizione, sede, relatori con ruolo, foto tema, eventuali link
 alle registrazioni.
 
 Da chiarire anche: **le serate storiche hanno un link video ciascuna?** Nei
@@ -88,33 +88,32 @@ che è una pagina giusta con addosso l'aria di un sito abbandonato.
 Serve dal committente insieme ai testi delle pagine istituzionali, che sono la
 voce qui sopra e la stessa telefonata.
 
-## Da fare alla PR 17
+## Chiusa alla PR 18
 
-### La prova su un telefono vero
+### La prova su un telefono vero — fatta
 
-*(Alla PR 16 questa voce è passata dalla vecchia «Pubblicazione» alla PR 17,
-con il resto della coda: la prova aspetta un URL stabile, e `pages.dev` ne dà
-uno senza che si compri niente.)*
+*(Rimandata dalla PR 7, passata dalla vecchia «Pubblicazione» alla PR 17 alla
+PR 16, e alla PR 18 perché alla 17 un iPhone non c'era. Chiusa il 17 agosto 2026,
+su iPhone in Safari.)*
 
-Rimandata dalla PR 7, e non perché non conti: è la prova che regge la decisione
-`svh` invece di `dvh`, cioè che lo snap non salti quando la barra degli
-indirizzi di Safari si ritrae. Chi lavora al progetto non ha un iPhone, e i due
-modi di provarlo prima — un tunnel verso il server di sviluppo, un servizio con
-device remoti — costavano più attenzione di quanta ne valga: alla PR 17 il sito è
-in linea e lo apre chiunque, da qualunque telefono.
+Le tre domande hanno avuto risposta, e la prima **non** è quella che era stata
+scritta:
 
-Quello che intanto regge il rischio è costruttivo e non una speranza: l'altezza
-delle scene è `--scene-height`, cioè `svh` con il ripiego a `vh` in `@supports`,
-e ogni scena dichiara la propria altezza intrinseca — che è ciò che tiene ferme
-le posizioni di snap e rende esatto il salto di apertura. Il residuo è che la
-posizione iniziale cada di poco fuori posto, che è visibile e correggibile.
+- **Lo snap non salta quando la barra di Safari si ritrae** — perché la barra
+  non si ritrae. Si ritrae sullo scorrimento del *documento*, e qui a scorrere è
+  il programma, che è un contenitore dentro di esso: l'altezza della finestra non
+  cambia mai per tutta la visita. Il rischio che ha deciso `svh` invece di `dvh`
+  su questo sito non si presenta, e `svh` resta comunque la misura giusta perché
+  con la barra sempre presente coincide con lo schermo visibile. La conseguenza
+  vera è un'altra, ed è costata la taratura di mezza PR 18: **un iPhone da 844
+  dà alla scena circa 740**, quindi tre soglie di cessione scritte sotto quel
+  numero non erano mai scattate su un telefono.
+- **L'apertura cade sulla prima serata futura.**
+- **Il salto da una tacca arriva a destinazione**, e ha trovato il difetto del
+  tasto indietro, che è passato alla PR 19 con la diagnosi.
 
-Da provare, in ordine: che lo snap non salti mentre la barra si ritrae; che
-l'apertura cada esattamente sulla prima serata futura; che il salto da una tacca
-della Timeline arrivi a destinazione senza essere interrotto dallo snap —
-rimandato qui dalla PR 8, per lo stesso motivo e con lo stesso rischio retto per
-costruzione: il salto è quello nativo del browser sul frammento, non uno
-`scrollTo` scritto da noi.
+Resta fuori il sito **in orizzontale**, che nessuno aveva mai guardato e che non
+è una taratura: sta nella PR 19.
 
 ## Da fare alla PR 20
 

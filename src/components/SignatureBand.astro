@@ -23,20 +23,21 @@ import type { HTMLAttributes } from 'astro/types';
    caller's copy is the one a browser throws away. */
 interface Props extends Omit<HTMLAttributes<'div'>, 'style'> {
   text?: string;
-  /** In px, like the export: the padding scales from it. */
-  size?: number;
+  /** Type size as a CSS length — rule 23, so in `rem` — and the padding scales
+   *  from it. Left unset it comes from the stylesheet below. */
+  size?: string;
   style?: string;
 }
 
 const {
   text = 'MINIERA CULTURALE IN PERIFERIA',
-  size = 34,
+  size,
   class: className,
   style,
   ...rest
 } = Astro.props;
 
-const inlineStyle = [`--band-size: ${size}px`, style].filter(Boolean).join('; ');
+const inlineStyle = [size && `--band-size: ${size}`, style].filter(Boolean).join('; ');
 ---
 
 <div class:list={['signature-band', className]} data-brand style={inlineStyle} {...rest}>
@@ -47,7 +48,7 @@ const inlineStyle = [`--band-size: ${size}px`, style].filter(Boolean).join('; ')
   /* Bottom padding heavier than the top, as drawn: the capitals of Archivo
      Black sit high in the line box, and equal padding reads as top-heavy. */
   .signature-band {
-    --band-size: 34px;
+    --band-size: 2.125rem;
 
     width: 100%;
     padding: calc(var(--band-size) * 0.24) 0 calc(var(--band-size) * 0.3);

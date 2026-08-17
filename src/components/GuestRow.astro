@@ -23,14 +23,21 @@ import type { HTMLAttributes } from 'astro/types';
 interface Props extends Omit<HTMLAttributes<'div'>, 'role' | 'style'> {
   name: string;
   role?: string;
-  /** In px, like the export: the size of the name. */
-  size?: number;
+  /** The size of the name, as a CSS length — `rule 23`, so in `rem`.
+   *
+   * It used to be a number, and the number was in px «like the export». That is
+   * text sized in px by way of a custom property, which is the one shape of the
+   * rule the guard could not see and four of the eight components had. Left
+   * unset the size comes from the stylesheet below, which is what lets a caller
+   * lower it for a phone: a custom property is inherited, an inline style is
+   * not overridable at all. */
+  size?: string;
   /* Composed with this component's own, not spread past it — see Brand.astro:
      written twice, the caller's copy is the one a browser throws away. */
   style?: string;
 }
 
-const { name, role, size = 34, class: className, style, ...rest } = Astro.props;
+const { name, role, size, class: className, style, ...rest } = Astro.props;
 
 /* Rendered first, and only then asked whether anything came out of it.
    `Astro.slots.has()` answers about the slot and not about what it draws: a
@@ -42,7 +49,7 @@ const { name, role, size = 34, class: className, style, ...rest } = Astro.props;
 const portrait = Astro.slots.has('portrait') ? await Astro.slots.render('portrait') : '';
 const hasPortrait = portrait.trim() !== '';
 
-const inlineStyle = [`--guest-size: ${size}px`, style].filter(Boolean).join('; ');
+const inlineStyle = [size && `--guest-size: ${size}`, style].filter(Boolean).join('; ');
 ---
 
 <div class:list={['guest-row', className]} style={inlineStyle} {...rest}>
@@ -54,9 +61,13 @@ const inlineStyle = [`--guest-size: ${size}px`, style].filter(Boolean).join('; '
 </div>
 
 <style>
+  /* Neither `--guest-size` nor `--portrait-size` is declared here. Declared on the row it
+     would beat the value inherited from whatever contains the row, which is how
+     the scene sets it for a phone — a declaration on the element wins over
+     inheritance, and the names came out at the default of 2.125rem, bigger than
+     the title. The default lives in the `var()` that reads it, which loses to
+     an inherited value and to the prop alike. */
   .guest-row {
-    --guest-size: 34px;
-    --portrait-size: 56px;
 
     display: flex;
     align-items: center;
@@ -68,8 +79,8 @@ const inlineStyle = [`--guest-size: ${size}px`, style].filter(Boolean).join('; '
      around before the clip ever hid it. */
   .guest-portrait {
     flex: none;
-    width: var(--portrait-size);
-    height: var(--portrait-size);
+    width: var(--portrait-size, 3.5rem);
+    height: var(--portrait-size, 3.5rem);
     overflow: hidden;
     clip-path: url(#clip-clover-8);
   }
@@ -92,7 +103,7 @@ const inlineStyle = [`--guest-size: ${size}px`, style].filter(Boolean).join('; '
   .guest-name {
     font-family: var(--font-display);
     font-weight: var(--weight-black);
-    font-size: var(--guest-size);
+    font-size: var(--guest-size, 2.125rem);
     line-height: 0.98;
     letter-spacing: var(--tracking-display);
     color: var(--text-primary);

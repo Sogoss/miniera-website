@@ -10,14 +10,15 @@ import type { HTMLAttributes } from 'astro/types';
 /* `style` composed rather than spread — see Brand.astro: written twice, the
    caller's copy is the one a browser throws away. */
 interface Props extends Omit<HTMLAttributes<'span'>, 'style'> {
-  /** In px, like the export: type size, and the padding scales from it. */
-  size?: number;
+  /** Type size as a CSS length — rule 23, so in `rem` — and the padding scales
+   *  from it. Left unset it comes from the stylesheet below. */
+  size?: string;
   style?: string;
 }
 
-const { size = 44, class: className, style, ...rest } = Astro.props;
+const { size, class: className, style, ...rest } = Astro.props;
 
-const inlineStyle = [`--badge-size: ${size}px`, style].filter(Boolean).join('; ');
+const inlineStyle = [size && `--badge-size: ${size}`, style].filter(Boolean).join('; ');
 ---
 
 <span class:list={['episode-badge', className]} style={inlineStyle} {...rest}>
@@ -26,7 +27,7 @@ const inlineStyle = [`--badge-size: ${size}px`, style].filter(Boolean).join('; '
 
 <style>
   .episode-badge {
-    --badge-size: 44px;
+    --badge-size: 2.75rem;
 
     display: inline-block;
     padding: calc(var(--badge-size) * 0.36) calc(var(--badge-size) * 0.5)
