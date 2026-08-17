@@ -2763,15 +2763,17 @@ piccolo*. In breve:
       di ciò che una scena deve mostrare: lo spazio in cima viene da `--nav-bar`
       come quello in fondo viene da `--timeline-bar`, e non più da un numero
       scelto a mano che su un telefono corto finiva sotto la pillola
-- [ ] **Il pannello del modale sta dentro lo schermo che c'è.** Oggi è
+- [x] **Il pannello del modale sta dentro lo schermo che c'è.** Oggi è
       `max-height: 80vh`, cioè misurato sul viewport grande: su iOS con la barra
       degli indirizzi visibile può essere più alto di quel che si vede, e il
       `max-height` del `<dialog>` non lo taglia perché `.modal` è `overflow:
       visible` — il fondo di un testo lungo finisce fuori senza una barra che ci
       porti. È la stessa questione `svh` contro `vh` delle scene, rimandata qui
       perché cambiare quel numero cambia le proporzioni del modale, e le
-      proporzioni si guardano su un telefono vero. *Scritto — `calc(var(--scene-height) * 0.8)`
-      arriva in `dist/` — e da verificare su iOS, che è dove il difetto si vede*
+      proporzioni si guardano su un telefono vero. **Fatto e verificato su iOS**:
+      il pannello sta dentro lo schermo con la barra visibile, e la prova ha
+      trovato un secondo difetto — la sua tipografia era rimasta quella del
+      desktop mentre la scena dietro era scesa. Ora è la stessa scala
 
 > **Trovato provando.** Il primo giro su un telefono, con il ridimensionamento
 > del testo alzato, ha mostrato il nome di un relatore che finisce **sotto la
@@ -2794,6 +2796,19 @@ piccolo*. In breve:
 > giornata: **quattro componenti su otto scrivevano la dimensione del testo in
 > px** attraverso una custom property, e la guardia della regola 23 — nata lo
 > stesso giorno — non li vedeva.
+>
+> **E una lezione di processo, che vale da qui in poi.** A metà lavoro la CI ha
+> smesso di partire sui push del branch: nessun rosso, nessun errore, semplicemente
+> nessun run — e i due controlli obbligatori restano in attesa per sempre, che è il
+> bottone di merge grigio senza una ragione scritta da nessuna parte. La causa è
+> che **la pull request era in conflitto con `main`**: GitHub esegue i workflow
+> `pull_request` sul merge di prova fra il branch e la base, e se quel merge non
+> esiste non c'è niente su cui girare. Il conflitto l'aveva creato il CMS, che
+> dalla PR 17 scrive **direttamente su `main`** con il bypass del ruleset: due
+> salvataggi sulla stessa serata che questo branch stava toccando. Non è un caso
+> isolato — è la conseguenza normale di avere una redazione che pubblica senza
+> pull request — quindi **un branch va tenuto in pari con `main`**, e la spia da
+> guardare quando i controlli non partono è `mergeable`, non i log delle Actions.
 >
 > **E ha detto una seconda cosa, sul provare.** Il confronto fra produzione e
 > preview con il cursore di Android al massimo ha dato due schermate identiche:
@@ -2819,7 +2834,10 @@ piccolo*. In breve:
 ### Test manuali
 
 - Su un telefono vero, con tutte le serate: la scena si legge senza che niente
-  esca dallo schermo, in verticale e in orizzontale
+  esca dallo schermo. **In verticale: fatto**, ed è quello che ha portato la
+  taratura di questo passo. **In orizzontale: no, e si rimanda alla PR 19** —
+  sotto i 400px di altezza utile tutte le soglie tarate qui si accavallano, e
+  quello che serve è una composizione diversa, non una misura ritoccata
 - **Con il testo del sistema ingrandito**, che è il controllo per cui esiste il
   primo obiettivo: portarlo al 200% e vedere che il sito cresce invece di
   restare fermo. È un pubblico di cinquanta e sessant'anni. **Fatto**, con la
@@ -2838,10 +2856,23 @@ piccolo*. In breve:
   Timeline. Su Android è già provato, e **non risponde alla stessa domanda**:
   `svh` contro `dvh` e la ritrazione della barra sono comportamenti di Safari,
   ed è per Safari che la regola 5 esiste. Questo passo un iPhone lo richiede
-  comunque, quindi è il posto dove la prova costa meno
+  comunque, quindi è il posto dove la prova costa meno.
+  **Fatto, e ha risposto in modo diverso da come era stata scritta**: lo snap non
+  salta perché *la barra non si ritrae affatto* — si ritrae sullo scorrimento del
+  documento, e qui a scorrere è il programma, che è un contenitore dentro di esso.
+  L'apertura cade sulla prima serata futura. Il salto da una tacca arriva a
+  destinazione, e ha trovato **un difetto che si rimanda alla PR 19**: il primo
+  tocco del tasto indietro non muove niente. Un click su un'ancora aggiunge una
+  voce di cronologia — la mette il browser, non lo script — e `replaceState` la
+  riscrive dopo: il primo indietro cambia l'indirizzo e lascia la pagina dov'è,
+  il secondo esce. La regola 16 promette che il tasto indietro esca dal sito, e
+  quella promessa copre lo scorrimento e non i salti
 - **Il modale con un testo lungo, su iOS con la barra degli indirizzi visibile**:
   il fondo si vede e il pannello scorre. È il difetto che il sesto obiettivo
-  descrive, ed è visibile solo lì
+  descrive, ed è visibile solo lì. **Fatto: si apre e sta dentro lo schermo**, e
+  la prova ne ha trovato un secondo — il pannello aveva ancora la scala del
+  desktop, un titolo di 33px sopra un testo di 17, mentre la scena da cui si apre
+  era scesa a 22 e 15. Corretto qui, con le misure della scena
 - **Un salvataggio da `/admin`**, ereditato dalla PR 17: arriva su `main`, fa
   partire una build, e la scheda Actions dice com'è andata — perché con il bypass
   del ruleset quel commit non passa dai test prima di entrare. **Fatto**, e con
@@ -2864,7 +2895,28 @@ sopra una fotografia.
 
 Va dopo la PR 18 e non prima: la 18 è la taratura, questa è il collaudo.
 
-> **Un lavoro le arriva dalla PR 18, con un numero.** `--text-muted` è 0,44 di
+> **Tre lavori le arrivano dalla PR 18, con la diagnosi già fatta.**
+>
+> **Il primo tocco del tasto indietro non muove niente.** Una tacca della
+> Timeline è un `<a href="#serata-78">`, e un click su un'ancora aggiunge una
+> voce di cronologia: la mette il browser. L'osservatore poi la riscrive in
+> `/78` con `replaceState`, quindi il primo indietro cambia l'indirizzo e lascia
+> la pagina dov'era, il secondo esce dal sito. La regola 16 promette che il tasto
+> indietro esca, e la promessa copre lo scorrimento e non i salti. Il rimedio è
+> intercettare il **click semplice** — lasciando passare il click centrale e
+> quello con il tasto di comando, che è metà della ragione per cui una tacca è
+> un'ancora — fare `scrollIntoView()` senza argomenti, regola 15, e riscrivere
+> l'indirizzo. Non è stato fatto alla PR 18 perché è comportamento e non
+> proporzioni, e vuole un test suo.
+>
+> **Il sito in orizzontale su un telefono.** Mai guardato, e in landscape
+> l'altezza utile scende sotto i 400px: tutte le soglie tarate alla PR 18 si
+> accavallano lì sotto, e quello che serve è una composizione diversa — la
+> fotografia accanto al testo invece che sopra, probabilmente — non una misura
+> ritoccata. Fuori dalla PR 18 per decisione del committente, guardando lo
+> schermo.
+>
+> **E il contrasto, con un numero.** `--text-muted` è 0,44 di
 > crema sul blu e misura **3,3:1**, sotto il 4,5 di un testo. La PR 18 ha spostato
 > a `--text-secondary` i due usi che stavano dentro una scena — la nota e la
 > parola *già svolta* — e ha lasciato gli altri: le etichette di `pages.css`, la
