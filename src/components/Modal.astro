@@ -213,6 +213,27 @@
     text-underline-offset: 4px;
   }
 
+  /* The same scale the scene uses on a phone, and it is a correction: the
+     panel kept the desktop sizes — a 33px title over 17px text — while the
+     scene behind it had come down to 22 and 15. Opened from that scene it read
+     as a different site, and it is worse than it looks on the shorter screens,
+     where the panel is the only thing showing.
+
+     The rows of recordings are not here: they are cloned out of the scene and
+     bring its scoped styles with them, which is what makes the two agree
+     without saying so twice. */
+  @media (max-width: 900px) {
+    .modal-title {
+      margin-bottom: var(--space-3);
+      font-size: 1.375rem;
+    }
+
+    .modal-body :global(p),
+    .modal-body :global(p a) {
+      font-size: var(--text-sm);
+    }
+  }
+
   .modal-body :global(p a:hover),
   .modal-body :global(p a:focus-visible) {
     text-decoration-thickness: 4px;
